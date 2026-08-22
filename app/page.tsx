@@ -1,25 +1,20 @@
 "use client";
 
-import { AnimatePresence } from "framer-motion";
 import { useState } from "react";
+import { CinematicHero } from "@/components/CinematicHero";
 import { Dictionary } from "@/components/Dictionary";
-import { Hero } from "@/components/Hero";
-import { Splash } from "@/components/Splash";
 
 export default function Home() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [query, setQuery] = useState("");
 
   return (
     <>
-      <AnimatePresence>
-        {showSplash && <Splash onEnter={() => setShowSplash(false)} />}
-      </AnimatePresence>
-      <Hero />
+      <CinematicHero query={query} onQueryChange={setQuery} />
       <div className="wrap">
       <header className="dictionary-intro">
         <p className="tagline">diccionario navegable del lunfardo porteño — palabras y expresiones, de dónde vienen y cómo se usan hoy</p>
       </header>
-      <Dictionary />
+      <Dictionary query={query} onQueryChange={setQuery} />
       </div>
     </>
   );
