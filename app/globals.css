@@ -45,13 +45,15 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    revelado, vuelve al flujo normal para poder seguir navegando. */
 .cinehero-curtain { z-index:10; }
 .cinehero-curtain[data-revealed="false"] { position:fixed; inset:0; }
-.cinehero-curtain[data-revealed="true"] { position:static; }
+.cinehero-curtain[data-revealed="true"] { position:relative; }
 
 /* Niebla que viaja pegada a la cortina: en vez de un borde recto, el
    diccionario se funde con la escena a través de un degradado vertical
    amplio (transparente arriba, --ink sólido abajo), derivado del color
-   real de fondo. */
-.cinehero-curtain-fade { position:absolute; left:0; right:0; top:-26vh; height:26vh; pointer-events:none; background:linear-gradient(to bottom, rgba(20,23,28,0) 0%, rgba(20,23,28,.12) 18%, rgba(20,23,28,.55) 55%, rgba(20,23,28,1) 100%); }
+   real de fondo. Ancla por bottom:100% contra .cinehero-curtain (siempre
+   positioned, fixed o relative) para no ocupar nunca espacio en el flujo
+   ni depender de un ancestro distinto según el estado. */
+.cinehero-curtain-fade { position:absolute; left:0; right:0; bottom:100%; height:26vh; pointer-events:none; z-index:1; background:linear-gradient(to bottom, rgba(20,23,28,0) 0%, rgba(20,23,28,.12) 18%, rgba(20,23,28,.55) 55%, rgba(20,23,28,1) 100%); }
 .cinehero-curtain-clip { background:var(--ink); }
 .cinehero-curtain[data-revealed="false"] .cinehero-curtain-clip { height:100svh; overflow:hidden; }
 .cinehero-curtain[data-revealed="true"] .cinehero-curtain-clip { height:auto; overflow:visible; }
@@ -59,9 +61,30 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 @media (max-width:640px) { .cinehero-content { padding:24px 20px; } }
 @media (pointer:coarse) { .cinehero-plate { will-change:auto; } }
 .filters { display:flex; flex-wrap:wrap; gap:8px; }
-.filter-chip { font-size:12px; letter-spacing:.3px; padding:6px 14px; border-radius:20px; border:1px solid var(--line-strong); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s ease; }
+.filter-chip { font-size:12px; letter-spacing:.3px; padding:6px 14px; border-radius:20px; border:1px solid var(--line-strong); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s ease; text-transform:none; }
 .filter-chip:hover { border-color:var(--crema); color:var(--crema); }
 .filter-chip.active { background:var(--crema); color:var(--ink); border-color:var(--crema); font-weight:500; }
+
+/* ---- Filtros del diccionario: letra / categoría / origen ---- */
+.dict-filters { margin-bottom:10px; }
+.filters-toggle { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:20px; border:1px solid var(--line-strong); background:transparent; color:var(--crema); cursor:pointer; font:12px/1 var(--font-space-grotesk), sans-serif; letter-spacing:.4px; transition:border-color .15s ease, color .15s ease; }
+.filters-toggle:hover { border-color:var(--brass); color:var(--brass); }
+.filters-toggle-badge { display:inline-grid; min-width:16px; height:16px; padding:0 4px; place-items:center; border-radius:999px; background:var(--brass); color:var(--ink); font-size:10px; font-weight:700; }
+.filters-panel { display:flex; flex-direction:column; gap:14px; margin-top:14px; padding:16px; border:1px solid var(--line); border-radius:2px; background:rgba(237,230,214,0.03); }
+.filters-group { display:flex; flex-direction:column; gap:8px; }
+.filters-group-label { font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--muted); }
+.active-filters { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:12px; }
+.active-filter-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:20px; border:1px solid var(--brass); background:rgba(201,161,90,0.12); color:var(--brass); font-size:11px; letter-spacing:.2px; cursor:pointer; font-family:inherit; }
+.active-filter-pill:hover { background:rgba(201,161,90,0.22); }
+.active-filter-pill span { font-size:13px; line-height:1; }
+.clear-filters-btn { border:0; background:none; color:var(--muted); font-size:11px; letter-spacing:.3px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; font-family:inherit; padding:5px 4px; }
+.clear-filters-btn:hover { color:var(--crema); }
+.results-counter { margin-top:12px; font-size:11px; letter-spacing:.5px; color:var(--muted); }
+.load-more-btn { display:block; margin:40px auto 0; padding:12px 32px; border:1px solid var(--line-strong); border-radius:2px; background:transparent; color:var(--crema); cursor:pointer; font:12px/1 var(--font-space-grotesk), sans-serif; letter-spacing:1px; text-transform:uppercase; transition:border-color .15s ease, color .15s ease; }
+.load-more-btn:hover:not(:disabled) { border-color:var(--brass); color:var(--brass); }
+.load-more-btn:disabled { opacity:.5; cursor:default; }
+.ficha-badges { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.ficha-badge { font-size:9px; letter-spacing:.6px; text-transform:uppercase; padding:3px 8px; border-radius:2px; color:var(--muted); border:1px solid var(--line); }
 .letter-block { margin-top:56px; }
 .letter-portada { display:flex; align-items:baseline; gap:16px; margin-bottom:20px; }
 .letter-big { font-family:var(--font-fraunces), serif; font-weight:700; font-style:italic; font-size:72px; color:var(--brass); line-height:1; }

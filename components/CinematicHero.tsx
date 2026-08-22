@@ -39,6 +39,11 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  // Corrección (px) para que la cortina, al pasar a position:relative, no
+  // deje un hueco: el hero oculto sigue reservando 100svh en el flujo,
+  // pero el recorrido visible es más corto, así que compensamos con un
+  // top negativo medido en el instante exacto del cambio (ver más abajo).
+  const [curtainTopOffset, setCurtainTopOffset] = useState(0);
 
   const revealVh = isMobileViewport ? (reduceMotion ? 40 : 50) : reduceMotion ? 55 : 78;
   const revealUnit = isMobileViewport ? "svh" : "vh";
@@ -146,9 +151,19 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   // El hero solo se oculta (visibility:hidden) una vez que el diccionario
   // ya está totalmente opaco y cubrió el viewport (80%–100%), nunca antes.
   // Histéresis chica para que sea reversible sin parpadeo al retroceder.
+  //
+  // Al pasar a relative, la posición natural de la cortina en el flujo es
+  // "altura del hero" (siempre 100svh, oculto o no) — pero el recorrido
+  // visible es más corto, así que en el instante del cambio medimos la
+  // diferencia real contra el scroll actual y la aplicamos como "top"
+  // negativo constante, cerrando el hueco sin alterar ninguna otra fase.
   useMotionValueEvent(scrollProgress, "change", (latest) => {
     setIsRevealed((prev) => {
-      if (!prev && latest >= 0.85) return true;
+      if (!prev && latest >= 0.85) {
+        const heroHeight = stickyRef.current?.offsetHeight ?? 0;
+        setCurtainTopOffset(heroHeight - window.scrollY);
+        return true;
+      }
       if (prev && latest < 0.78) return false;
       return prev;
     });
@@ -320,7 +335,11 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         </button>
       </div>
 
-      <motion.div className="cinehero-curtain" data-revealed={isRevealed ? "true" : "false"} style={{ y: curtainY }}>
+      <motion.div
+        className="cinehero-curtain"
+        data-revealed={isRevealed ? "true" : "false"}
+        style={{ y: curtainY, top: isRevealed ? -curtainTopOffset : undefined }}
+      >
         <div className="cinehero-curtain-fade" aria-hidden="true" />
         <div className="cinehero-curtain-clip">
           <div className="wrap">

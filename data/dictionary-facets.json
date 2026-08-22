@@ -1,0 +1,51 @@
+{
+  "total": 14971,
+  "letras": {
+    "A": 1178,
+    "B": 791,
+    "C": 1868,
+    "D": 641,
+    "E": 1059,
+    "F": 540,
+    "G": 539,
+    "H": 386,
+    "I": 186,
+    "J": 214,
+    "K": 40,
+    "L": 596,
+    "M": 1117,
+    "N": 273,
+    "O": 168,
+    "P": 1634,
+    "Q": 181,
+    "R": 705,
+    "S": 950,
+    "T": 1113,
+    "U": 87,
+    "V": 420,
+    "W": 25,
+    "X": 3,
+    "Y": 115,
+    "Z": 142
+  },
+  "categorias": {
+    "Uso popular": 9093,
+    "Lunfardo": 1082,
+    "Fútbol": 265,
+    "Deportes": 18,
+    "Turf": 116,
+    "Música": 5,
+    "Jerga delictiva": 646,
+    "Jerga carcelaria": 91,
+    "Jerga vinculada con drogas": 309,
+    "Habla rural": 21,
+    "Uso médico popular": 92
+  },
+  "origenes": {
+    "Voz de origen italiano": 60,
+    "Voz de origen inglés": 297,
+    "Voz de origen francés": 107,
+    "Voz de origen alemán": 12
+  },
+  "sinCategoria": 3311
+}
