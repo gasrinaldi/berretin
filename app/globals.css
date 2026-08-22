@@ -16,31 +16,58 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .search-row input::placeholder { color:var(--muted); }
 
 /* ---- Bienvenida cinematográfica (La Boca / puerto) ---- */
-.cinehero { position:relative; height:100vh; height:calc(100svh + 62vh); }
+.cinehero-shell { position:relative; }
 .cinehero-sticky { position:sticky; top:0; overflow:hidden; height:100vh; height:100svh; background:var(--ink); }
 .cinehero-layers { position:absolute; inset:0; }
-.cinehero-layer { position:absolute; inset:0; z-index:1; width:100%; height:100%; object-fit:cover; object-position:center bottom; will-change:transform; }
-.cinehero-layer-back { z-index:1; }
-.cinehero-layer-mid { z-index:2; }
-.cinehero-layer-front { z-index:3; }
-.cinehero-camera { position:absolute; inset:0; z-index:1; pointer-events:none; }
-.cinehero-vignette { position:absolute; inset:0; z-index:4; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
-.cinehero-corner-shadow { position:absolute; inset:0; z-index:4; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
-.cinehero-blend { position:absolute; inset:0; z-index:5; pointer-events:none; background:var(--ink); }
-.cinehero-content { position:relative; z-index:6; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
+
+/* Base compartida por las 6 placas: mismo inset/object-fit/position para
+   que ninguna copia pierda registro respecto de las demás. */
+.cinehero-plate { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; will-change:transform; }
+
+/* Máscaras suaves sobre copias de la escena maestra: sin recortes duros,
+   feather amplio y mucho solapamiento. La placa maestra completa (sin
+   máscara, justo debajo) garantiza que nunca se vea un hueco. */
+.cinehero-mask-port {
+  mask-image: radial-gradient(ellipse 38% 55% at 12% 32%, black 30%, transparent 82%), radial-gradient(ellipse 30% 50% at 55% 30%, black 30%, transparent 82%), radial-gradient(ellipse 34% 55% at 88% 32%, black 30%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 38% 55% at 12% 32%, black 30%, transparent 82%), radial-gradient(ellipse 30% 50% at 55% 30%, black 30%, transparent 82%), radial-gradient(ellipse 34% 55% at 88% 32%, black 30%, transparent 82%);
+}
+.cinehero-mask-crowd {
+  mask-image: radial-gradient(ellipse 30% 32% at 50% 60%, black 35%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 30% 32% at 50% 60%, black 35%, transparent 85%);
+}
+.cinehero-mask-tanguero {
+  mask-image: radial-gradient(ellipse 11% 28% at 49% 62%, black 30%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 11% 28% at 49% 62%, black 30%, transparent 90%);
+}
+.cinehero-mask-youths {
+  mask-image: radial-gradient(ellipse 20% 42% at 17% 78%, black 30%, transparent 90%), radial-gradient(ellipse 24% 55% at 85% 68%, black 30%, transparent 90%);
+  -webkit-mask-image: radial-gradient(ellipse 20% 42% at 17% 78%, black 30%, transparent 90%), radial-gradient(ellipse 24% 55% at 85% 68%, black 30%, transparent 90%);
+}
+
+.cinehero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
+.cinehero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
+.cinehero-content { position:relative; z-index:8; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
 .cinehero-eyebrow { max-width:420px; color:var(--crema); font-size:11px; letter-spacing:1.7px; text-transform:uppercase; }
 .cinehero-logo { margin-top:16px; filter:drop-shadow(0 4px 16px rgba(0,0,0,.42)); }
 .cinehero-tagline { margin-top:14px; color:var(--crema); font-family:var(--font-fraunces), serif; font-size:clamp(15px, 2vw, 19px); font-style:italic; }
 .cinehero-search { width:min(420px, 100%); margin-top:30px; margin-bottom:0; box-shadow:0 8px 30px rgba(0,0,0,.35); }
-.cinehero-cue { position:absolute; left:50%; bottom:clamp(24px, 5vh, 48px); z-index:6; transform:translateX(-50%); border:0; background:none; color:var(--crema); cursor:pointer; font:500 11px var(--font-space-grotesk), sans-serif; letter-spacing:1.4px; text-transform:uppercase; text-shadow:0 2px 12px rgba(0,0,0,.5); display:flex; align-items:center; gap:8px; animation:cinehero-cue-bob 2.2s ease-in-out infinite; }
+.cinehero-cue { position:absolute; left:50%; bottom:clamp(24px, 5vh, 48px); z-index:8; transform:translateX(-50%); border:0; background:none; color:var(--crema); cursor:pointer; font:500 11px var(--font-space-grotesk), sans-serif; letter-spacing:1.4px; text-transform:uppercase; text-shadow:0 2px 12px rgba(0,0,0,.5); display:flex; align-items:center; gap:8px; animation:cinehero-cue-bob 2.2s ease-in-out infinite; }
 .cinehero-cue span { color:var(--brass); font-size:14px; }
 @keyframes cinehero-cue-bob { 0%, 100% { transform:translate(-50%, 0); } 50% { transform:translate(-50%, 6px); } }
-.cinehero-audio-toggle { position:absolute; right:clamp(20px, 5vw, 56px); bottom:clamp(20px, 5vw, 48px); z-index:6; display:grid; width:38px; height:38px; place-items:center; border:1px solid rgba(237,230,214,.5); border-radius:50%; background:rgba(20,23,28,.3); color:var(--crema); cursor:pointer; text-shadow:0 2px 12px rgba(0,0,0,.5); transition:color .2s ease, border-color .2s ease, background-color .2s ease; }
+.cinehero-audio-toggle { position:absolute; right:clamp(20px, 5vw, 56px); bottom:clamp(20px, 5vw, 48px); z-index:8; display:grid; width:38px; height:38px; place-items:center; border:1px solid rgba(237,230,214,.5); border-radius:50%; background:rgba(20,23,28,.3); color:var(--crema); cursor:pointer; text-shadow:0 2px 12px rgba(0,0,0,.5); transition:color .2s ease, border-color .2s ease, background-color .2s ease; }
 .cinehero-audio-toggle:hover { border-color:var(--crema); color:var(--brass); background:rgba(20,23,28,.5); }
 .cinehero-audio-toggle svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; stroke-width:1.6; }
 .cinehero-audio-toggle > span { color:var(--brass); font-size:20px; line-height:1; }
-@media (max-width:640px) { .cinehero { height:calc(100svh + 46vh); } .cinehero-content { padding:24px 20px; } }
-@media (pointer:coarse) { .cinehero-layer { will-change:auto; } }
+
+/* El diccionario real como cortina: mientras el scroll está dentro del
+   recorrido, fixed + transform lo hace ascender tapando el hero; una vez
+   revelado, vuelve al flujo normal para poder seguir navegando. */
+.cinehero-curtain { z-index:10; background:var(--ink); }
+.cinehero-curtain[data-revealed="false"] { position:fixed; inset:0; height:100svh; overflow:hidden; }
+.cinehero-curtain[data-revealed="true"] { position:static; height:auto; overflow:visible; }
+
+@media (max-width:640px) { .cinehero-content { padding:24px 20px; } }
+@media (pointer:coarse) { .cinehero-plate { will-change:auto; } }
 .filters { display:flex; flex-wrap:wrap; gap:8px; }
 .filter-chip { font-size:12px; letter-spacing:.3px; padding:6px 14px; border-radius:20px; border:1px solid var(--line-strong); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s ease; }
 .filter-chip:hover { border-color:var(--crema); color:var(--crema); }
