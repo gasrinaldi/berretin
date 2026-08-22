@@ -20,29 +20,10 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .cinehero-sticky { position:sticky; top:0; overflow:hidden; height:100vh; height:100svh; background:var(--ink); }
 .cinehero-layers { position:absolute; inset:0; }
 
-/* Base compartida por las 6 placas: mismo inset/object-fit/position para
-   que ninguna copia pierda registro respecto de las demás. */
+/* Base compartida por las 2 placas (fondo limpio + escena maestra):
+   mismo inset/object-fit/position para que no pierdan registro. Cada una
+   viaja entera — nada de sectores ni personajes desplazándose aparte. */
 .cinehero-plate { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; will-change:transform; }
-
-/* Máscaras suaves sobre copias de la escena maestra: sin recortes duros,
-   feather amplio y mucho solapamiento. La placa maestra completa (sin
-   máscara, justo debajo) garantiza que nunca se vea un hueco. */
-.cinehero-mask-port {
-  mask-image: radial-gradient(ellipse 38% 55% at 12% 32%, black 30%, transparent 82%), radial-gradient(ellipse 30% 50% at 55% 30%, black 30%, transparent 82%), radial-gradient(ellipse 34% 55% at 88% 32%, black 30%, transparent 82%);
-  -webkit-mask-image: radial-gradient(ellipse 38% 55% at 12% 32%, black 30%, transparent 82%), radial-gradient(ellipse 30% 50% at 55% 30%, black 30%, transparent 82%), radial-gradient(ellipse 34% 55% at 88% 32%, black 30%, transparent 82%);
-}
-.cinehero-mask-crowd {
-  mask-image: radial-gradient(ellipse 30% 32% at 50% 60%, black 35%, transparent 85%);
-  -webkit-mask-image: radial-gradient(ellipse 30% 32% at 50% 60%, black 35%, transparent 85%);
-}
-.cinehero-mask-tanguero {
-  mask-image: radial-gradient(ellipse 11% 28% at 49% 62%, black 30%, transparent 90%);
-  -webkit-mask-image: radial-gradient(ellipse 11% 28% at 49% 62%, black 30%, transparent 90%);
-}
-.cinehero-mask-youths {
-  mask-image: radial-gradient(ellipse 20% 42% at 17% 78%, black 30%, transparent 90%), radial-gradient(ellipse 24% 55% at 85% 68%, black 30%, transparent 90%);
-  -webkit-mask-image: radial-gradient(ellipse 20% 42% at 17% 78%, black 30%, transparent 90%), radial-gradient(ellipse 24% 55% at 85% 68%, black 30%, transparent 90%);
-}
 
 .cinehero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
 .cinehero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
@@ -62,9 +43,18 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 /* El diccionario real como cortina: mientras el scroll está dentro del
    recorrido, fixed + transform lo hace ascender tapando el hero; una vez
    revelado, vuelve al flujo normal para poder seguir navegando. */
-.cinehero-curtain { z-index:10; background:var(--ink); }
-.cinehero-curtain[data-revealed="false"] { position:fixed; inset:0; height:100svh; overflow:hidden; }
-.cinehero-curtain[data-revealed="true"] { position:static; height:auto; overflow:visible; }
+.cinehero-curtain { z-index:10; }
+.cinehero-curtain[data-revealed="false"] { position:fixed; inset:0; }
+.cinehero-curtain[data-revealed="true"] { position:static; }
+
+/* Niebla que viaja pegada a la cortina: en vez de un borde recto, el
+   diccionario se funde con la escena a través de un degradado vertical
+   amplio (transparente arriba, --ink sólido abajo), derivado del color
+   real de fondo. */
+.cinehero-curtain-fade { position:absolute; left:0; right:0; top:-26vh; height:26vh; pointer-events:none; background:linear-gradient(to bottom, rgba(20,23,28,0) 0%, rgba(20,23,28,.12) 18%, rgba(20,23,28,.55) 55%, rgba(20,23,28,1) 100%); }
+.cinehero-curtain-clip { background:var(--ink); }
+.cinehero-curtain[data-revealed="false"] .cinehero-curtain-clip { height:100svh; overflow:hidden; }
+.cinehero-curtain[data-revealed="true"] .cinehero-curtain-clip { height:auto; overflow:visible; }
 
 @media (max-width:640px) { .cinehero-content { padding:24px 20px; } }
 @media (pointer:coarse) { .cinehero-plate { will-change:auto; } }

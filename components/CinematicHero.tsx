@@ -11,32 +11,47 @@ type CinematicHeroProps = {
   onQueryChange: (value: string) => void;
 };
 
-// Rango de parallax por capa (px en los extremos del viewport). El eje Y
-// se atenúa un poco respecto del X, tal como lo pide el spec ("un poco
-// más fuerte en X"). La placa maestra completa (safety net) no se mueve
-// con el mouse: por eso no tiene rango propio, solo el zoom de cámara.
-const RANGE_BACK = 5;
-const RANGE_PORT = 9;
-const RANGE_CROWD = 15;
-const RANGE_TANGUERO = 20;
-const RANGE_YOUTHS = 26;
-const RANGE_CONTENT = 3;
-const Y_DAMP = 0.7;
+// Rango de parallax por placa (px en los extremos del viewport), tal como
+// lo pide el spec: dos placas completas (fondo + escena) más la capa UI.
+// Nada de esto mueve sectores de personajes por separado — cada placa
+// viaja entera, sin deformarse.
+const RANGE_BACK_X = 3;
+const RANGE_BACK_Y = 2;
+const RANGE_SCENE_X = 8;
+const RANGE_SCENE_Y = 5;
+const RANGE_UI_X = 11;
+const RANGE_UI_Y = 7;
 
-const BASE_OVERSCAN = 1.06;
+const BACK_BASE_SCALE = 1.04;
+const SCENE_SCALE_MIN = 1.055;
+const SCENE_SCALE_MAX = 1.065;
 
-// Cuánto scroll extra (además de los 100svh sticky) dura todo el recorrido
-// de la bienvenida. Más corto bajo reduced-motion, como pide el spec.
-const REVEAL_VH_FULL = 150;
-const REVEAL_VH_REDUCED = 55;
-
+// Cuánto scroll extra (además del 100svh sticky) dura la bienvenida.
+// 70–85vh en desktop, 45–55svh en mobile, más corto aún con reduced-motion.
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const shellRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const [canParallax] = useState(() => typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches);
+  // Arranca en false (igual que el servidor, sin window) para no generar
+  // un hydration mismatch en el "style" del shell; el efecto de abajo lo
+  // corrige apenas monta en cliente, y lo mantiene al rotar/resize.
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+
+  const revealVh = isMobileViewport ? (reduceMotion ? 40 : 50) : reduceMotion ? 55 : 78;
+  const revealUnit = isMobileViewport ? "svh" : "vh";
+
+  // Re-sincroniza el breakpoint si el layout todavía no se había asentado
+  // al montar, o si el viewport cambia después (rotación, resize).
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px)");
+    const sync = () => setIsMobileViewport(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   const portAudioRef = useRef<HTMLAudioElement | null>(null);
   const crowdAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -44,53 +59,64 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const mutedRef = useRef(false);
   const audioFrameRef = useRef<number | null>(null);
 
-  // Puntero crudo (-1..1) suavizado con spring: easing inmediato pero
-  // prolijo, y retorno natural al centro al salir el mouse.
+  // Puntero crudo (-1..1) suavizado con spring: reacciona de inmediato y
+  // vuelve con naturalidad al centro al salir el mouse.
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const smoothX = useSpring(pointerX, { stiffness: 90, damping: 16, mass: 0.5 });
   const smoothY = useSpring(pointerY, { stiffness: 90, damping: 16, mass: 0.5 });
 
-  // Progreso de scroll a lo largo de todo el recorrido (sticky + reveal).
-  const { scrollYProgress } = useScroll({ target: shellRef, offset: ["start start", "end end"] });
-  const scrollSpring = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.4 });
-  const scrollProgress = reduceMotion ? scrollYProgress : scrollSpring;
+  // Progreso de scroll, sin spring adicional: responde de forma directa,
+  // sin sensación amortiguada, para que un solo swipe fuerte alcance.
+  const { scrollYProgress: scrollProgress } = useScroll({ target: shellRef, offset: ["start start", "end end"] });
 
-  // 0–20%: parallax a pleno. Cae progresivamente hasta apagarse en 50%.
-  const parallaxDamp = useTransform(scrollProgress, [0, 0.2, 0.5], [1, 1, 0], { clamp: true });
+  // 0–10%: parallax a pleno. Cae progresivamente hasta apagarse en 30%,
+  // justo cuando arranca el desvanecimiento de la escena.
+  const parallaxDamp = useTransform(scrollProgress, [0, 0.1, 0.3], [1, 1, 0], { clamp: true });
   const dampedX = useTransform([smoothX, parallaxDamp], (values) => (values[0] as number) * (values[1] as number));
   const dampedY = useTransform([smoothY, parallaxDamp], (values) => (values[0] as number) * (values[1] as number));
 
-  const backX = useTransform(dampedX, (v) => -v * RANGE_BACK);
-  const backY = useTransform(dampedY, (v) => -v * RANGE_BACK * Y_DAMP);
-  const portX = useTransform(dampedX, (v) => -v * RANGE_PORT);
-  const portY = useTransform(dampedY, (v) => -v * RANGE_PORT * Y_DAMP);
-  const crowdX = useTransform(dampedX, (v) => -v * RANGE_CROWD);
-  const crowdY = useTransform(dampedY, (v) => -v * RANGE_CROWD * Y_DAMP);
-  const tangueroX = useTransform(dampedX, (v) => -v * RANGE_TANGUERO);
-  const tangueroY = useTransform(dampedY, (v) => -v * RANGE_TANGUERO * Y_DAMP);
-  const youthsX = useTransform(dampedX, (v) => -v * RANGE_YOUTHS);
-  const youthsY = useTransform(dampedY, (v) => -v * RANGE_YOUTHS * Y_DAMP);
-  const contentParallaxX = useTransform(dampedX, (v) => -v * RANGE_CONTENT);
-  const contentParallaxY = useTransform(dampedY, (v) => -v * RANGE_CONTENT * Y_DAMP);
+  const backX = useTransform(dampedX, (v) => -v * RANGE_BACK_X);
+  const backY = useTransform(dampedY, (v) => -v * RANGE_BACK_Y);
+  const sceneX = useTransform(dampedX, (v) => -v * RANGE_SCENE_X);
+  const sceneY = useTransform(dampedY, (v) => -v * RANGE_SCENE_Y);
+  const contentParallaxX = useTransform(dampedX, (v) => -v * RANGE_UI_X);
+  const contentParallaxY = useTransform(dampedY, (v) => -v * RANGE_UI_Y);
 
-  // Avance de cámara: zoom leve y uniforme en las 6 capas entre 20% y 55%.
-  // Bajo reduced-motion queda anulado (rango constante).
-  const cameraScale = useTransform(scrollProgress, [0.2, 0.55], reduceMotion ? [1, 1] : [1, 1.08], { clamp: true });
-  const backScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN);
-  const masterScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN);
-  const portScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN * 1.01);
-  const crowdScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN * 1.015);
-  const tangueroScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN * 1.02);
-  const youthsScale = useTransform(cameraScale, (s) => s * BASE_OVERSCAN * 1.025);
+  // Escala de la escena "según cursor": crece apenas con la distancia al
+  // centro (1.055 en reposo, 1.065 en los extremos), amortiguada igual
+  // que el resto del parallax al avanzar el scroll.
+  const pointerMagnitude = useTransform([dampedX, dampedY], (values) => {
+    const nx = (values[0] as number) / RANGE_SCENE_X;
+    const ny = (values[1] as number) / RANGE_SCENE_Y;
+    return Math.min(1, Math.sqrt(nx * nx + ny * ny));
+  });
+  const sceneCursorScale = useTransform(pointerMagnitude, [0, 1], [SCENE_SCALE_MIN, SCENE_SCALE_MAX]);
 
-  // Logo, tagline, buscador y cue se elevan y desvanecen entre 20% y 55%.
-  const contentOpacity = useTransform(scrollProgress, [0.2, 0.55], [1, 0], { clamp: true });
-  const contentLiftY = useTransform(scrollProgress, [0.2, 0.55], reduceMotion ? [0, 0] : [0, -40], { clamp: true });
+  // Avance de cámara sutil durante el desvanecimiento (30%–80%): empuja el
+  // zoom de la escena hasta ~1.10 y el del fondo en proporción, sin saltos.
+  const dissolveZoom = useTransform(scrollProgress, [0.3, 0.8], reduceMotion ? [1, 1] : [1, 1.1 / 1.06], { clamp: true });
+  const backScale = useTransform(dissolveZoom, (z) => BACK_BASE_SCALE * z);
+  const sceneScale = useTransform([sceneCursorScale, dissolveZoom], (values) => (values[0] as number) * (values[1] as number));
+
+  // La escena pierde contraste y se difumina progresivamente (30%–80%):
+  // nunca se apaga de golpe, y con reduced-motion se salta el blur/zoom.
+  const sceneOpacity = useTransform(scrollProgress, [0.3, 0.8], [1, 0.25], { clamp: true });
+  const sceneBlurPx = useTransform(scrollProgress, [0.3, 0.8], reduceMotion ? [0, 0] : [0, 6], { clamp: true });
+  const sceneSaturate = useTransform(scrollProgress, [0.3, 0.8], [1, 0.7], { clamp: true });
+  const sceneBrightness = useTransform(scrollProgress, [0.3, 0.8], [1, 0.85], { clamp: true });
+  const sceneFilter = useTransform(
+    [sceneBlurPx, sceneSaturate, sceneBrightness],
+    (values) => `blur(${values[0]}px) saturate(${values[1]}) brightness(${values[2]})`
+  );
+
+  // Logo, tagline y buscador suben ligeramente y se desvanecen (10%–30%).
+  const contentOpacity = useTransform(scrollProgress, [0.1, 0.3], [1, 0], { clamp: true });
+  const contentLiftY = useTransform(scrollProgress, [0.1, 0.3], reduceMotion ? [0, 0] : [0, -30], { clamp: true });
   const contentY = useTransform([contentLiftY, contentParallaxY], (values) => (values[0] as number) + (values[1] as number));
 
-  // El diccionario real asciende como cortina entre 35% y 100%.
-  const curtainY = useTransform(scrollProgress, [0.35, 1], ["100%", "0%"], { clamp: true });
+  // El diccionario real asciende como cortina entre 15% y 75%.
+  const curtainY = useTransform(scrollProgress, [0.15, 0.75], ["100%", "0%"], { clamp: true });
 
   useEffect(() => {
     if (!canParallax || reduceMotion) return;
@@ -117,25 +143,24 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     };
   }, [canParallax, reduceMotion, pointerX, pointerY]);
 
-  // El diccionario queda "revelado" (flujo normal, ya no fixed) apenas el
-  // scroll cruza el final del recorrido, y vuelve a la cortina si se
-  // retrocede. Histéresis chica para evitar parpadeo cerca del límite.
+  // El hero solo se oculta (visibility:hidden) una vez que el diccionario
+  // ya está totalmente opaco y cubrió el viewport (80%–100%), nunca antes.
+  // Histéresis chica para que sea reversible sin parpadeo al retroceder.
   useMotionValueEvent(scrollProgress, "change", (latest) => {
     setIsRevealed((prev) => {
-      if (!prev && latest >= 0.995) return true;
-      if (prev && latest < 0.97) return false;
+      if (!prev && latest >= 0.85) return true;
+      if (prev && latest < 0.78) return false;
       return prev;
     });
   });
 
-  // El sonido ambiente se apaga a medida que el diccionario cubre el hero
-  // (35%–100%), no antes: así no queda sonando sin control tras el scroll.
+  // El sonido ambiente se apaga junto con la escena (30%–80%), no antes.
   useMotionValueEvent(scrollProgress, "change", (latest) => {
     if (!audioStartedRef.current || mutedRef.current) return;
     const portAudio = portAudioRef.current;
     const crowdAudio = crowdAudioRef.current;
     if (!portAudio || !crowdAudio) return;
-    const fade = latest <= 0.35 ? 1 : Math.max(0, 1 - (latest - 0.35) / 0.65);
+    const fade = latest <= 0.3 ? 1 : Math.max(0, 1 - (latest - 0.3) / 0.5);
     portAudio.volume = 0.7 * fade;
     crowdAudio.volume = 0.45 * fade;
     if (fade === 0 && !portAudio.paused) {
@@ -226,13 +251,9 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   };
 
   return (
-    <section
-      ref={shellRef}
-      className="cinehero-shell"
-      style={{ height: `calc(100svh + ${reduceMotion ? REVEAL_VH_REDUCED : REVEAL_VH_FULL}vh)` }}
-    >
+    <section ref={shellRef} className="cinehero-shell" style={{ height: `calc(100svh + ${revealVh}${revealUnit})` }}>
       <div ref={stickyRef} className="cinehero-sticky" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
-        <div className="cinehero-layers" aria-hidden="true">
+        <motion.div className="cinehero-layers" aria-hidden="true" style={{ opacity: sceneOpacity, filter: sceneFilter }}>
           <motion.img
             className="cinehero-plate"
             src="/splash/puerto-fondo-limpio.png"
@@ -247,41 +268,9 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             alt=""
             width={1672}
             height={941}
-            style={{ scale: masterScale }}
+            style={{ x: sceneX, y: sceneY, scale: sceneScale }}
           />
-          <motion.img
-            className="cinehero-plate cinehero-mask-port"
-            src="/splash/escena-maestra.png"
-            alt=""
-            width={1672}
-            height={941}
-            style={{ x: portX, y: portY, scale: portScale }}
-          />
-          <motion.img
-            className="cinehero-plate cinehero-mask-crowd"
-            src="/splash/escena-maestra.png"
-            alt=""
-            width={1672}
-            height={941}
-            style={{ x: crowdX, y: crowdY, scale: crowdScale }}
-          />
-          <motion.img
-            className="cinehero-plate cinehero-mask-tanguero"
-            src="/splash/escena-maestra.png"
-            alt=""
-            width={1672}
-            height={941}
-            style={{ x: tangueroX, y: tangueroY, scale: tangueroScale }}
-          />
-          <motion.img
-            className="cinehero-plate cinehero-mask-youths"
-            src="/splash/escena-maestra.png"
-            alt=""
-            width={1672}
-            height={941}
-            style={{ x: youthsX, y: youthsY, scale: youthsScale }}
-          />
-        </div>
+        </motion.div>
 
         <div className="cinehero-vignette" aria-hidden="true" />
         <div className="cinehero-corner-shadow" aria-hidden="true" />
@@ -332,11 +321,14 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       </div>
 
       <motion.div className="cinehero-curtain" data-revealed={isRevealed ? "true" : "false"} style={{ y: curtainY }}>
-        <div className="wrap">
-          <header className="dictionary-intro">
-            <p className="tagline">diccionario navegable del lunfardo porteño — palabras y expresiones, de dónde vienen y cómo se usan hoy</p>
-          </header>
-          <Dictionary query={query} onQueryChange={onQueryChange} />
+        <div className="cinehero-curtain-fade" aria-hidden="true" />
+        <div className="cinehero-curtain-clip">
+          <div className="wrap">
+            <header className="dictionary-intro">
+              <p className="tagline">diccionario navegable del lunfardo porteño — palabras y expresiones, de dónde vienen y cómo se usan hoy</p>
+            </header>
+            <Dictionary query={query} onQueryChange={onQueryChange} />
+          </div>
         </div>
       </motion.div>
     </section>
