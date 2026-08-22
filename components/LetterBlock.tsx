@@ -8,14 +8,14 @@ export function LetterBlock({ letter, words }: { letter: string; words: Word[] }
   const reduceMotion = useReducedMotion();
 
   return (
-    <motion.section className="letter-block" aria-labelledby={`letter-${letter}`} initial={reduceMotion ? false : "hidden"} whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
-      <motion.div className="letter-portada" variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.5, ease: "easeOut" }}>
+    <section className="letter-block" aria-labelledby={`letter-${letter}`}>
+      <motion.div className="letter-portada" initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
         <h2 className="letter-big" id={`letter-${letter}`}>{letter}</h2>
         <span className="letter-count">{words.length} {words.length === 1 ? "palabra" : "palabras"}</span>
       </motion.div>
-      <motion.div className="fichas" variants={{ hidden: {}, visible: {} }}>
-        {words.map((word, index) => <motion.div key={`${word.word}-${index}`} variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }} transition={{ duration: 0.4, delay: 0.08 * index, ease: "easeOut" }}><WordCard word={word} /></motion.div>)}
-      </motion.div>
-    </motion.section>
+      <div className="fichas">
+        {words.map((word, index) => <motion.div key={`${word.word}-${index}`} initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(0.015 * index, 0.45), ease: "easeOut" }}><WordCard word={word} /></motion.div>)}
+      </div>
+    </section>
   );
 }
