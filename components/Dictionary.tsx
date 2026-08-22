@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
 import { DictionaryFilters, type FilterState } from "@/components/DictionaryFilters";
+import { Footer } from "@/components/Footer";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false };
@@ -58,7 +59,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const hydrated = useRef(false);
+  // Flag de estado (no ref): así el commit que aplica los filtros leídos de
+  // la URL es el mismo en el que "hydrated" pasa a true, y el efecto que
+  // escribe la URL nunca ve la combinación a medio hidratar (perdería los
+  // filtros aunque conservara la búsqueda, que llega por otra vía).
+  const [hydrated, setHydrated] = useState(false);
   const requestId = useRef(0);
 
   // Hidratar desde la URL una sola vez al montar.
@@ -67,7 +72,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
       const { query: urlQuery, filters: urlFilters } = readStateFromUrl();
       if (urlQuery) onQueryChange(urlQuery);
       setFilters(urlFilters);
-      hydrated.current = true;
+      setHydrated(true);
     };
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -81,9 +86,9 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
 
   // Reflejar búsqueda y filtros en la URL, sin pisar lo que aún no se leyó.
   useEffect(() => {
-    if (!hydrated.current) return;
+    if (!hydrated) return;
     writeStateToUrl(query, filters);
-  }, [query, filters]);
+  }, [query, filters, hydrated]);
 
   const fetchPage = async (targetPage: number, replace: boolean) => {
     const id = ++requestId.current;
@@ -177,6 +182,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
           !loading && <p className="no-results">no encontramos nada con eso — probá con otra palabra o quitá algún filtro</p>
         )}
       </main>
+      <Footer />
     </>
   );
 }

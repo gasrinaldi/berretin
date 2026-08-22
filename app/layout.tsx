@@ -13,6 +13,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://berretin-steel.vercel.app"),
   title: "Berretín — diccionario del lunfardo porteño",
   description: "Diccionario navegable del lunfardo porteño.",
 };
