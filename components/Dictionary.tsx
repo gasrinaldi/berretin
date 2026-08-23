@@ -336,7 +336,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   return (
     <>
       <DictionaryIntro />
-      <div className="controls">
+      <div id="dictionary-search" className="controls">
         <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
         <p className="consult-results-count">
           {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
