@@ -15,9 +15,11 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${safeNext}`);
+    if (supabase) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (!error) {
+        return NextResponse.redirect(`${origin}${safeNext}`);
+      }
     }
   }
 

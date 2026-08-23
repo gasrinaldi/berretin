@@ -19,7 +19,9 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.getUser().then(({ data }) => setLoggedIn(Boolean(data.user)));
+    if (supabase) {
+      supabase.auth.getUser().then(({ data }) => setLoggedIn(Boolean(data.user)));
+    }
     getWordVoteSummary(wordSlug).then((result) => {
       if (result.ok) setSummary(result.data);
       else setLoadError(result.error);

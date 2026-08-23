@@ -10,6 +10,8 @@ export async function getAdminUser(): Promise<AdminUser | null> {
   if (!adminEmail) return null;
 
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return null;
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

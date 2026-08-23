@@ -9,6 +9,8 @@ export type CurrentUser = { id: string; email: string };
 // primera visita (mismo error que hubo que corregir en /admin/aportes).
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return null; // Supabase sin configurar: se trata como "sin sesión", nunca como error.
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

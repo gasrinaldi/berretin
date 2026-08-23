@@ -124,5 +124,6 @@ export async function getMyContributions(): Promise<{ ok: true; rows: MyContribu
 export async function signOutUser(): Promise<void> {
   const { createSupabaseServerClient } = await import("@/lib/supabase/server");
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return;
   await supabase.auth.signOut();
 }

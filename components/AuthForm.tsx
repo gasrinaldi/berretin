@@ -14,6 +14,12 @@ export function AuthForm({ redirectTo }: { redirectTo: string }) {
     setError("");
 
     const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setStatus("error");
+      setError("El inicio de sesión no está disponible en este momento.");
+      return;
+    }
+
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {

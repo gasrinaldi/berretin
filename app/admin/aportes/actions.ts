@@ -293,5 +293,6 @@ export async function getSenderHistory(id: string): Promise<{ ok: true; rows: Se
 export async function signOutAdmin(): Promise<void> {
   const { createSupabaseServerClient } = await import("@/lib/supabase/server");
   const supabase = await createSupabaseServerClient();
+  if (!supabase) return;
   await supabase.auth.signOut();
 }
