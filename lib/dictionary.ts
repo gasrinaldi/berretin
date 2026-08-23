@@ -34,6 +34,13 @@ function stripAccents(value: string) {
 function normalize(value: string) {
   return stripAccents(value).toLowerCase();
 }
+// Clasificación automática, sin tocar el dataset: un término sin espacios
+// es "palabra", dos o más separados por espacios son "expresión". Se usa
+// tanto para el filtro Todas/Palabras/Expresiones como para restringir
+// "expresión aleatoria" en /descubrir.
+export function isExpression(palabra: string): boolean {
+  return palabra.trim().split(/\s+/).filter(Boolean).length >= 2;
+}
 function slugifyWord(value: string) {
   return (
     stripAccents(value)
@@ -113,12 +120,15 @@ export function getAllEntries(): DictionaryEntry[] {
   return ALL.map(stripInternal);
 }
 
+export type TipoFilter = "todas" | "palabras" | "expresiones";
+
 export type SearchParams = {
   q?: string;
   letras?: string[];
   categorias?: string[];
   origenes?: string[];
   sinCategoria?: boolean;
+  tipo?: TipoFilter;
   page?: number;
   limit?: number;
 };
@@ -134,7 +144,7 @@ export type SearchResult = {
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-export function searchEntries({ q = "", letras = [], categorias = [], origenes = [], sinCategoria = false, page = 0, limit = DEFAULT_LIMIT }: SearchParams): SearchResult {
+export function searchEntries({ q = "", letras = [], categorias = [], origenes = [], sinCategoria = false, tipo = "todas", page = 0, limit = DEFAULT_LIMIT }: SearchParams): SearchResult {
   const query = normalize(q.trim());
   const safePage = Math.max(0, Math.floor(page) || 0);
   const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit) || DEFAULT_LIMIT));
@@ -142,6 +152,8 @@ export function searchEntries({ q = "", letras = [], categorias = [], origenes =
   let filtered = ALL;
   if (query) filtered = filtered.filter((e) => e.busquedaNormalizada.includes(query));
   if (letras.length) filtered = filtered.filter((e) => letras.includes(e.letra));
+  if (tipo === "palabras") filtered = filtered.filter((e) => !isExpression(e.palabra));
+  else if (tipo === "expresiones") filtered = filtered.filter((e) => isExpression(e.palabra));
   if (sinCategoria) {
     filtered = filtered.filter((e) => e.categorias.length === 0 && e.origenes.length === 0);
   } else {

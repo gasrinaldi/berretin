@@ -1,4 +1,4 @@
-import type { DictionaryEntry } from "@/lib/dictionary";
+import { isExpression, type DictionaryEntry } from "@/lib/dictionary";
 
 export type QuizOption = { text: string; correct: boolean };
 export type QuizQuestion = { id: string; palabra: string; slug: string; options: QuizOption[] };
@@ -21,8 +21,13 @@ export function pickWordOfTheDay(entries: DictionaryEntry[], date: Date = new Da
   return entries[hashToIndex(dateKey, entries.length)];
 }
 
+// "Expresión aleatoria" solo debe salir con entradas de dos o más
+// términos (ver isExpression) — con fallback defensivo al set completo si
+// el dataset real no tuviera ninguna, para no romper la sección.
 export function pickRandomEntry(entries: DictionaryEntry[]): DictionaryEntry {
-  return entries[Math.floor(Math.random() * entries.length)];
+  const pool = entries.filter((e) => isExpression(e.palabra));
+  const source = pool.length > 0 ? pool : entries;
+  return source[Math.floor(Math.random() * source.length)];
 }
 
 function shuffle<T>(list: T[]): T[] {

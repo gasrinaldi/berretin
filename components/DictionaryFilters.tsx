@@ -1,20 +1,28 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState } from "react";
 import facets from "@/data/dictionary-facets.json";
 
 const LETTERS = Object.keys(facets.letras);
 const CATEGORIES = Object.keys(facets.categorias);
 const ORIGINS = Object.keys(facets.origenes);
+const TIPOS = [
+  { value: "todas", label: "todas" },
+  { value: "palabras", label: "palabras" },
+  { value: "expresiones", label: "expresiones" },
+] as const;
+
+export type TipoFilter = (typeof TIPOS)[number]["value"];
 
 export type FilterState = {
   letras: string[];
   categorias: string[];
   origenes: string[];
   sinCategoria: boolean;
+  tipo: TipoFilter;
 };
 
-export const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false };
+export const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false, tipo: "todas" };
 
 type DictionaryFiltersProps = {
   state: FilterState;
@@ -27,19 +35,15 @@ function toggleValue(list: string[], value: string) {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-// Filtros siempre visibles (sin toggle, sin panel, sin píldoras): índice
-// alfabético + categoría/origen como texto editorial, exclusivamente con
-// los facets reales del diccionario. La lógica de filtrado (qué letra,
-// categoría u origen queda activo) es la misma de siempre — solo cambia
-// la presentación.
+// Filtros siempre visibles (sin toggle, sin panel, sin píldoras) salvo
+// categoría/origen, que en mobile quedan detrás de un botón "Filtros"
+// (el buscador y el índice alfabético no se ocultan nunca). La lógica de
+// filtrado es la misma de siempre — solo cambia la presentación.
 export function DictionaryFilters({ state, onChange, query, onQueryChange }: DictionaryFiltersProps) {
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  // Cuántas filas por columna hacen falta para partir la lista de
-  // categorías (real: "sin categoría" + las de facets) en 2 columnas
-  // parejas — se calcula desde los datos reales, nunca un número fijo.
-  const categoryRows = Math.ceil((CATEGORIES.length + 1) / 2);
+  const [facetsOpen, setFacetsOpen] = useState(false);
 
-  const activeFilterCount = state.letras.length + state.categorias.length + state.origenes.length + (state.sinCategoria ? 1 : 0);
+  const facetCount = state.categorias.length + state.origenes.length + (state.sinCategoria ? 1 : 0);
+  const activeFilterCount = state.letras.length + facetCount + (state.tipo !== "todas" ? 1 : 0);
   const hasActiveState = Boolean(query.trim()) || activeFilterCount > 0;
 
   const handleClearAll = () => {
@@ -86,13 +90,41 @@ export function DictionaryFilters({ state, onChange, query, onQueryChange }: Dic
         </div>
       </section>
 
-      <section className="consult-facets" aria-label="Categorías y orígenes">
+      <section className="consult-tipo" aria-label="Tipo de entrada">
+        <h2 className="consult-section-title">Tipo</h2>
+        {/* También exclusiva: una entrada es palabra o expresión, nunca las dos. */}
+        <div className="consult-letters" role="radiogroup" aria-label="Filtrar por tipo">
+          {TIPOS.map((tipo) => (
+            <button
+              key={tipo.value}
+              type="button"
+              role="radio"
+              aria-checked={state.tipo === tipo.value}
+              className={`consult-letter${state.tipo === tipo.value ? " active" : ""}`}
+              onClick={() => onChange({ ...state, tipo: tipo.value })}
+            >
+              {tipo.label}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <button
+        type="button"
+        className="consult-facets-toggle"
+        aria-expanded={facetsOpen}
+        onClick={() => setFacetsOpen((open) => !open)}
+      >
+        Filtros{facetCount > 0 ? ` (${facetCount})` : ""}
+        <span aria-hidden="true" className={`consult-facets-toggle-caret${facetsOpen ? " open" : ""}`}>
+          ↓
+        </span>
+      </button>
+
+      <section className="consult-facets" aria-label="Categorías y orígenes" data-open={facetsOpen}>
         <div className="consult-facet-group">
           <h2 className="consult-section-title">Categoría</h2>
-          <div
-            className={`consult-facet-list consult-facet-list-columns${categoriesExpanded ? " expanded" : ""}`}
-            style={{ "--facet-rows": categoryRows } as CSSProperties}
-          >
+          <div className="consult-facet-list">
             <button
               type="button"
               className={`consult-facet-item${state.sinCategoria ? " active" : ""}`}
@@ -113,14 +145,7 @@ export function DictionaryFilters({ state, onChange, query, onQueryChange }: Dic
               </button>
             ))}
           </div>
-          {!categoriesExpanded && (
-            <button type="button" className="consult-facet-more" onClick={() => setCategoriesExpanded(true)}>
-              ver todas las categorías ({CATEGORIES.length + 1})
-            </button>
-          )}
         </div>
-
-        <div className="consult-facet-divider" aria-hidden="true" />
 
         <div className="consult-facet-group">
           <h2 className="consult-section-title">Origen</h2>

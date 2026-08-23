@@ -27,6 +27,8 @@ type ScrollState = { search: string; pagesLoaded: number; scrollY: number };
 function readStateFromUrl(): { query: string; filters: FilterState } {
   if (typeof window === "undefined") return { query: "", filters: EMPTY_FILTERS };
   const params = new URLSearchParams(window.location.search);
+  const tipoParam = params.get("tipo");
+  const tipo: FilterState["tipo"] = tipoParam === "palabras" || tipoParam === "expresiones" ? tipoParam : "todas";
   return {
     query: params.get("q") ?? "",
     filters: {
@@ -34,6 +36,7 @@ function readStateFromUrl(): { query: string; filters: FilterState } {
       categorias: params.getAll("categoria"),
       origenes: params.getAll("origen"),
       sinCategoria: params.get("sinCategoria") === "1",
+      tipo,
     },
   };
 }
@@ -45,6 +48,7 @@ function writeStateToUrl(query: string, filters: FilterState) {
   filters.categorias.forEach((c) => params.append("categoria", c));
   filters.origenes.forEach((o) => params.append("origen", o));
   if (filters.sinCategoria) params.set("sinCategoria", "1");
+  if (filters.tipo !== "todas") params.set("tipo", filters.tipo);
   const search = params.toString();
   const url = search ? `?${search}` : window.location.pathname;
   window.history.replaceState(null, "", url);
@@ -178,6 +182,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     filters.categorias.forEach((c) => params.append("categoria", c));
     filters.origenes.forEach((o) => params.append("origen", o));
     if (filters.sinCategoria) params.set("sinCategoria", "1");
+    if (filters.tipo !== "todas") params.set("tipo", filters.tipo);
     params.set("page", String(targetPage));
     return params;
   };

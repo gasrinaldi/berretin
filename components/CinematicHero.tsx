@@ -336,6 +336,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             <span className="cinehero-wordmark-sheen" aria-hidden="true" />
           </div>
           <p className="cinehero-descriptor">diccionario de la calle argentina</p>
+          <p className="cinehero-subline">lunfardo porteño</p>
           <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
         </motion.div>
 
@@ -375,7 +376,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       >
         <div className="cinehero-curtain-fade" aria-hidden="true" />
         <div className="cinehero-curtain-clip">
-          <div className="wrap">
+          <div className="wrap dictionary-wrap">
             <header className="dictionary-intro">
               <AuxNav className="dictionary-intro-nav" />
             </header>
