@@ -3,6 +3,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { getEntryBySlug } from "@/lib/dictionary";
+import { getCurrentUser } from "@/lib/auth-user";
 import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET } from "@/lib/supabase-admin";
 import { detectImageType } from "@/lib/image-signature";
 import { processContributionImage, ImageProcessingError, type ProcessedImage } from "@/lib/image-processing";
@@ -112,6 +113,9 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
   }
 
   const ipHash = await getClientIpHash();
+  // Vincula el aporte a la cuenta si hay sesión, sin exigirla: el aporte
+  // anónimo (sin user_id) sigue permitido exactamente como antes.
+  const currentUser = await getCurrentUser();
 
   let supabase: ReturnType<typeof getSupabaseAdmin>;
   try {
@@ -221,6 +225,7 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     word_id: entry.id,
     word_slug: entry.slug,
     word: entry.palabra,
+    user_id: currentUser?.id ?? null,
     type: rawType,
     content,
     author_alias: authorAlias || null,

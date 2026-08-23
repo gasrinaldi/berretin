@@ -4,6 +4,7 @@ import { getAdminUser } from "@/lib/admin-auth";
 import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET } from "@/lib/supabase-admin";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { sanitizeText, CONTENT_MAX } from "@/lib/contributions";
+import { REPUTATION_PER_APPROVAL } from "@/lib/community";
 import {
   mapContributionRow,
   LIST_PAGE_SIZE,
@@ -117,12 +118,21 @@ export async function updateAndApprove(id: string, content: string, moderationNo
   const supabase = getAdminClientOrNull();
   if (!supabase) return unavailable();
 
+  // Se lee el estado previo para no sumar reputación dos veces si algo
+  // reintenta aprobar un aporte que ya estaba aprobado.
+  const { data: existing } = await supabase.from("word_contributions").select("status, user_id").eq("id", id).single();
+
   const { error } = await supabase
     .from("word_contributions")
     .update({ content: trimmedContent, status: "approved", moderation_note: note || null, updated_at: new Date().toISOString() })
     .eq("id", id);
 
   if (error) return { ok: false, error: "No pudimos guardar los cambios." };
+
+  if (existing && existing.status !== "approved" && existing.user_id) {
+    await supabase.rpc("increment_reputation", { profile_id: existing.user_id, amount: REPUTATION_PER_APPROVAL });
+  }
+
   return { ok: true };
 }
 

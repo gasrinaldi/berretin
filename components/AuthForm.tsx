@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export function LoginForm() {
+export function AuthForm({ redirectTo }: { redirectTo: string }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState("");
@@ -17,7 +17,7 @@ export function LoginForm() {
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/admin/aportes")}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
       },
     });
 
@@ -31,14 +31,14 @@ export function LoginForm() {
   };
 
   if (status === "sent") {
-    return <p className="admin-login-note">Si ese email tiene acceso, te enviamos un enlace de ingreso. Revisá tu bandeja de entrada.</p>;
+    return <p className="admin-login-note">Te enviamos un enlace de ingreso a {email}. Revisá tu bandeja de entrada para continuar.</p>;
   }
 
   return (
     <form className="admin-login-form" onSubmit={handleSubmit}>
       <div className="contribute-field">
-        <label htmlFor="admin-email">Email de administrador</label>
-        <input id="admin-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="vos@ejemplo.com" />
+        <label htmlFor="auth-email">Email</label>
+        <input id="auth-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="vos@ejemplo.com" />
       </div>
       {error && <p className="contribute-error">{error}</p>}
       <button type="submit" className="share-btn" disabled={status === "sending"}>
