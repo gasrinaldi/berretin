@@ -29,7 +29,7 @@ export async function listWordRegions(): Promise<ListResult> {
 // Asigna (o reemplaza) la región de una palabra. Nunca infiere la región:
 // el admin la elige a mano de la lista fija de provincias, y la palabra
 // tiene que existir realmente en el diccionario (se busca por slug exacto,
-// el mismo que aparece en /palabra/[slug]).
+// el mismo que aparece en /diccionario/[slug]).
 export async function assignWordRegion(wordSlugRaw: string, region: string): Promise<AssignResult> {
   const admin = await getAdminUser();
   if (!admin) return { ok: false, error: "No autorizado." };

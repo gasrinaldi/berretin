@@ -4,12 +4,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Cliente con la clave publishable (segura para el navegador), cookies de
 // sesión vía @supabase/ssr — se usa para LEER la sesión ya establecida
-// (por ejemplo, saber si hay alguien logueado en /palabra/[slug]).
+// (por ejemplo, saber si hay alguien logueado en /diccionario/[slug]).
 //
 // Devuelve null en vez de tirar si faltan las variables de entorno: nunca
 // hay que dejar que @supabase/ssr explote (lanza "Your project's URL and
 // API key are required"), porque este helper se llama desde componentes
-// cliente que se montan en /palabra/[slug], y esa página tiene que seguir
+// cliente que se montan en /diccionario/[slug], y esa página tiene que seguir
 // funcionando aunque todavía no esté configurado Supabase.
 export function createSupabaseBrowserClient(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

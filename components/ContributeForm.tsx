@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-import { submitContribution } from "@/app/palabra/[slug]/contribute-actions";
+import { submitContribution } from "@/app/diccionario/[slug]/contribute-actions";
 import {
   CONTRIBUTION_TYPES,
   TYPES_WITH_IMAGE,

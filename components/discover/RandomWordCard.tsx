@@ -31,7 +31,7 @@ export function RandomWordCard({ initial }: { initial: DictionaryEntry }) {
         </span>
       )}
       <div className="discover-card-actions">
-        <Link href={`/palabra/${entry.slug}`} className="back-btn">
+        <Link href={`/diccionario/${entry.slug}`} className="back-btn">
           ver ficha completa
         </Link>
         <button type="button" className="share-btn" onClick={handleClick} disabled={pending}>

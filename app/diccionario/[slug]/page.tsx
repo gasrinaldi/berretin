@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getEntryBySlug, getEntryPosition } from "@/lib/dictionary";
+import { getEntryBySlug, getEntryPosition, isExpression } from "@/lib/dictionary";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { SITE_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt } from "@/lib/site";
 import { BackButton } from "@/components/BackButton";
 import { AuxNav } from "@/components/AuxNav";
 import { ShareButton } from "@/components/ShareButton";
@@ -23,6 +24,10 @@ function capitalizeFirst(text: string) {
   return text.replace(/\p{L}/u, (ch) => ch.toLocaleUpperCase("es"));
 }
 
+function tipoLabel(palabra: string) {
+  return isExpression(palabra) ? "Expresión" : "Palabra";
+}
+
 // Región asignada a mano desde /admin/regiones, si existe (Etapa 6). Nunca
 // se infiere: si Supabase no está disponible o la palabra no tiene región
 // cargada, se omite en silencio — la ficha sigue funcionando igual.
@@ -37,27 +42,28 @@ async function getWordRegion(wordSlug: string): Promise<string | null> {
   return data?.region ?? null;
 }
 
-export async function generateMetadata({ params }: PageProps<"/palabra/[slug]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/diccionario/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const entry = getEntryBySlug(slug);
 
   if (!entry) {
-    return { title: "Palabra no encontrada | Berretín" };
+    return { title: `Palabra no encontrada | ${SITE_NAME}`, robots: { index: false, follow: true } };
   }
 
-  const title = `${capitalizeFirst(entry.palabra)} — significado | Berretín`;
-  const description = `Conocé el significado de "${entry.palabra}" en el diccionario argentino Berretín.`;
-  const url = `/palabra/${entry.slug}`;
+  const title = `${capitalizeFirst(entry.palabra)}: significado en lunfardo argentino | ${SITE_NAME}`;
+  const description = cleanExcerpt(entry.definicion);
+  const url = `${SITE_URL}/diccionario/${entry.slug}`;
 
   return {
     title,
     description,
     alternates: { canonical: url },
+    robots: INDEXING_ALLOWED ? { index: true, follow: true } : { index: false, follow: true },
     openGraph: {
       title,
       description,
       url,
-      siteName: "Berretín",
+      siteName: SITE_NAME,
       locale: "es_AR",
       type: "article",
     },
@@ -69,7 +75,7 @@ export async function generateMetadata({ params }: PageProps<"/palabra/[slug]">)
   };
 }
 
-export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]">) {
+export default async function DiccionarioEntryPage({ params }: PageProps<"/diccionario/[slug]">) {
   const { slug } = await params;
   const entry = getEntryBySlug(slug);
 
@@ -78,10 +84,25 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
   const region = await getWordRegion(entry.slug);
   const position = getEntryPosition(entry.slug);
   const registro = position ? String(position).padStart(5, "0") : null;
-  const metaParts = [...entry.categorias, ...entry.origenes, ...(region ? [region] : [])];
+  const tipo = tipoLabel(entry.palabra);
+  const metaParts = [tipo, ...entry.categorias, ...entry.origenes, ...(region ? [region] : [])];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "DefinedTerm",
+    name: entry.palabra,
+    description: entry.definicion,
+    inDefinedTermSet: {
+      "@type": "DefinedTermSet",
+      name: `${SITE_NAME} — Archivo del habla`,
+      url: SITE_URL,
+    },
+    url: `${SITE_URL}/diccionario/${entry.slug}`,
+  };
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="ficha-detail">
         <nav className="ficha-detail-nav">
           <BackButton />
@@ -108,7 +129,7 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
               <WordVote wordSlug={entry.slug} />
               <div className="ficha-actions">
                 <div className="ficha-actions-list">
-                  <ShareButton word={entry.palabra} path={`/palabra/${entry.slug}`} />
+                  <ShareButton word={entry.palabra} path={`/diccionario/${entry.slug}`} />
                   <ContributeButton wordSlug={entry.slug} wordPalabra={entry.palabra} />
                 </div>
                 <ReportButton wordSlug={entry.slug} />

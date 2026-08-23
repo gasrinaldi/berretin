@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getContributionMediaUrl } from "@/app/palabra/[slug]/gallery-actions";
+import { getContributionMediaUrl } from "@/app/diccionario/[slug]/gallery-actions";
 
 // Nunca precarga el audio: el <audio> con src solo existe después de que
 // el usuario pide reproducirlo, y ese pedido genera una URL firmada de

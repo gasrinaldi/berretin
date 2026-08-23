@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getWordGallery, getContributionMediaUrl } from "@/app/palabra/[slug]/gallery-actions";
+import { getWordGallery, getContributionMediaUrl } from "@/app/diccionario/[slug]/gallery-actions";
 import type { GalleryContribution } from "@/lib/gallery";
 import { GalleryVoteReport } from "@/components/gallery/GalleryVoteReport";
 import { ContributionMeta } from "@/components/gallery/ContributionMeta";

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { getWordVoteSummary, castVote } from "@/app/palabra/[slug]/community-actions";
+import { getWordVoteSummary, castVote } from "@/app/diccionario/[slug]/community-actions";
 import { VOTE_OPTIONS, type VoteValue, type VoteSummary } from "@/lib/community";
 
 // Chequea la sesión en el cliente a propósito: la página de palabra es

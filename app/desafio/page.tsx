@@ -40,7 +40,7 @@ export default async function DesafioPage() {
               <p className="word-definition">{challenge.description}</p>
               {challenge.wordSlug && (
                 <p className="contribute-hint">
-                  Palabra del desafío: <Link href={`/palabra/${challenge.wordSlug}`}>{challenge.wordSlug}</Link>
+                  Palabra del desafío: <Link href={`/diccionario/${challenge.wordSlug}`}>{challenge.wordSlug}</Link>
                 </p>
               )}
             </>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { toggleContributionVote } from "@/app/palabra/[slug]/gallery-actions";
-import { submitReport } from "@/app/palabra/[slug]/community-actions";
+import { toggleContributionVote } from "@/app/diccionario/[slug]/gallery-actions";
+import { submitReport } from "@/app/diccionario/[slug]/community-actions";
 import { REPORT_REASONS, REPORT_COMMENT_MAX, initialReportState } from "@/lib/community";
 
 type GalleryVoteReportProps = {

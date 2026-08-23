@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { SITE_URL, SITE_NAME, INDEXING_ALLOWED } from "@/lib/site";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -12,19 +15,46 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
+const siteTitle = `${SITE_NAME} — diccionario del lunfardo porteño`;
+const siteDescription = "Diccionario navegable del lunfardo porteño: significados, expresiones y el habla de la calle argentina.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://berretin-steel.vercel.app"),
-  title: "Berretín — diccionario del lunfardo porteño",
-  description: "Diccionario navegable del lunfardo porteño.",
+  metadataBase: new URL(SITE_URL),
+  title: siteTitle,
+  description: siteDescription,
+  // Apagado por defecto (SITE_INDEXING_ENABLED sin activar o deployment
+  // que no es producción) — el gate real vive en lib/site.ts. Páginas
+  // específicas (la ficha de diccionario, el home con filtros en la URL)
+  // pisan este valor con su propio robots cuando corresponde.
+  robots: INDEXING_ALLOWED ? { index: true, follow: true } : { index: false, follow: false },
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    locale: "es_AR",
+    type: "website",
+    images: [{ url: "/brand/berretin-wordmark.png", width: 2079, height: 756, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+    images: ["/brand/berretin-wordmark.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="es"
+      lang="es-AR"
       className={`${spaceGrotesk.variable} ${fraunces.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
     </html>
   );
 }

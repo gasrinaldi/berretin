@@ -8,7 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 //
 // Devuelve null en vez de tirar si faltan las variables de entorno (mismo
 // motivo que lib/supabase/browser.ts): esto se llama desde server actions
-// que corren en /palabra/[slug] (voto, reporte, aportes), y esa página
+// que corren en /diccionario/[slug] (voto, reporte, aportes), y esa página
 // tiene que seguir funcionando sin Supabase configurado. getCurrentUser()
 // y getAdminUser() tratan un cliente null como "sin sesión", no como error.
 export async function createSupabaseServerClient(): Promise<SupabaseClient | null> {

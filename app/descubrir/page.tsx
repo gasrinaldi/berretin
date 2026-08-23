@@ -63,7 +63,7 @@ export default async function DescubrirPage() {
               </span>
             )}
             <div className="discover-card-actions">
-              <Link href={`/palabra/${wordOfTheDay.slug}`} className="back-btn">
+              <Link href={`/diccionario/${wordOfTheDay.slug}`} className="back-btn">
                 ver ficha completa
               </Link>
             </div>
@@ -83,7 +83,7 @@ export default async function DescubrirPage() {
               <img src={weeklyIllustration.thumbnailSignedUrl} alt="" className="discover-illustration-img" />
               <div className="discover-illustration-caption">
                 <span className="ficha-word">{weeklyIllustration.word}</span>
-                <Link href={`/palabra/${weeklyIllustration.wordSlug}`} className="back-btn">
+                <Link href={`/diccionario/${weeklyIllustration.wordSlug}`} className="back-btn">
                   ver ficha completa
                 </Link>
               </div>
@@ -101,7 +101,7 @@ export default async function DescubrirPage() {
             <ol className="discover-trends">
               {trending.map((item) => (
                 <li key={item.wordSlug} className="discover-trend-item">
-                  <Link href={`/palabra/${item.wordSlug}`} className="discover-trend-word">
+                  <Link href={`/diccionario/${item.wordSlug}`} className="discover-trend-word">
                     {item.word}
                   </Link>
                   <span className="discover-trend-meta">
@@ -126,7 +126,7 @@ export default async function DescubrirPage() {
                     {group.words.map((w, i) => (
                       <span key={w.wordSlug}>
                         {i > 0 && " · "}
-                        <Link href={`/palabra/${w.wordSlug}`}>{w.word}</Link>
+                        <Link href={`/diccionario/${w.wordSlug}`}>{w.word}</Link>
                       </span>
                     ))}
                   </p>
@@ -149,7 +149,7 @@ export default async function DescubrirPage() {
                     {group.words.map((w, i) => (
                       <span key={w.wordSlug}>
                         {i > 0 && " · "}
-                        <Link href={`/palabra/${w.wordSlug}`}>{w.word}</Link>
+                        <Link href={`/diccionario/${w.wordSlug}`}>{w.word}</Link>
                       </span>
                     ))}
                   </p>

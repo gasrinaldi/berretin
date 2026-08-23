@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { submitReport } from "@/app/palabra/[slug]/community-actions";
+import { submitReport } from "@/app/diccionario/[slug]/community-actions";
 import { REPORT_REASONS, REPORT_COMMENT_MAX, initialReportState } from "@/lib/community";
 
 export function ReportButton({ wordSlug }: { wordSlug: string }) {

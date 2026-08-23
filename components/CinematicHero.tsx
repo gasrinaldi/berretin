@@ -329,6 +329,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             alt=""
             width={1672}
             height={941}
+            fetchPriority="low"
             style={{ x: backX, y: backY, scale: backScale }}
           />
           <motion.img
@@ -337,6 +338,9 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             alt=""
             width={1672}
             height={941}
+            // El plano que en verdad se ve completo (encima del fondo) es el
+            // LCP real del hero — el único que vale la pena priorizar.
+            fetchPriority="high"
             style={{ x: sceneX, y: sceneY, scale: sceneScale }}
           />
         </motion.div>
@@ -352,7 +356,10 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
               alt="Berretín"
               width={2079}
               height={756}
-              priority
+              // El LCP real del hero es la escena de fondo (más grande y
+              // pintada antes) — el wordmark carga eager pero sin
+              // competirle la prioridad "high".
+              loading="eager"
               sizes="(max-width: 640px) 88vw, 720px"
               style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
             />

@@ -89,7 +89,7 @@ const ALL: InternalEntry[] = buildAll();
 const BY_SLUG = new Map<string, InternalEntry>(ALL.map((e) => [e.slug, e]));
 // Posición (1-based) de cada entrada dentro del orden alfabético completo
 // del diccionario — estable mientras no cambie el dataset, nunca inventada.
-// Usada en /palabra/[slug] para el número de ficha ("N.º 00047").
+// Usada en /diccionario/[slug] para el número de ficha ("N.º 00047").
 const POSITION_BY_SLUG = new Map<string, number>(ALL.map((e, i) => [e.slug, i + 1]));
 
 function stripInternal(entry: InternalEntry): DictionaryEntry {
