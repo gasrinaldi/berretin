@@ -154,6 +154,21 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   // El diccionario real asciende como cortina entre 15% y 75%.
   const curtainY = useTransform(scrollProgress, [0.15, 0.75], ["100%", "0%"], { clamp: true });
 
+  // El botón de sonido vive por encima de .cinehero-curtain para no
+  // quedar lavado por su degradado — pero eso también lo pondría por
+  // encima del contenido ya opaco del diccionario en cuanto la cortina,
+  // al subir, alcanza esa altura. Se deriva directamente de curtainY (no
+  // de scrollProgress por separado) para ir perfectamente sincronizado
+  // con la posición real de la cortina, sin importar el mapeo scroll↔
+  // progreso: apagado apenas antes de que curtainY llegue a la altura
+  // real del botón (bottom:20-48px ≈ 84-96% del viewport), el mismo
+  // momento en que igual hubiera quedado tapado. "Deslizá para entrar"
+  // no lo necesita: su propio contentOpacity (10%–30%) ya lo apaga antes.
+  const audioToggleOpacity = useTransform(curtainY, (latest) => {
+    const percent = parseFloat(latest as string);
+    return Math.min(1, Math.max(0, (percent - 84) / 12));
+  });
+
   useEffect(() => {
     if (!canParallax || reduceMotion) return;
     const sticky = stickyRef.current;
@@ -348,6 +363,17 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
         </motion.div>
 
+        <audio ref={portAudioRef} src="/sounds/puerto-ambiente.mp3" loop preload="auto" aria-hidden="true" />
+        <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
+      </div>
+
+      {/* Capa aparte, hermana de .cinehero-sticky y con z-index por encima
+          de .cinehero-curtain (que incluye el degradado inferior que se
+          funde con --ink): así "deslizá para entrar" y el botón de sonido
+          nunca quedan pintados por debajo de ese degradado ni de ningún
+          filter/opacity de la escena — no heredan nada de esos elementos,
+          viven en su propio stacking context. */}
+      <div className="cinehero-controls-overlay" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
         <motion.button
           className="cinehero-cue"
           type="button"
@@ -357,14 +383,13 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           deslizá para entrar <span aria-hidden="true">↓</span>
         </motion.button>
 
-        <audio ref={portAudioRef} src="/sounds/puerto-ambiente.mp3" loop preload="auto" aria-hidden="true" />
-        <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
-        <button
+        <motion.button
           className="cinehero-audio-toggle"
           type="button"
           onClick={toggleMute}
           aria-label={isMuted ? "Activar sonido ambiente" : "Silenciar sonido ambiente"}
           aria-pressed={isMuted}
+          style={{ opacity: audioToggleOpacity }}
         >
           {isMuted ? (
             <span aria-hidden="true">×</span>
@@ -374,7 +399,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
               <path d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10" />
             </svg>
           )}
-        </button>
+        </motion.button>
       </div>
 
       <motion.div
