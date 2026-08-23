@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET } from "@/lib/supabase-admin";
 import { detectImageType } from "@/lib/image-signature";
+import { processContributionImage, ImageProcessingError, type ProcessedImage } from "@/lib/image-processing";
 import {
   isContributionType,
   sanitizeText,
@@ -23,6 +24,7 @@ import {
 
 const RATE_LIMIT_SECONDS = 20;
 const DAILY_LIMIT = 20;
+const IMAGE_DAILY_LIMIT = 3;
 
 function errorState(message: string, fieldErrors?: ContributionFieldErrors): ContributeFormState {
   return { status: "error", message, fieldErrors };
@@ -84,8 +86,11 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     fieldErrors.image = "Este tipo de aporte necesita una imagen.";
   }
 
-  let imageBytes: Uint8Array | null = null;
-  let imageExt: string | null = null;
+  // Solo validaciones baratas acá (tamaño crudo + firma real de bytes). El
+  // procesamiento con sharp (caro) se hace más abajo, después de los
+  // límites de frecuencia, para no gastar CPU en un pedido que de todos
+  // modos se va a rechazar.
+  let rawImageBytes: Uint8Array | null = null;
 
   if (needsImage && hasImageFile) {
     const file = imageFile as File;
@@ -97,8 +102,7 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
       if (!detected) {
         fieldErrors.image = "El archivo no es una imagen JPG, PNG o WebP válida.";
       } else {
-        imageBytes = buffer;
-        imageExt = detected === "jpg" ? "jpg" : detected;
+        rawImageBytes = buffer;
       }
     }
   }
@@ -136,21 +140,67 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     if (!dailyError && (dailyCount ?? 0) >= DAILY_LIMIT) {
       return errorState("Alcanzaste el límite de aportes por hoy. Probá de nuevo mañana.");
     }
+
+    if (rawImageBytes) {
+      const { count: imageDailyCount, error: imageDailyError } = await supabase
+        .from("word_contributions")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_hash", ipHash)
+        .not("image_path", "is", null)
+        .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+      if (!imageDailyError && (imageDailyCount ?? 0) >= IMAGE_DAILY_LIMIT) {
+        return errorState("Alcanzaste el límite de aportes con imagen por hoy (3 cada 24 horas). Probá de nuevo mañana.", {
+          image: "Límite de imágenes por hoy alcanzado.",
+        });
+      }
+    }
+  }
+
+  let processedMain: ProcessedImage | null = null;
+  let processedThumb: ProcessedImage | null = null;
+
+  if (rawImageBytes) {
+    try {
+      const processed = await processContributionImage(rawImageBytes);
+      processedMain = processed.main;
+      processedThumb = processed.thumbnail;
+    } catch (err) {
+      const message = err instanceof ImageProcessingError ? err.message : "No pudimos procesar la imagen. Probá con otro archivo.";
+      return errorState(message, { image: message });
+    }
   }
 
   const contributionId = randomUUID();
   let imagePath: string | null = null;
+  let thumbnailPath: string | null = null;
+  let imageSize: number | null = null;
+  let thumbnailSize: number | null = null;
 
-  if (imageBytes && imageExt) {
-    imagePath = `pending/${contributionId}.${imageExt}`;
-    const contentType = imageExt === "jpg" ? "image/jpeg" : imageExt === "png" ? "image/png" : "image/webp";
-    const { error: uploadError } = await supabase.storage.from(CONTRIBUTIONS_BUCKET).upload(imagePath, imageBytes, {
-      contentType,
+  if (processedMain && processedThumb) {
+    imagePath = `pending/${contributionId}.webp`;
+    thumbnailPath = `pending/${contributionId}-thumb.webp`;
+
+    const { error: mainUploadError } = await supabase.storage.from(CONTRIBUTIONS_BUCKET).upload(imagePath, processedMain.buffer, {
+      contentType: "image/webp",
       upsert: false,
     });
-    if (uploadError) {
+    if (mainUploadError) {
       return errorState("No pudimos subir la imagen. Probá de nuevo en unos minutos.");
     }
+
+    const { error: thumbUploadError } = await supabase.storage.from(CONTRIBUTIONS_BUCKET).upload(thumbnailPath, processedThumb.buffer, {
+      contentType: "image/webp",
+      upsert: false,
+    });
+    if (thumbUploadError) {
+      // La imagen principal ya se subió: se borra para no dejar un huérfano.
+      await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove([imagePath]);
+      return errorState("No pudimos subir la imagen. Probá de nuevo en unos minutos.");
+    }
+
+    imageSize = processedMain.size;
+    thumbnailSize = processedThumb.size;
   }
 
   const { error: insertError } = await supabase.from("word_contributions").insert({
@@ -165,11 +215,18 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     location: location || null,
     decade: decade || null,
     image_path: imagePath,
+    image_size: imageSize,
+    thumbnail_path: thumbnailPath,
+    thumbnail_size: thumbnailSize,
     status: "pending",
     ip_hash: ipHash,
   });
 
   if (insertError) {
+    if (imagePath || thumbnailPath) {
+      const orphanPaths = [imagePath, thumbnailPath].filter((p): p is string => Boolean(p));
+      await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove(orphanPaths);
+    }
     return errorState("No pudimos guardar tu aporte. Probá de nuevo en unos minutos.");
   }
 
