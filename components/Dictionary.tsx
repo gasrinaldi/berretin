@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
-import { DictionaryFilters, type FilterState } from "@/components/DictionaryFilters";
+import { DictionaryIntro } from "@/components/DictionaryIntro";
+import { DictionaryFilters, EMPTY_FILTERS, type FilterState } from "@/components/DictionaryFilters";
 import { Footer } from "@/components/Footer";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
-
-const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false };
 
 // Techo defensivo para la restauración por sessionStorage: nunca se
 // dispara en el uso normal, solo evita un exceso de pedidos en paralelo
@@ -88,7 +87,6 @@ type DictionaryProps = {
 
 export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [results, setResults] = useState<DictionaryEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -112,6 +110,20 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   const pendingRestoreRef = useRef<ScrollState | null>(null);
   const pendingScrollYRef = useRef<number | null>(null);
 
+  // El navegador (y Next.js, para navegaciones "atrás") intentan restaurar
+  // el scroll por su cuenta apenas cambia la ruta — antes de que este
+  // componente termine de recargar las páginas guardadas. Si se deja en
+  // "auto", esa restauración nativa pisa la nuestra (o queda pisada por
+  // ella más tarde). Se apaga una sola vez para que el único que mueva el
+  // scroll sea el efecto de más abajo.
+  useEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, []);
+
   // Hidratar desde la URL una sola vez al montar. Si hay un estado de
   // scroll guardado que corresponde EXACTAMENTE a esta URL (misma
   // búsqueda/filtros), es que se está volviendo de una palabra: se marca
@@ -128,7 +140,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
       setDebouncedQuery(urlQuery);
 
       const saved = readScrollState();
-      if (saved && saved.search === window.location.search && saved.pagesLoaded > 1) {
+      // pagesLoaded >= 1 (no ">1"): incluso con una sola página cargada el
+      // usuario puede haber scrolleado bastante dentro de ella — lo que
+      // importa para decidir si vale la pena restaurar es que haya *algo*
+      // guardado para esta misma búsqueda, no cuántas páginas hacían falta.
+      if (saved && saved.search === window.location.search && saved.pagesLoaded >= 1) {
         pendingRestoreRef.current = saved;
         try {
           sessionStorage.removeItem(SCROLL_STATE_KEY);
@@ -264,6 +280,12 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // así que primero hay que "empujar" ese cruce (el scroll queda clamped
   // al alto del hero, pero eso ya alcanza para revelarlo) y solo después,
   // con el documento ya a su alto real, aplicar la posición final.
+  //
+  // Sigue reafirmando la posición unos cuadros más incluso después de
+  // cruzar el umbral: tanto el navegador como el propio router de
+  // Next.js intentan restaurar SU idea de scroll en una navegación
+  // "atrás", a veces después de que este efecto ya corrió una vez — sin
+  // este margen, esa restauración ajena termina ganando la carrera.
   useEffect(() => {
     if (loading) return;
     const targetY = pendingScrollYRef.current;
@@ -271,11 +293,14 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     pendingScrollYRef.current = null;
 
     let cancelled = false;
+    let revealedAt: number | null = null;
     const settle = (attempt: number) => {
       if (cancelled) return;
       window.scrollTo(0, targetY);
-      if (isCurtainRevealed() || attempt > 30) return;
-      requestAnimationFrame(() => settle(attempt + 1));
+      if (revealedAt == null && isCurtainRevealed()) revealedAt = attempt;
+      const settledLongEnough = revealedAt != null && attempt - revealedAt > 6;
+      if (settledLongEnough || attempt > 40) return;
+      setTimeout(() => settle(attempt + 1), 50);
     };
     settle(0);
     return () => {
@@ -308,38 +333,16 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     return ordered;
   }, [results]);
 
-  const activeFilterCount = filters.letras.length + filters.categorias.length + filters.origenes.length + (filters.sinCategoria ? 1 : 0);
-
-  const activePills = [
-    ...filters.letras.map((v) => ({ key: `letra-${v}`, label: `letra: ${v}`, onRemove: () => setFilters({ ...filters, letras: filters.letras.filter((x) => x !== v) }) })),
-    ...filters.categorias.map((v) => ({ key: `cat-${v}`, label: v.toLocaleLowerCase("es"), onRemove: () => setFilters({ ...filters, categorias: filters.categorias.filter((x) => x !== v) }) })),
-    ...filters.origenes.map((v) => ({ key: `ori-${v}`, label: v.replace("Voz de origen ", "").toLocaleLowerCase("es"), onRemove: () => setFilters({ ...filters, origenes: filters.origenes.filter((x) => x !== v) }) })),
-    ...(filters.sinCategoria ? [{ key: "sin-categoria", label: "sin categoría", onRemove: () => setFilters({ ...filters, sinCategoria: false }) }] : []),
-  ];
-
   return (
     <>
+      <DictionaryIntro />
       <div className="controls">
-        <SearchBar value={query} onChange={onQueryChange} />
-        <div className="controls-row">
-          <DictionaryFilters state={filters} onChange={setFilters} isOpen={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} activeCount={activeFilterCount} />
-          <p className="results-counter">
-            {total} {total === 1 ? "resultado" : "resultados"}
-          </p>
-        </div>
-        {activePills.length > 0 && (
-          <div className="active-filters">
-            {activePills.map((pill) => (
-              <button key={pill.key} type="button" className="active-filter-pill" onClick={pill.onRemove}>
-                {pill.label} <span aria-hidden="true">×</span>
-              </button>
-            ))}
-            <button type="button" className="clear-filters-btn" onClick={() => setFilters(EMPTY_FILTERS)}>
-              limpiar filtros
-            </button>
-          </div>
-        )}
+        <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
+        <p className="consult-results-count">
+          {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
+        </p>
       </div>
+      <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
       <main id="content">
         {groups.length > 0 ? (
           <>
