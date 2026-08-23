@@ -19,6 +19,10 @@ export function LetterBlock({ letter, entries, total }: LetterBlockProps) {
         <h2 className="letter-big" id={`letter-${letter}`}>{letter}</h2>
         <span className="letter-count">{total} {total === 1 ? "palabra" : "palabras"}</span>
       </motion.div>
+      <div className="dict-col-header" aria-hidden="true">
+        <span>Palabra / expresión</span>
+        <span>Significado</span>
+      </div>
       <div className="fichas">
         {entries.map((entry, index) => (
           <motion.div key={entry.id} initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(0.015 * index, 0.45), ease: "easeOut" }}>

@@ -149,7 +149,12 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     <>
       <div className="controls">
         <SearchBar value={query} onChange={onQueryChange} />
-        <DictionaryFilters state={filters} onChange={setFilters} isOpen={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} activeCount={activeFilterCount} />
+        <div className="controls-row">
+          <DictionaryFilters state={filters} onChange={setFilters} isOpen={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} activeCount={activeFilterCount} />
+          <p className="results-counter">
+            {total} {total === 1 ? "resultado" : "resultados"}
+          </p>
+        </div>
         {activePills.length > 0 && (
           <div className="active-filters">
             {activePills.map((pill) => (
@@ -162,9 +167,6 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
             </button>
           </div>
         )}
-        <p className="results-counter">
-          {total} {total === 1 ? "resultado" : "resultados"}
-        </p>
       </div>
       <main id="content">
         {groups.length > 0 ? (

@@ -35,19 +35,19 @@ export function WordCard({ entry }: { entry: DictionaryEntry }) {
       onPointerMove={handlePointerMove}
       onPointerLeave={resetTilt}
     >
-      <span className="ficha-meta">
-        <span className="ficha-word">{entry.palabra}</span>
+      <span className="ficha-word">{entry.palabra}</span>
+      <span className="ficha-content">
         <span className="ficha-meaning">{entry.definicion}</span>
+        {badges.length > 0 && (
+          <span className="ficha-badges">
+            {badges.map((badge) => (
+              <span key={badge} className="ficha-badge">
+                {badge}
+              </span>
+            ))}
+          </span>
+        )}
       </span>
-      {badges.length > 0 && (
-        <span className="ficha-badges">
-          {badges.map((badge) => (
-            <span key={badge} className="ficha-badge">
-              {badge}
-            </span>
-          ))}
-        </span>
-      )}
     </MotionLink>
   );
 }
