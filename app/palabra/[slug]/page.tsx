@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { BackButton } from "@/components/BackButton";
 import { ShareButton } from "@/components/ShareButton";
+import { ContributeButton } from "@/components/ContributeButton";
 import { Footer } from "@/components/Footer";
 
 // Nada se prerenderiza en el build: cada palabra se genera la primera vez
@@ -78,6 +79,7 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
           )}
           <div className="word-actions">
             <ShareButton word={entry.palabra} path={`/palabra/${entry.slug}`} />
+            <ContributeButton wordSlug={entry.slug} wordPalabra={entry.palabra} />
           </div>
         </article>
       </div>
