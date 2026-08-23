@@ -21,7 +21,7 @@ export function SearchBar({ value, onChange, onSubmit, id = "search", className 
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
-      <input id={id} type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder="buscar una palabra o expresión..." aria-label="Buscar una palabra o expresión" />
+      <input id={id} type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder="Buscar una palabra o expresión…" aria-label="Buscar una palabra o expresión" />
     </form>
   );
 }

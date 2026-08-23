@@ -345,7 +345,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <div className="cinehero-curtain-clip">
           <div className="wrap">
             <header className="dictionary-intro">
-              <p className="consult-cabecera-tagline">diccionario navegable del lunfardo porteño — palabras y expresiones, de dónde vienen y cómo se usan hoy</p>
               <AuxNav className="dictionary-intro-nav" />
             </header>
             <Dictionary query={query} onQueryChange={onQueryChange} />

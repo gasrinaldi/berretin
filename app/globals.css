@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root { --ink:#14171C; --surface:#1C2027; --crema:#EDE6D6; --crema-dim:rgba(237,230,214,0.78); --muted:#96907E; --brass:#C9A15A; --line:rgba(237,230,214,0.09); --line-strong:rgba(237,230,214,0.16); --error:#D98770; }
+:root { --ink:#0B0D10; --surface:#1C2027; --crema:#EDE6D6; --crema-dim:rgba(237,230,214,0.78); --muted:#96907E; --brass:#C9A15A; --line:rgba(237,230,214,0.09); --line-strong:rgba(237,230,214,0.16); --error:#D98770; }
 * { box-sizing:border-box; margin:0; padding:0; }
 html, body { background:var(--ink); color:var(--crema); min-height:100vh; }
 body { font-family:var(--font-space-grotesk), sans-serif; }
@@ -10,21 +10,20 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .logo span { color:var(--brass); font-style:italic; font-weight:500; }
 .tagline { font-size:13px; color:var(--muted); max-width:420px; line-height:1.5; }
 .dictionary-intro { margin-bottom:0; padding-bottom:20px; }
-.dictionary-intro-nav { margin-top:14px; }
-.controls { margin-top:36px; margin-bottom:36px; }
+.aux-nav.dictionary-intro-nav { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; margin-top:0; }
+.aux-nav.dictionary-intro-nav a:nth-child(1) { justify-self:start; }
+.aux-nav.dictionary-intro-nav a:nth-child(2) { justify-self:center; }
+.aux-nav.dictionary-intro-nav a:nth-child(3) { justify-self:end; }
+.controls { margin-top:32px; margin-bottom:36px; }
 .search-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line-strong); border-radius:2px; padding:12px 16px; margin-bottom:14px; }
 .search-row svg { flex-shrink:0; opacity:.5; }
 .search-row input { background:none; border:none; outline:none; color:var(--crema); font-family:inherit; font-size:15px; width:100%; }
 .search-row input::placeholder { color:var(--muted); }
 
-/* ---- Cabecera superior del diccionario: frase en una sola línea,
-   compartiendo margen exacto con la línea inferior de .dictionary-intro ---- */
-.consult-cabecera-tagline { color:var(--muted); font-size:clamp(10px, 1vw, 12.5px); line-height:1.5; letter-spacing:.25px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
 /* ---- Introducción de la consulta (rótulo + título + sello) ---- */
-.consult-intro { position:relative; margin-top:40px; padding-bottom:32px; border-bottom:1px solid var(--line); }
+.consult-intro { position:relative; margin-top:40px; }
 .consult-eyebrow { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--brass); }
-.consult-title { margin-top:10px; font-family:var(--font-fraunces), serif; font-weight:600; font-size:clamp(32px, 4.5vw, 52px); line-height:1.08; max-width:16ch; }
+.consult-title { margin-top:10px; margin-bottom:0; font-family:var(--font-fraunces), serif; font-weight:600; font-size:clamp(26px, 4vw, 44px); line-height:1.08; white-space:nowrap; }
 .consult-seal { position:absolute; top:-4px; right:0; width:100px; height:100px; color:var(--brass); opacity:.4; pointer-events:none; }
 
 /* ---- Buscador editorial ---- */
@@ -40,7 +39,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 .consult-index { margin-bottom:36px; }
 .consult-letters { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 4px; padding-bottom:16px; border-bottom:1px solid var(--line); }
-.consult-letter { position:relative; border:0; background:none; padding:6px 2px; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-size:15px; text-transform:uppercase; transition:color .15s ease; }
+.consult-letter { position:relative; border:0; background:none; padding:6px 2px; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; text-transform:uppercase; transition:color .15s ease; }
 .consult-letter:hover { color:var(--crema); }
 .consult-letter.active { color:var(--brass); }
 .consult-letter.active::after { content:""; position:absolute; left:2px; right:2px; bottom:0; height:2px; background:var(--brass); }
@@ -50,11 +49,11 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-facet-divider { width:1px; background:var(--line-strong); }
 .consult-facet-list { display:flex; flex-direction:column; }
 .consult-facet-list-columns { display:grid; grid-auto-flow:column; grid-template-rows:repeat(var(--facet-rows, 6), auto); column-gap:24px; row-gap:4px; }
-.consult-facet-item { display:flex; align-items:baseline; gap:10px; width:100%; border:0; background:none; padding:7px 0; color:var(--crema-dim); cursor:pointer; font:14px/1.3 var(--font-space-grotesk), sans-serif; text-align:left; transition:color .15s ease; }
+.consult-facet-item { display:flex; align-items:baseline; gap:10px; width:100%; border:0; background:none; padding:7px 0; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:400; font-size:15px; line-height:1.3; text-align:left; transition:color .15s ease; }
 .consult-facet-item:hover { color:var(--crema); }
 .consult-facet-item.active { color:var(--brass); }
 .consult-facet-item:focus-visible { outline:1px solid var(--brass); outline-offset:2px; }
-.consult-facet-index { font-size:10px; color:var(--muted); flex-shrink:0; }
+.consult-facet-index { font-family:var(--font-space-grotesk), sans-serif; font-size:10px; color:var(--muted); flex-shrink:0; }
 .consult-facet-name { position:relative; }
 .consult-facet-item.active .consult-facet-name::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:1px; background:var(--brass); }
 .consult-facet-more { display:none; }
@@ -72,9 +71,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 }
 
 @media (max-width:640px) {
-  .consult-cabecera-tagline { white-space:normal; overflow:visible; text-overflow:clip; }
-  .consult-intro { padding-bottom:24px; }
-  .consult-title { font-size:clamp(26px, 8vw, 34px); max-width:none; }
+  .consult-title { font-size:clamp(26px, 8vw, 34px); white-space:normal; }
   .consult-seal { display:none; }
   .controls { margin-top:28px; margin-bottom:28px; }
   .consult-letters { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
