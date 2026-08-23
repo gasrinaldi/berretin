@@ -17,3 +17,4 @@ export function getSupabaseAdmin() {
 }
 
 export const CONTRIBUTIONS_BUCKET = "contribution-images";
+export const CONTRIBUTIONS_AUDIO_BUCKET = "contribution-audio";

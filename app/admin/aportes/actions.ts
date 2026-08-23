@@ -1,7 +1,7 @@
 "use server";
 
 import { getAdminUser } from "@/lib/admin-auth";
-import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET } from "@/lib/supabase-admin";
+import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET, CONTRIBUTIONS_AUDIO_BUCKET } from "@/lib/supabase-admin";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { sanitizeText, CONTENT_MAX } from "@/lib/contributions";
 import { REPUTATION_PER_APPROVAL } from "@/lib/community";
@@ -36,10 +36,10 @@ function getAdminClientOrNull(): AdminSupabase | null {
   }
 }
 
-async function deleteContributionImages(supabase: AdminSupabase, imagePath: string | null, thumbnailPath: string | null) {
-  const paths = [imagePath, thumbnailPath].filter((p): p is string => Boolean(p));
-  if (paths.length === 0) return;
-  await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove(paths);
+async function deleteContributionFiles(supabase: AdminSupabase, imagePath: string | null, thumbnailPath: string | null, audioPath: string | null) {
+  const imagePaths = [imagePath, thumbnailPath].filter((p): p is string => Boolean(p));
+  if (imagePaths.length > 0) await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove(imagePaths);
+  if (audioPath) await supabase.storage.from(CONTRIBUTIONS_AUDIO_BUCKET).remove([audioPath]);
 }
 
 export async function listContributions(filters: ListFilters): Promise<{ ok: true; data: ListResult } | { ok: false; error: string }> {
@@ -143,10 +143,10 @@ export async function rejectContribution(id: string, moderationNote: string): Pr
   const supabase = getAdminClientOrNull();
   if (!supabase) return unavailable();
 
-  const { data: existing, error: fetchError } = await supabase.from("word_contributions").select("image_path, thumbnail_path").eq("id", id).single();
+  const { data: existing, error: fetchError } = await supabase.from("word_contributions").select("image_path, thumbnail_path, audio_path").eq("id", id).single();
   if (fetchError || !existing) return { ok: false, error: "No encontramos ese aporte." };
 
-  await deleteContributionImages(supabase, existing.image_path, existing.thumbnail_path);
+  await deleteContributionFiles(supabase, existing.image_path, existing.thumbnail_path, existing.audio_path);
 
   const note = sanitizeText(moderationNote).slice(0, MODERATION_NOTE_MAX);
   const { error } = await supabase
@@ -158,6 +158,8 @@ export async function rejectContribution(id: string, moderationNote: string): Pr
       thumbnail_path: null,
       image_size: null,
       thumbnail_size: null,
+      audio_path: null,
+      audio_size: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -196,7 +198,7 @@ export async function blockSender(id: string, reason: string): Promise<ActionRes
 
   const { data: existing, error: fetchError } = await supabase
     .from("word_contributions")
-    .select("ip_hash, email, image_path, thumbnail_path")
+    .select("ip_hash, email, image_path, thumbnail_path, audio_path")
     .eq("id", id)
     .single();
   if (fetchError || !existing) return { ok: false, error: "No encontramos ese aporte." };
@@ -210,7 +212,7 @@ export async function blockSender(id: string, reason: string): Promise<ActionRes
   });
   if (insertError) return { ok: false, error: "No pudimos registrar el bloqueo." };
 
-  await deleteContributionImages(supabase, existing.image_path, existing.thumbnail_path);
+  await deleteContributionFiles(supabase, existing.image_path, existing.thumbnail_path, existing.audio_path);
 
   const { error: updateError } = await supabase
     .from("word_contributions")
@@ -221,6 +223,8 @@ export async function blockSender(id: string, reason: string): Promise<ActionRes
       thumbnail_path: null,
       image_size: null,
       thumbnail_size: null,
+      audio_path: null,
+      audio_size: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);
@@ -240,6 +244,22 @@ export async function getOriginalImageUrl(id: string): Promise<{ ok: true; url: 
   if (fetchError || !existing?.image_path) return { ok: false, error: "Esta entrada no tiene una imagen original disponible." };
 
   const { data: signed, error: signError } = await supabase.storage.from(CONTRIBUTIONS_BUCKET).createSignedUrl(existing.image_path, ORIGINAL_URL_TTL_SECONDS);
+  if (signError || !signed?.signedUrl) return { ok: false, error: "No pudimos generar el enlace." };
+
+  return { ok: true, url: signed.signedUrl };
+}
+
+export async function getContributionAudioUrl(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await getAdminUser();
+  if (!admin) return unauthorized();
+
+  const supabase = getAdminClientOrNull();
+  if (!supabase) return unavailable();
+
+  const { data: existing, error: fetchError } = await supabase.from("word_contributions").select("audio_path").eq("id", id).single();
+  if (fetchError || !existing?.audio_path) return { ok: false, error: "Esta entrada no tiene un audio disponible." };
+
+  const { data: signed, error: signError } = await supabase.storage.from(CONTRIBUTIONS_AUDIO_BUCKET).createSignedUrl(existing.audio_path, ORIGINAL_URL_TTL_SECONDS);
   if (signError || !signed?.signedUrl) return { ok: false, error: "No pudimos generar el enlace." };
 
   return { ok: true, url: signed.signedUrl };

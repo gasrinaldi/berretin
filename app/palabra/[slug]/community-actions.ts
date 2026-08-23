@@ -86,6 +86,10 @@ export async function submitReport(_prevState: ReportFormState, formData: FormDa
   const rawReason = String(formData.get("reason") ?? "");
   if (!isReportReason(rawReason)) return { status: "error", error: "Elegí un motivo válido." };
 
+  // Si viene contributionId, el reporte apunta a ese aporte aprobado
+  // puntual (galería, Etapa 5) en vez de a la palabra en general.
+  const contributionId = String(formData.get("contributionId") ?? "").trim() || null;
+
   const comment = sanitizeText(String(formData.get("comment") ?? "")).slice(0, REPORT_COMMENT_MAX);
 
   const ipHash = await getClientIpHash();
@@ -119,8 +123,9 @@ export async function submitReport(_prevState: ReportFormState, formData: FormDa
   }
 
   const { error } = await supabase.from("reports").insert({
-    target_type: "word",
+    target_type: contributionId ? "contribution" : "word",
     word_slug: entry.slug,
+    contribution_id: contributionId,
     reason: rawReason,
     comment: comment || null,
     reporter_user_id: user?.id ?? null,

@@ -2,7 +2,23 @@
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { submitContribution } from "@/app/palabra/[slug]/contribute-actions";
-import { CONTRIBUTION_TYPES, TYPES_WITH_IMAGE, ALLOWED_IMAGE_LABEL, CONSENT_TEXT, CONSENT_NOTE, EMAIL_NOTE, CONTENT_MAX, ALIAS_MAX, LOCATION_MAX, DECADE_MAX, EMAIL_MAX, initialContributeState, type ContributionType } from "@/lib/contributions";
+import {
+  CONTRIBUTION_TYPES,
+  TYPES_WITH_IMAGE,
+  TYPES_WITH_AUDIO,
+  ALLOWED_IMAGE_LABEL,
+  ALLOWED_AUDIO_LABEL,
+  CONSENT_TEXT,
+  CONSENT_NOTE,
+  EMAIL_NOTE,
+  CONTENT_MAX,
+  ALIAS_MAX,
+  LOCATION_MAX,
+  DECADE_MAX,
+  EMAIL_MAX,
+  initialContributeState,
+  type ContributionType,
+} from "@/lib/contributions";
 
 type ContributeFormProps = {
   wordSlug: string;
@@ -17,6 +33,7 @@ export function ContributeForm({ wordSlug, wordPalabra, onClose }: ContributeFor
   const dialogTitleId = useId();
   const activeTypeDef = CONTRIBUTION_TYPES.find((t) => t.value === type) ?? CONTRIBUTION_TYPES[0];
   const showImage = TYPES_WITH_IMAGE.includes(type);
+  const showAudio = TYPES_WITH_AUDIO.includes(type);
 
   useEffect(() => {
     if (state.status === "success") formRef.current?.reset();
@@ -80,6 +97,14 @@ export function ContributeForm({ wordSlug, wordPalabra, onClose }: ContributeFor
                 <label htmlFor="contribute-image">Imagen ({ALLOWED_IMAGE_LABEL}, hasta 8&nbsp;MB)</label>
                 <input id="contribute-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" required />
                 {state.fieldErrors?.image && <p className="contribute-error">{state.fieldErrors.image}</p>}
+              </div>
+            )}
+
+            {showAudio && (
+              <div className="contribute-field">
+                <label htmlFor="contribute-audio">Audio ({ALLOWED_AUDIO_LABEL}, hasta 5&nbsp;MB)</label>
+                <input id="contribute-audio" name="audio" type="file" accept="audio/mpeg,audio/wav,audio/ogg,audio/webm" required />
+                {state.fieldErrors?.audio && <p className="contribute-error">{state.fieldErrors.audio}</p>}
               </div>
             )}
 

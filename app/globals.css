@@ -228,5 +228,33 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .profile-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong); }
 .profile-meta { margin-top:24px; }
 
-@media (max-width:640px) { .wrap { padding-top:32px; } .logo { font-size:34px; } .letter-big { font-size:52px; } .ficha-toggle { flex-wrap:wrap; } .ficha-word { font-size:20px; } .word-wrap { padding-top:40px; } .admin-filters { grid-template-columns:1fr; } }
+/* ---- Pestañas de la ficha de palabra (Etapa 5) ---- */
+.word-tabs { margin-top:28px; }
+.word-tabs-nav { margin-bottom:24px; }
+.word-tabs-panel[hidden] { display:none; }
+
+/* ---- Galería cultural: "cómo se usa" / "cómo se ve" ---- */
+.gallery-list { display:flex; flex-direction:column; gap:20px; }
+.gallery-item { border:1px solid var(--line); border-radius:2px; padding:18px 20px; }
+.gallery-item-header { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px; }
+.gallery-item-meta { font-size:11px; color:var(--muted); }
+.gallery-item-content { font-style:normal; color:var(--crema); margin-bottom:12px; }
+.gallery-audio-trigger { margin-bottom:12px; }
+.gallery-audio-player, .admin-audio-player { width:100%; max-width:360px; margin:6px 0 12px; }
+.gallery-actions { margin-top:8px; }
+.gallery-actions-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.gallery-vote-btn { display:inline-flex; align-items:center; gap:6px; }
+.gallery-vote-btn.active { color:var(--brass); border-color:var(--brass); background:rgba(201,161,90,0.1); }
+
+.gallery-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:20px; }
+.gallery-grid-item { display:flex; flex-direction:column; gap:8px; }
+.gallery-grid-thumb { display:block; width:100%; aspect-ratio:1; border:1px solid var(--line-strong); border-radius:2px; background:var(--surface); padding:0; cursor:pointer; overflow:hidden; display:grid; place-items:center; }
+.gallery-grid-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.gallery-grid-thumb:hover { border-color:var(--brass); }
+
+.gallery-lightbox { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:5vh 20px; background:rgba(10,12,15,0.9); }
+.gallery-lightbox-img { max-width:100%; max-height:90vh; border:1px solid var(--line-strong); }
+.gallery-lightbox-close { position:fixed; top:16px; right:16px; color:var(--crema); }
+
+@media (max-width:640px) { .wrap { padding-top:32px; } .logo { font-size:34px; } .letter-big { font-size:52px; } .ficha-toggle { flex-wrap:wrap; } .ficha-word { font-size:20px; } .word-wrap { padding-top:40px; } .admin-filters { grid-template-columns:1fr; } .gallery-grid { grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition-duration:0.01ms !important; animation-duration:0.01ms !important; animation-iteration-count:1 !important; } .ficha:hover { box-shadow:none; } }

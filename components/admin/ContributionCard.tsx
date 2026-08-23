@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateAndApprove, rejectContribution, saveModerationNote, blockSender, getOriginalImageUrl, getSenderHistory, type SenderHistoryRow } from "@/app/admin/aportes/actions";
+import { updateAndApprove, rejectContribution, saveModerationNote, blockSender, getOriginalImageUrl, getContributionAudioUrl, getSenderHistory, type SenderHistoryRow } from "@/app/admin/aportes/actions";
 import { CONTRIBUTION_TYPES } from "@/lib/contributions";
 import { MODERATION_NOTE_MAX, BLOCK_REASON_MAX, type ContributionRow } from "@/lib/admin-contributions";
 
@@ -26,6 +26,7 @@ export function ContributionCard({ row, onChanged, onUpdated }: ContributionCard
   const [blockReason, setBlockReason] = useState("");
   const [history, setHistory] = useState<SenderHistoryRow[] | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const typeDef = CONTRIBUTION_TYPES.find((t) => t.value === row.type);
   const isPending = row.status === "pending";
@@ -52,7 +53,8 @@ export function ContributionCard({ row, onChanged, onUpdated }: ContributionCard
       setLocalError(result.error);
       return;
     }
-    onUpdated(row.id, { moderationNote: note || null, imagePath: null, thumbnailPath: null, thumbnailSignedUrl: null });
+    onUpdated(row.id, { moderationNote: note || null, imagePath: null, thumbnailPath: null, thumbnailSignedUrl: null, audioPath: null });
+    setAudioUrl(null);
     onChanged(row.id, "rejected");
   };
 
@@ -82,7 +84,8 @@ export function ContributionCard({ row, onChanged, onUpdated }: ContributionCard
       return;
     }
     setBlockOpen(false);
-    onUpdated(row.id, { imagePath: null, thumbnailPath: null, thumbnailSignedUrl: null });
+    onUpdated(row.id, { imagePath: null, thumbnailPath: null, thumbnailSignedUrl: null, audioPath: null });
+    setAudioUrl(null);
     onChanged(row.id, "rejected");
   };
 
@@ -96,6 +99,18 @@ export function ContributionCard({ row, onChanged, onUpdated }: ContributionCard
       return;
     }
     window.open(result.url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleLoadAudio = async () => {
+    setPending(true);
+    setLocalError(null);
+    const result = await getContributionAudioUrl(row.id);
+    setPending(false);
+    if (!result.ok) {
+      setLocalError(result.error);
+      return;
+    }
+    setAudioUrl(result.url);
   };
 
   const handleToggleHistory = async () => {
@@ -186,10 +201,21 @@ export function ContributionCard({ row, onChanged, onUpdated }: ContributionCard
                 ver original
               </button>
             )}
+            {row.audioPath && !audioUrl && (
+              <button type="button" className="back-btn" disabled={pending} onClick={handleLoadAudio}>
+                cargar audio
+              </button>
+            )}
             <button type="button" className="back-btn" onClick={handleToggleHistory}>
               historial del remitente
             </button>
           </div>
+
+          {audioUrl && (
+            <audio controls src={audioUrl} className="admin-audio-player">
+              Tu navegador no puede reproducir audio.
+            </audio>
+          )}
 
           {blockOpen && (
             <div className="admin-block-panel">

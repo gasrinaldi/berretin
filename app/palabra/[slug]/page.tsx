@@ -6,6 +6,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { ContributeButton } from "@/components/ContributeButton";
 import { WordVote } from "@/components/WordVote";
 import { ReportButton } from "@/components/ReportButton";
+import { WordTabs } from "@/components/gallery/WordTabs";
 import { Footer } from "@/components/Footer";
 
 // Nada se prerenderiza en el build: cada palabra se genera la primera vez
@@ -58,8 +59,6 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
 
   if (!entry) notFound();
 
-  const badges = [...entry.categorias, ...entry.origenes];
-
   return (
     <>
       <div className="wrap word-wrap">
@@ -69,16 +68,7 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
         <article className="word-article">
           <span className="word-letter">{entry.letra}</span>
           <h1 className="word-title">{entry.palabra}</h1>
-          <p className="word-definition">{entry.definicion}</p>
-          {badges.length > 0 && (
-            <div className="word-badges">
-              {badges.map((badge) => (
-                <span key={badge} className="ficha-badge">
-                  {badge}
-                </span>
-              ))}
-            </div>
-          )}
+          <WordTabs wordSlug={entry.slug} definicion={entry.definicion} categorias={entry.categorias} origenes={entry.origenes} />
           <div className="word-actions">
             <ShareButton word={entry.palabra} path={`/palabra/${entry.slug}`} />
             <ContributeButton wordSlug={entry.slug} wordPalabra={entry.palabra} />

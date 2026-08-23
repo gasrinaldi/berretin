@@ -4,20 +4,23 @@ import { createHash, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { getCurrentUser } from "@/lib/auth-user";
-import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET } from "@/lib/supabase-admin";
+import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET, CONTRIBUTIONS_AUDIO_BUCKET } from "@/lib/supabase-admin";
 import { detectImageType } from "@/lib/image-signature";
+import { detectAudioType, audioContentType } from "@/lib/audio-signature";
 import { processContributionImage, ImageProcessingError, type ProcessedImage } from "@/lib/image-processing";
 import {
   isContributionType,
   sanitizeText,
   validateEmail,
   TYPES_WITH_IMAGE,
+  TYPES_WITH_AUDIO,
   CONTENT_MIN,
   CONTENT_MAX,
   ALIAS_MAX,
   LOCATION_MAX,
   DECADE_MAX,
   MAX_IMAGE_BYTES,
+  MAX_AUDIO_BYTES,
   SUCCESS_MESSAGE,
   type ContributionFieldErrors,
   type ContributeFormState,
@@ -26,6 +29,7 @@ import {
 const RATE_LIMIT_SECONDS = 20;
 const DAILY_LIMIT = 20;
 const IMAGE_DAILY_LIMIT = 3;
+const AUDIO_DAILY_LIMIT = 3;
 
 function errorState(message: string, fieldErrors?: ContributionFieldErrors): ContributeFormState {
   return { status: "error", message, fieldErrors };
@@ -108,6 +112,33 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     }
   }
 
+  const needsAudio = TYPES_WITH_AUDIO.includes(rawType);
+  const audioFile = formData.get("audio");
+  const hasAudioFile = audioFile instanceof File && audioFile.size > 0;
+
+  if (needsAudio && !hasAudioFile) {
+    fieldErrors.audio = "Este tipo de aporte necesita un audio.";
+  }
+
+  let rawAudioBytes: Uint8Array | null = null;
+  let audioExt: "mp3" | "wav" | "ogg" | "webm" | null = null;
+
+  if (needsAudio && hasAudioFile) {
+    const file = audioFile as File;
+    if (file.size > MAX_AUDIO_BYTES) {
+      fieldErrors.audio = "El audio no puede superar los 5 MB.";
+    } else {
+      const buffer = new Uint8Array(await file.arrayBuffer());
+      const detected = detectAudioType(buffer);
+      if (!detected) {
+        fieldErrors.audio = "El archivo no es un audio MP3, WAV, OGG o WebM válido.";
+      } else {
+        rawAudioBytes = buffer;
+        audioExt = detected;
+      }
+    }
+  }
+
   if (Object.keys(fieldErrors).length > 0) {
     return errorState("Revisá los campos marcados.", fieldErrors);
   }
@@ -172,6 +203,21 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
         });
       }
     }
+
+    if (rawAudioBytes) {
+      const { count: audioDailyCount, error: audioDailyError } = await supabase
+        .from("word_contributions")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_hash", ipHash)
+        .not("audio_path", "is", null)
+        .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+      if (!audioDailyError && (audioDailyCount ?? 0) >= AUDIO_DAILY_LIMIT) {
+        return errorState("Alcanzaste el límite de aportes con audio por hoy (3 cada 24 horas). Probá de nuevo mañana.", {
+          audio: "Límite de audios por hoy alcanzado.",
+        });
+      }
+    }
   }
 
   let processedMain: ProcessedImage | null = null;
@@ -220,6 +266,24 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     thumbnailSize = processedThumb.size;
   }
 
+  let audioPath: string | null = null;
+  let audioSize: number | null = null;
+
+  if (rawAudioBytes && audioExt) {
+    audioPath = `pending/${contributionId}.${audioExt}`;
+    const { error: audioUploadError } = await supabase.storage.from(CONTRIBUTIONS_AUDIO_BUCKET).upload(audioPath, rawAudioBytes, {
+      contentType: audioContentType(audioExt),
+      upsert: false,
+    });
+    if (audioUploadError) {
+      if (imagePath || thumbnailPath) {
+        await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove([imagePath, thumbnailPath].filter((p): p is string => Boolean(p)));
+      }
+      return errorState("No pudimos subir el audio. Probá de nuevo en unos minutos.");
+    }
+    audioSize = rawAudioBytes.byteLength;
+  }
+
   const { error: insertError } = await supabase.from("word_contributions").insert({
     id: contributionId,
     word_id: entry.id,
@@ -236,6 +300,8 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     image_size: imageSize,
     thumbnail_path: thumbnailPath,
     thumbnail_size: thumbnailSize,
+    audio_path: audioPath,
+    audio_size: audioSize,
     status: "pending",
     ip_hash: ipHash,
   });
@@ -244,6 +310,9 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     if (imagePath || thumbnailPath) {
       const orphanPaths = [imagePath, thumbnailPath].filter((p): p is string => Boolean(p));
       await supabase.storage.from(CONTRIBUTIONS_BUCKET).remove(orphanPaths);
+    }
+    if (audioPath) {
+      await supabase.storage.from(CONTRIBUTIONS_AUDIO_BUCKET).remove([audioPath]);
     }
     return errorState("No pudimos guardar tu aporte. Probá de nuevo en unos minutos.");
   }

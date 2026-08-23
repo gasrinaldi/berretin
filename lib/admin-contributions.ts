@@ -17,6 +17,8 @@ export type ContributionRow = {
   imageSize: number | null;
   thumbnailPath: string | null;
   thumbnailSize: number | null;
+  audioPath: string | null;
+  audioSize: number | null;
   status: ContributionStatus;
   moderationNote: string | null;
   ipHash: string | null;
@@ -68,6 +70,8 @@ export function mapContributionRow(row: any): Omit<ContributionRow, "thumbnailSi
     imageSize: row.image_size,
     thumbnailPath: row.thumbnail_path,
     thumbnailSize: row.thumbnail_size,
+    audioPath: row.audio_path,
+    audioSize: row.audio_size,
     status: row.status,
     moderationNote: row.moderation_note,
     ipHash: row.ip_hash,
