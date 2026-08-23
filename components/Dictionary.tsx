@@ -1,6 +1,5 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
@@ -91,7 +90,6 @@ type DictionaryProps = {
 };
 
 export function Dictionary({ query, onQueryChange }: DictionaryProps) {
-  const reduceMotion = useReducedMotion();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [results, setResults] = useState<DictionaryEntry[]>([]);
@@ -340,21 +338,9 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     return ordered;
   }, [results]);
 
-  // Vuelve al inicio exacto del buscador/filtros, conservando query y
-  // filtros (viven en estado de React, nadie los toca acá). El botón es
-  // sticky dentro de .dictionary-body, así que para cuando queda visible
-  // la cortina ya está revelada — no hace falta esperar ningún umbral.
-  const scrollToSearch = () => {
-    document.getElementById("dictionary-search")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-  };
-
   return (
     <>
       <div className="dictionary-body">
-        <button type="button" className="dictionary-back-btn" onClick={scrollToSearch}>
-          <span className="dictionary-back-mark" aria-hidden="true" />
-          Volver al buscador
-        </button>
         <DictionaryIntro />
         <div id="dictionary-search" className="controls">
           <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
@@ -363,6 +349,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
           </p>
         </div>
         <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
+        {/* Centinela fino (no #content entero, que al ser alto queda
+            "intersectando" casi todo el scroll y no vuelve a disparar el
+            observer al cruzar su borde superior): CinematicHero.tsx lo usa
+            para saber cuándo mostrar "volver al buscador". */}
+        <div id="results-sentinel" aria-hidden="true" />
         <main id="content">
           {groups.length > 0 ? (
             <>

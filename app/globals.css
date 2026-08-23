@@ -159,16 +159,25 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .cinehero-search .search-submit-btn { width:48px; height:48px; }
 }
 
-/* "Volver al buscador": hijo directo de .dictionary-body (desde la intro
-   hasta el final de los resultados, Footer afuera), así su rango de
-   sticky es el alto real de todo ese contenedor y no un renglón chico —
-   se queda pegado mientras se recorren las palabras y suelta solo al
-   llegar al pie. Nunca puede quedar por encima del hero porque vive
-   dentro de la cortina misma. Editorial: solo texto + línea roja, sin
-   caja ni ícono. */
-.dictionary-body { position:relative; }
-.dictionary-back-btn { position:sticky; top:20px; z-index:5; display:flex; align-items:center; gap:9px; width:fit-content; min-height:44px; margin:0 0 8px auto; border:0; background:none; padding:4px 2px; color:var(--crema-dim); cursor:pointer; font:600 11px var(--font-space-grotesk), sans-serif; letter-spacing:1.6px; text-transform:uppercase; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:4px; transition:color .15s ease, text-decoration-color .15s ease; }
-.dictionary-back-mark { width:2px; height:11px; background:#A92D22; flex-shrink:0; }
+/* "Volver al buscador": vive fuera de .cinehero-curtain (el propio
+   CinematicHero la renderiza como hermana de <section>), porque la
+   cortina tiene su propio transform (curtainY) y cualquier position:fixed
+   adentro terminaría fijo a ESE box transformado, no al viewport real —
+   mismo motivo por el que la flecha flotante original vivía ahí afuera.
+   React la monta/desmonta según showBackBtn (ver CinematicHero.tsx), que
+   observa el borde superior de #content: mientras título/buscador/filtros
+   siguen a la vista ese borde no cruzó 0 todavía, así que el botón ni
+   siquiera existe en el DOM. right: usa el hueco real fuera de las
+   1320px del diccionario cuando lo hay (pantallas anchas) y cae a 24px
+   del borde real del viewport cuando no — nunca menos, así nunca genera
+   overflow ni se superpone a la columna de resultados. Editorial: solo
+   texto + línea roja, sin caja ni ícono. */
+.dictionary-back-btn { position:fixed; top:28px; right:max(24px, calc((100vw - 1320px) / 2 - 40px)); z-index:20; display:flex; align-items:center; gap:9px; min-height:44px; border:0; background:none; padding:4px 2px; color:var(--crema-dim); cursor:pointer; font:600 11px var(--font-space-grotesk), sans-serif; letter-spacing:1.6px; text-transform:uppercase; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:4px; transition:color .15s ease, text-decoration-color .15s ease; text-shadow:0 0 3px var(--ink), 0 0 6px var(--ink), 0 0 10px var(--ink), 0 1px 2px var(--ink); }
+/* Sin caja ni fondo (el diseño editorial lo pide así), pero el resultado
+   pasa igual sobre filas de palabras al hacer scroll — este halo del
+   mismo --ink (invisible contra el fondo normal, se nota recién si algo
+   claro pasa detrás) mantiene el texto legible sin agregar ningún panel. */
+.dictionary-back-mark { width:2px; height:11px; background:#A92D22; flex-shrink:0; filter:drop-shadow(0 0 3px var(--ink)) drop-shadow(0 0 5px var(--ink)); }
 .dictionary-back-btn:hover, .dictionary-back-btn:focus-visible { color:var(--brass); text-decoration-color:var(--brass); }
 .dictionary-back-btn:focus-visible { outline:1px solid var(--brass); outline-offset:3px; }
 

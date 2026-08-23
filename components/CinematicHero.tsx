@@ -40,6 +40,11 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
+  // "Volver al diccionario": solo aparece una vez que el usuario ya
+  // empezó a recorrer los resultados (el título/buscador/filtros todavía
+  // están a la vista antes de eso). Observa #content, que Dictionary.tsx
+  // siempre renderiza — no depende de conocer su estado interno.
+  const [showBackBtn, setShowBackBtn] = useState(false);
   // Corrección (px) para que la cortina, al pasar a position:relative, no
   // deje un hueco: el hero oculto sigue reservando 100svh en el flujo,
   // pero el recorrido visible es más corto, así que compensamos con un
@@ -57,6 +62,31 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     sync();
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
+  }, []);
+
+  // El botón "volver" se muestra recién cuando el usuario cruzó el
+  // centinela que Dictionary.tsx pone justo antes de los resultados —
+  // mientras título/buscador/filtros siguen a la vista, todavía no lo
+  // cruzó. Un centinela fino (no #content entero, que al ser alto queda
+  // intersectando casi todo el scroll) dispara el observer de forma
+  // confiable en cada cruce, tanto al bajar como al volver a subir.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    let sentinel: HTMLElement | null = null;
+    let observer: IntersectionObserver | null = null;
+    let attempts = 0;
+    const attach = () => {
+      sentinel = document.getElementById("results-sentinel");
+      if (!sentinel) {
+        attempts += 1;
+        if (attempts < 40) requestAnimationFrame(attach);
+        return;
+      }
+      observer = new IntersectionObserver(([entry]) => setShowBackBtn(entry.boundingClientRect.top < 0), { threshold: 0 });
+      observer.observe(sentinel);
+    };
+    attach();
+    return () => observer?.disconnect();
   }, []);
 
   const portAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -266,7 +296,15 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     shellRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "end" });
   };
 
+  // Vuelve al inicio real de la sección del diccionario (nav + título +
+  // buscador + filtros), nunca directo al input — conserva query y
+  // filtros porque ambos viven en estado de React, ajeno a este scroll.
+  const scrollToDictionaryTop = () => {
+    document.getElementById("dictionary-top")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  };
+
   return (
+    <>
     <section ref={shellRef} className="cinehero-shell" style={{ height: `calc(100svh + ${revealVh}${revealUnit})` }}>
       <div ref={stickyRef} className="cinehero-sticky" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
         <motion.div className="cinehero-layers" aria-hidden="true" style={{ opacity: sceneOpacity, filter: sceneFilter }}>
@@ -347,7 +385,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <div className="cinehero-curtain-fade" aria-hidden="true" />
         <div className="cinehero-curtain-clip">
           <div className="wrap dictionary-wrap">
-            <header className="dictionary-intro">
+            <header id="dictionary-top" className="dictionary-intro">
               <AuxNav className="dictionary-intro-nav" />
             </header>
             <Dictionary query={query} onQueryChange={onQueryChange} />
@@ -355,5 +393,12 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         </div>
       </motion.div>
     </section>
+    {showBackBtn && (
+      <button type="button" className="dictionary-back-btn" onClick={scrollToDictionaryTop}>
+        <span className="dictionary-back-mark" aria-hidden="true" />
+        Volver al buscador
+      </button>
+    )}
+    </>
   );
 }
