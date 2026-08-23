@@ -145,7 +145,11 @@ export function searchEntries({ q = "", letras = [], categorias = [], origenes =
   if (sinCategoria) {
     filtered = filtered.filter((e) => e.categorias.length === 0 && e.origenes.length === 0);
   } else {
-    if (categorias.length) filtered = filtered.filter((e) => categorias.some((c) => e.categorias.includes(c)));
+    // AND entre categorías: una entrada solo aparece si tiene TODAS las
+    // categorías activas (una palabra puede pertenecer legítimamente a
+    // varias, y seleccionar más de una debe acotar el resultado, no
+    // ampliarlo). Origen se mantiene con OR, sin cambios.
+    if (categorias.length) filtered = filtered.filter((e) => categorias.every((c) => e.categorias.includes(c)));
     if (origenes.length) filtered = filtered.filter((e) => origenes.some((o) => e.origenes.includes(o)));
   }
 

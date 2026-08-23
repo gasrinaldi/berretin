@@ -359,7 +359,13 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
             )}
           </>
         ) : (
-          !loading && <p className="no-results">no encontramos nada con eso — probá con otra palabra o quitá algún filtro</p>
+          !loading && (
+            <p className="no-results">
+              {filters.categorias.length >= 2
+                ? "No encontramos entradas que compartan todos estos filtros."
+                : "no encontramos nada con eso — probá con otra palabra o quitá algún filtro"}
+            </p>
+          )
         )}
       </main>
       <Footer />
