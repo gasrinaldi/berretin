@@ -181,11 +181,16 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 /* Niebla que viaja pegada a la cortina: en vez de un borde recto, el
    diccionario se funde con la escena a través de un degradado vertical
-   amplio (transparente arriba, --ink sólido abajo), derivado del color
-   real de fondo. Ancla por bottom:100% contra .cinehero-curtain (siempre
-   positioned, fixed o relative) para no ocupar nunca espacio en el flujo
-   ni depender de un ancestro distinto según el estado. */
-.cinehero-curtain-fade { position:absolute; left:0; right:0; bottom:100%; height:26vh; pointer-events:none; z-index:1; background:linear-gradient(to bottom, rgba(20,23,28,0) 0%, rgba(20,23,28,.12) 18%, rgba(20,23,28,.55) 55%, rgba(20,23,28,1) 100%); }
+   amplio (transparente arriba, --ink sólido abajo). El color final tiene
+   que ser bit a bit el mismo --ink (rgb(11,13,16), no el rgb(20,23,28)
+   que tenía antes) — cualquier diferencia, por mínima que sea, se nota
+   como una línea justo donde termina la escena y empieza el fondo real.
+   Altura ~42vh para que el fundido arranque alrededor del 55–60% inferior
+   del hero (100% − 42% ≈ 58%) y llegue a --ink sólido recién en el borde
+   inferior, exactamente donde arranca la cortina. bottom:calc(100% - 2px)
+   sencilla: 2px de superposición contra .cinehero-curtain-clip por si
+   algún subpíxel dejara una costura entre ambos fondos ya idénticos. */
+.cinehero-curtain-fade { position:absolute; left:0; right:0; bottom:calc(100% - 2px); height:42vh; pointer-events:none; z-index:1; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,.12) 18%, rgba(11,13,16,.55) 55%, rgba(11,13,16,1) 100%); }
 .cinehero-curtain-clip { background:var(--ink); }
 .cinehero-curtain[data-revealed="false"] .cinehero-curtain-clip { height:100svh; overflow:hidden; }
 .cinehero-curtain[data-revealed="true"] .cinehero-curtain-clip { height:auto; overflow:visible; }
