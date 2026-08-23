@@ -159,13 +159,18 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .cinehero-search .search-submit-btn { width:48px; height:48px; }
 }
 
-/* Flecha flotante fija (fuera de la cortina transformada, así queda fija
-   al viewport de verdad): siempre visible, apilada arriba del botón de
-   audio para no superponerse mientras dura el splash. */
-.dictionary-jump-btn { position:fixed; right:clamp(16px, 5vw, 40px); bottom:clamp(72px, 12vh, 104px); z-index:20; display:grid; width:40px; height:40px; place-items:center; border:1px solid rgba(237,230,214,.3); border-radius:50%; background:rgba(11,13,16,.55); color:var(--crema); cursor:pointer; transition:color .2s ease, border-color .2s ease, background-color .2s ease; }
-.dictionary-jump-btn:hover { border-color:var(--brass); color:var(--brass); background:rgba(11,13,16,.75); }
-.dictionary-jump-btn:focus-visible { outline:1px solid var(--brass); outline-offset:3px; }
-.dictionary-jump-btn svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+/* "Volver al buscador": hijo directo de .dictionary-body (desde la intro
+   hasta el final de los resultados, Footer afuera), así su rango de
+   sticky es el alto real de todo ese contenedor y no un renglón chico —
+   se queda pegado mientras se recorren las palabras y suelta solo al
+   llegar al pie. Nunca puede quedar por encima del hero porque vive
+   dentro de la cortina misma. Editorial: solo texto + línea roja, sin
+   caja ni ícono. */
+.dictionary-body { position:relative; }
+.dictionary-back-btn { position:sticky; top:20px; z-index:5; display:flex; align-items:center; gap:9px; width:fit-content; min-height:44px; margin:0 0 8px auto; border:0; background:none; padding:4px 2px; color:var(--crema-dim); cursor:pointer; font:600 11px var(--font-space-grotesk), sans-serif; letter-spacing:1.6px; text-transform:uppercase; text-decoration:underline; text-decoration-color:transparent; text-underline-offset:4px; transition:color .15s ease, text-decoration-color .15s ease; }
+.dictionary-back-mark { width:2px; height:11px; background:#A92D22; flex-shrink:0; }
+.dictionary-back-btn:hover, .dictionary-back-btn:focus-visible { color:var(--brass); text-decoration-color:var(--brass); }
+.dictionary-back-btn:focus-visible { outline:1px solid var(--brass); outline-offset:3px; }
 
 /* El diccionario real como cortina: mientras el scroll está dentro del
    recorrido, fixed + transform lo hace ascender tapando el hero; una vez

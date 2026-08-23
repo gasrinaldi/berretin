@@ -1,5 +1,6 @@
 "use client";
 
+import { useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
@@ -90,6 +91,7 @@ type DictionaryProps = {
 };
 
 export function Dictionary({ query, onQueryChange }: DictionaryProps) {
+  const reduceMotion = useReducedMotion();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   const [results, setResults] = useState<DictionaryEntry[]>([]);
@@ -338,41 +340,55 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     return ordered;
   }, [results]);
 
+  // Vuelve al inicio exacto del buscador/filtros, conservando query y
+  // filtros (viven en estado de React, nadie los toca acá). El botón es
+  // sticky dentro de .dictionary-body, así que para cuando queda visible
+  // la cortina ya está revelada — no hace falta esperar ningún umbral.
+  const scrollToSearch = () => {
+    document.getElementById("dictionary-search")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  };
+
   return (
     <>
-      <DictionaryIntro />
-      <div id="dictionary-search" className="controls">
-        <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
-        <p className="consult-results-count">
-          {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
-        </p>
+      <div className="dictionary-body">
+        <button type="button" className="dictionary-back-btn" onClick={scrollToSearch}>
+          <span className="dictionary-back-mark" aria-hidden="true" />
+          Volver al buscador
+        </button>
+        <DictionaryIntro />
+        <div id="dictionary-search" className="controls">
+          <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
+          <p className="consult-results-count">
+            {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
+          </p>
+        </div>
+        <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
+        <main id="content">
+          {groups.length > 0 ? (
+            <>
+              {groups.map((group) => (
+                <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
+              ))}
+              {hasMore && (
+                <>
+                  <div ref={sentinelRef} aria-hidden="true" />
+                  <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
+                    {loading ? "cargando..." : "cargar más"}
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            !loading && (
+              <p className="no-results">
+                {filters.categorias.length >= 2
+                  ? "No encontramos entradas que compartan todos estos filtros."
+                  : "no encontramos nada con eso — probá con otra palabra o quitá algún filtro"}
+              </p>
+            )
+          )}
+        </main>
       </div>
-      <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
-      <main id="content">
-        {groups.length > 0 ? (
-          <>
-            {groups.map((group) => (
-              <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
-            ))}
-            {hasMore && (
-              <>
-                <div ref={sentinelRef} aria-hidden="true" />
-                <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
-                  {loading ? "cargando..." : "cargar más"}
-                </button>
-              </>
-            )}
-          </>
-        ) : (
-          !loading && (
-            <p className="no-results">
-              {filters.categorias.length >= 2
-                ? "No encontramos entradas que compartan todos estos filtros."
-                : "no encontramos nada con eso — probá con otra palabra o quitá algún filtro"}
-            </p>
-          )
-        )}
-      </main>
       <Footer />
     </>
   );

@@ -266,37 +266,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     shellRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "end" });
   };
 
-  // Lleva directo al inicio del buscador + filtros, nunca al splash ni al
-  // principio de la página. Si la cortina todavía no se reveló (se hizo
-  // clic desde el splash), primero se dispara el mismo scroll que "deslizá
-  // para entrar" y se espera a que cruce su propio umbral de revelado
-  // (mismo data-revealed que ya expone CinematicHero) antes de alinear el
-  // buscador arriba — si no, "controls" todavía cuelga de la cortina en
-  // position:fixed y ese primer scrollIntoView no movería nada real.
-  const scrollToSearch = () => {
-    const behavior = reduceMotion ? "auto" : "smooth";
-    const goToControls = () => {
-      document.getElementById("dictionary-search")?.scrollIntoView({ behavior, block: "start" });
-    };
-    if (isRevealed) {
-      goToControls();
-      return;
-    }
-    shellRef.current?.scrollIntoView({ behavior, block: "end" });
-    let attempts = 0;
-    const waitForReveal = () => {
-      attempts += 1;
-      if (document.querySelector(".cinehero-curtain")?.getAttribute("data-revealed") === "true" || attempts > 60) {
-        goToControls();
-        return;
-      }
-      requestAnimationFrame(waitForReveal);
-    };
-    requestAnimationFrame(waitForReveal);
-  };
-
   return (
-    <>
     <section ref={shellRef} className="cinehero-shell" style={{ height: `calc(100svh + ${revealVh}${revealUnit})` }}>
       <div ref={stickyRef} className="cinehero-sticky" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
         <motion.div className="cinehero-layers" aria-hidden="true" style={{ opacity: sceneOpacity, filter: sceneFilter }}>
@@ -385,16 +355,5 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         </div>
       </motion.div>
     </section>
-    <button
-      type="button"
-      className="dictionary-jump-btn"
-      onClick={scrollToSearch}
-      aria-label="Ir al buscador y filtros"
-    >
-      <svg aria-hidden="true" viewBox="0 0 24 24">
-        <path d="M12 4v15M5 12l7 7 7-7" />
-      </svg>
-    </button>
-    </>
   );
 }
