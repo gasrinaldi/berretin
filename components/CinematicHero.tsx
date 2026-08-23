@@ -295,15 +295,14 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           <p className="cinehero-eyebrow">lunfardo porteño</p>
           <Image
             className="cinehero-logo"
-            src="/splash/logo-berretin.png"
-            alt="Berretín"
-            width={2048}
-            height={509}
+            src="/brand/berretin-wordmark.png"
+            alt="Berretín — diccionario de la calle argentina"
+            width={2610}
+            height={990}
             priority
             sizes="(max-width: 640px) 78vw, 480px"
             style={{ width: "clamp(240px, 46vw, 480px)", height: "auto" }}
           />
-          <p className="cinehero-tagline">diccionario de la calle argentina</p>
           <SearchBar id="hero-search" className="cinehero-search" value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
         </motion.div>
 
