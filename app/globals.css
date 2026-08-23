@@ -164,6 +164,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .admin-login-title { font-family:var(--font-fraunces), serif; font-weight:600; font-size:28px; margin:14px 0 28px; }
 .admin-login-form { display:flex; flex-direction:column; gap:16px; }
 .admin-login-note { font-size:14px; line-height:1.6; color:var(--crema); }
+.auth-form-links { display:flex; gap:16px; margin-top:-6px; }
 
 .admin-wrap { max-width:1080px; padding-top:48px; }
 .admin-header { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:32px; padding-bottom:24px; border-bottom:1px solid var(--line-strong); flex-wrap:wrap; }

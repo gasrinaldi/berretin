@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { establishSession } from "@/app/auth/callback/actions";
 
-// Destino del magic link de /cuenta (flujo implícito): el token viaja en
-// el hash de la URL (#access_token=...), que ningún servidor puede leer
+// Destino de los links por mail de /cuenta (confirmación de cuenta nueva y
+// recuperación de contraseña), ambos con flujo implícito: el token viaja
+// en el hash de la URL (#access_token=...), que ningún servidor puede leer
 // — por eso esta página es cliente y no un route handler. Lee el hash,
 // crea la sesión server-side vía establishSession() y hace un reload
-// completo a "next" para que esa página ya vea las cookies recién puestas.
+// completo. Un link de recuperación (type=recovery) va siempre a
+// /cuenta/nueva-contrasena; cualquier otro caso (confirmación de cuenta) va
+// a "next".
 export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +24,7 @@ export default function AuthCallbackPage() {
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
       const hashError = hashParams.get("error_description");
+      const isRecovery = hashParams.get("type") === "recovery";
 
       if (hashError) {
         setError("El enlace no es válido o ya expiró. Pedí uno nuevo.");
@@ -34,7 +38,7 @@ export default function AuthCallbackPage() {
 
       establishSession(accessToken, refreshToken).then((result) => {
         if (result.ok) {
-          window.location.replace(safeNext);
+          window.location.replace(isRecovery ? "/cuenta/nueva-contrasena" : safeNext);
         } else {
           setError(result.error);
         }
