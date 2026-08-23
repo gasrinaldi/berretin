@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { UsoTab } from "@/components/gallery/UsoTab";
 import { VeTab } from "@/components/gallery/VeTab";
+import { BerretinSeal } from "@/components/BerretinSeal";
 
 type WordTabsProps = {
   wordSlug: string;
   definicion: string;
-  categorias: string[];
-  origenes: string[];
 };
 
 const TABS = [
@@ -23,38 +22,39 @@ type TabValue = (typeof TABS)[number]["value"];
 // la página estática, sin fetch aparte) para que el contenido principal
 // siga siendo parte del HTML servido y no dependa de JS ni de una llamada
 // extra. Las otras dos pestañas recién piden datos cuando se activan.
-export function WordTabs({ wordSlug, definicion, categorias, origenes }: WordTabsProps) {
+export function WordTabs({ wordSlug, definicion }: WordTabsProps) {
   const [active, setActive] = useState<TabValue>("significado");
-  const badges = [...categorias, ...origenes];
 
   return (
-    <div className="word-tabs">
-      <div className="filters word-tabs-nav" role="tablist">
+    <div className="ficha-detail-tabs">
+      <div className="ficha-detail-tabs-nav" role="tablist">
         {TABS.map((tab) => (
-          <button key={tab.value} type="button" role="tab" aria-selected={active === tab.value} className={`filter-chip${active === tab.value ? " active" : ""}`} onClick={() => setActive(tab.value)}>
+          <button
+            key={tab.value}
+            type="button"
+            role="tab"
+            aria-selected={active === tab.value}
+            className={`ficha-tab-btn${active === tab.value ? " active" : ""}`}
+            onClick={() => setActive(tab.value)}
+          >
             {tab.label}
           </button>
         ))}
       </div>
 
-      <div className="word-tabs-panel" role="tabpanel" hidden={active !== "significado"}>
-        <p className="word-definition">{definicion}</p>
-        {badges.length > 0 && (
-          <div className="word-badges">
-            {badges.map((badge) => (
-              <span key={badge} className="ficha-badge">
-                {badge}
-              </span>
-            ))}
-          </div>
-        )}
+      <div className="ficha-detail-panel" role="tabpanel" hidden={active !== "significado"}>
+        <div className="ficha-definition-block">
+          <span className="ficha-definition-label">Definición</span>
+          <p className="ficha-definition-text">{definicion}</p>
+        </div>
+        <BerretinSeal className="ficha-detail-seal" />
       </div>
 
-      <div className="word-tabs-panel" role="tabpanel" hidden={active !== "uso"}>
+      <div className="ficha-detail-panel" role="tabpanel" hidden={active !== "uso"}>
         {active === "uso" && <UsoTab wordSlug={wordSlug} />}
       </div>
 
-      <div className="word-tabs-panel" role="tabpanel" hidden={active !== "ve"}>
+      <div className="ficha-detail-panel" role="tabpanel" hidden={active !== "ve"}>
         {active === "ve" && <VeTab wordSlug={wordSlug} />}
       </div>
     </div>

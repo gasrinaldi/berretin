@@ -30,8 +30,12 @@ export function ShareButton({ word, path }: ShareButtonProps) {
   };
 
   return (
-    <button type="button" className="share-btn" onClick={handleShare}>
-      {copied ? "enlace copiado" : "compartir palabra"}
+    <button type="button" className="ficha-action" onClick={handleShare}>
+      <svg className="ficha-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 16V4M12 4 7 9M12 4l5 5" />
+        <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+      </svg>
+      {copied ? "enlace copiado" : "compartir"}
     </button>
   );
 }

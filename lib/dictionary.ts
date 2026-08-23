@@ -80,6 +80,10 @@ function buildAll(): InternalEntry[] {
 // los slugs y el índice de búsqueda se reutilizan en cada request.
 const ALL: InternalEntry[] = buildAll();
 const BY_SLUG = new Map<string, InternalEntry>(ALL.map((e) => [e.slug, e]));
+// Posición (1-based) de cada entrada dentro del orden alfabético completo
+// del diccionario — estable mientras no cambie el dataset, nunca inventada.
+// Usada en /palabra/[slug] para el número de ficha ("N.º 00047").
+const POSITION_BY_SLUG = new Map<string, number>(ALL.map((e, i) => [e.slug, i + 1]));
 
 function stripInternal(entry: InternalEntry): DictionaryEntry {
   const { id, slug, palabra, definicion, letra, categorias, origenes } = entry;
@@ -93,6 +97,12 @@ export function getEntryBySlug(slug: string): DictionaryEntry | undefined {
 
 export function getAllSlugs(): string[] {
   return ALL.map((e) => e.slug);
+}
+
+// Devuelve la posición real y estable de la entrada, o null si no existe
+// (no se inventa ningún número de ficha para slugs desconocidos).
+export function getEntryPosition(slug: string): number | null {
+  return POSITION_BY_SLUG.get(slug) ?? null;
 }
 
 // Todo el diccionario ya normalizado (mismo orden y slugs que el resto de

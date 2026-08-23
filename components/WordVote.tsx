@@ -49,8 +49,8 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
 
   if (loadError) {
     return (
-      <div className="word-vote">
-        <span className="filters-group-label">¿todavía se usa?</span>
+      <div className="ficha-vote">
+        <span className="ficha-vote-label">¿todavía se usa?</span>
         <p className="contribute-hint">no disponible en este momento</p>
       </div>
     );
@@ -58,22 +58,28 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
 
   if (!summary) return null;
 
+  const siPct = summary.total > 0 ? Math.round((summary.counts.si / summary.total) * 100) : 0;
+
   return (
-    <div className="word-vote">
-      <span className="filters-group-label">¿todavía se usa?</span>
-      <div className="word-vote-options">
+    <div className="ficha-vote">
+      <span className="ficha-vote-label">¿todavía se usa?</span>
+      <div className="ficha-vote-options">
         {VOTE_OPTIONS.map((opt) => {
           const count = summary.counts[opt.value];
           const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0;
           const active = summary.myVote === opt.value;
           return (
-            <button key={opt.value} type="button" className={`filter-chip word-vote-btn${active ? " active" : ""}`} disabled={!loggedIn || pending} onClick={() => handleVote(opt.value)}>
-              {opt.label} <span className="word-vote-pct">{pct}%</span>
+            <button key={opt.value} type="button" className={`ficha-vote-option${active ? " active" : ""}`} disabled={!loggedIn || pending} onClick={() => handleVote(opt.value)}>
+              <span className="ficha-vote-dot" aria-hidden="true" />
+              {opt.label} <span className="ficha-vote-pct">{pct}%</span>
             </button>
           );
         })}
       </div>
-      <p className="contribute-hint">
+      <div className="ficha-vote-bar" aria-hidden="true">
+        <span className="ficha-vote-bar-fill" style={{ width: `${siPct}%` }} />
+      </div>
+      <p className="ficha-vote-count">
         {summary.total} {summary.total === 1 ? "voto" : "votos"}
         {!loggedIn && (
           <>

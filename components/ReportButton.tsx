@@ -13,9 +13,9 @@ export function ReportButton({ wordSlug }: { wordSlug: string }) {
   }
 
   return (
-    <div className="word-report">
-      <button type="button" className="back-btn" onClick={() => setOpen((v) => !v)}>
-        reportar error o contenido inapropiado
+    <div className="ficha-report">
+      <button type="button" className="ficha-action ficha-action-muted" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        reportar error
       </button>
       {open && (
         <form action={formAction} className="contribute-form word-report-form">
