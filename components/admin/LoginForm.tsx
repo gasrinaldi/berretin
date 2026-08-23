@@ -1,54 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useActionState, useEffect } from "react";
+import { adminSignIn } from "@/app/admin/login/actions";
+import { initialAdminSignInState } from "@/lib/admin-login-state";
 
 export function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [error, setError] = useState("");
+  const [state, formAction, pending] = useActionState(adminSignIn, initialAdminSignInState);
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setStatus("sending");
-    setError("");
-
-    const supabase = createSupabaseBrowserClient();
-    if (!supabase) {
-      setStatus("error");
-      setError("El inicio de sesión no está disponible en este momento.");
-      return;
+  useEffect(() => {
+    if (state.status === "success") {
+      // Reload completo: la sesión recién se guardó en cookies vía la
+      // server action, y /admin/aportes la lee en un Server Component.
+      window.location.replace("/admin/aportes");
     }
-
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/admin/aportes")}`,
-      },
-    });
-
-    if (signInError) {
-      setStatus("error");
-      setError("No pudimos enviar el enlace. Verificá el email e intentá de nuevo.");
-      return;
-    }
-
-    setStatus("sent");
-  };
-
-  if (status === "sent") {
-    return <p className="admin-login-note">Si ese email tiene acceso, te enviamos un enlace de ingreso. Revisá tu bandeja de entrada.</p>;
-  }
+  }, [state.status]);
 
   return (
-    <form className="admin-login-form" onSubmit={handleSubmit}>
+    <form className="admin-login-form" action={formAction}>
       <div className="contribute-field">
-        <label htmlFor="admin-email">Email de administrador</label>
-        <input id="admin-email" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="vos@ejemplo.com" />
+        <label htmlFor="admin-password">Contraseña</label>
+        <input id="admin-password" name="password" type="password" required autoFocus autoComplete="current-password" />
       </div>
-      {error && <p className="contribute-error">{error}</p>}
-      <button type="submit" className="share-btn" disabled={status === "sending"}>
-        {status === "sending" ? "enviando..." : "enviar enlace de ingreso"}
+      {state.status === "error" && state.error && <p className="contribute-error">{state.error}</p>}
+      <button type="submit" className="share-btn" disabled={pending}>
+        {pending ? "ingresando..." : "ingresar"}
       </button>
     </form>
   );

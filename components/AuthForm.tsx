@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { createSupabaseOtpClient } from "@/lib/supabase/browser";
 
 export function AuthForm({ redirectTo }: { redirectTo: string }) {
   const [email, setEmail] = useState("");
@@ -13,7 +13,7 @@ export function AuthForm({ redirectTo }: { redirectTo: string }) {
     setStatus("sending");
     setError("");
 
-    const supabase = createSupabaseBrowserClient();
+    const supabase = createSupabaseOtpClient();
     if (!supabase) {
       setStatus("error");
       setError("El inicio de sesión no está disponible en este momento.");
