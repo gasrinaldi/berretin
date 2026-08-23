@@ -120,6 +120,19 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     return errorState("El formulario de aportes no está disponible en este momento. Probá más tarde.");
   }
 
+  // Remitentes bloqueados por moderación (etapa 3): se rechaza en silencio,
+  // sin revelar que es por un bloqueo, antes de gastar tiempo en los demás
+  // límites o en procesar una imagen.
+  if (ipHash || emailRaw) {
+    let blockedQuery = supabase.from("blocked_senders").select("id", { count: "exact", head: true });
+    const conditions = [ipHash ? `ip_hash.eq.${ipHash}` : null, emailRaw ? `email.eq.${emailRaw.toLowerCase()}` : null].filter(Boolean).join(",");
+    blockedQuery = blockedQuery.or(conditions);
+    const { count: blockedCount, error: blockedError } = await blockedQuery;
+    if (!blockedError && (blockedCount ?? 0) > 0) {
+      return errorState("No pudimos procesar tu aporte. Si creés que es un error, escribinos.");
+    }
+  }
+
   if (ipHash) {
     const { count: recentCount, error: recentError } = await supabase
       .from("word_contributions")
