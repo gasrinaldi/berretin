@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { BackButton } from "@/components/BackButton";
+import { AuxNav } from "@/components/AuxNav";
 import { ShareButton } from "@/components/ShareButton";
 import { ContributeButton } from "@/components/ContributeButton";
 import { WordVote } from "@/components/WordVote";
@@ -64,6 +65,7 @@ export default async function PalabraPage({ params }: PageProps<"/palabra/[slug]
       <div className="wrap word-wrap">
         <nav className="word-nav">
           <BackButton />
+          <AuxNav />
         </nav>
         <article className="word-article">
           <span className="word-letter">{entry.letra}</span>

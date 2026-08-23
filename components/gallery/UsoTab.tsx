@@ -6,6 +6,7 @@ import { CONTRIBUTION_TYPES } from "@/lib/contributions";
 import type { GalleryContribution } from "@/lib/gallery";
 import { GalleryVoteReport } from "@/components/gallery/GalleryVoteReport";
 import { AudioPlayer } from "@/components/gallery/AudioPlayer";
+import { ContributionMeta } from "@/components/gallery/ContributionMeta";
 
 export function UsoTab({ wordSlug }: { wordSlug: string }) {
   const [rows, setRows] = useState<GalleryContribution[]>([]);
@@ -45,7 +46,11 @@ export function UsoTab({ wordSlug }: { wordSlug: string }) {
         <article key={row.id} className="gallery-item">
           <div className="gallery-item-header">
             <span className="ficha-badge">{CONTRIBUTION_TYPES.find((t) => t.value === row.type)?.label ?? row.type}</span>
-            {(row.authorAlias || row.location || row.decade) && <span className="gallery-item-meta">{[row.authorAlias, row.location, row.decade].filter(Boolean).join(" · ")}</span>}
+            {(row.authorAlias || row.location || row.decade) && (
+              <span className="gallery-item-meta">
+                <ContributionMeta row={row} />
+              </span>
+            )}
           </div>
           <p className="ficha-meaning gallery-item-content">{row.content}</p>
           {row.hasAudio && <AudioPlayer contributionId={row.id} />}

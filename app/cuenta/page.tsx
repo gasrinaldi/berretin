@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth-user";
 import { getMyProfile, getMyContributions } from "@/app/cuenta/actions";
 import { AuthForm } from "@/components/AuthForm";
@@ -16,6 +17,11 @@ export default async function CuentaPage() {
   if (!user) {
     return (
       <div className="wrap admin-login-wrap">
+        <nav className="word-nav">
+          <Link href="/" className="back-btn">
+            ← volver al diccionario
+          </Link>
+        </nav>
         <p className="word-letter">Berretín</p>
         <h1 className="admin-login-title">Mi cuenta</h1>
         <AuthForm redirectTo="/cuenta" />
@@ -28,6 +34,11 @@ export default async function CuentaPage() {
   return (
     <>
       <div className="wrap admin-wrap">
+        <nav className="word-nav">
+          <Link href="/" className="back-btn">
+            ← volver al diccionario
+          </Link>
+        </nav>
         <header className="admin-header">
           <div>
             <p className="word-letter">Berretín</p>

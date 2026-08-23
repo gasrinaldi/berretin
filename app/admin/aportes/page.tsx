@@ -4,6 +4,7 @@ import { getAdminUser } from "@/lib/admin-auth";
 import { DEFAULT_FILTERS } from "@/lib/admin-contributions";
 import { listContributions } from "@/app/admin/aportes/actions";
 import { ModerationDashboard } from "@/components/admin/ModerationDashboard";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 export const metadata: Metadata = { title: "Aportes — Berretín", robots: { index: false, follow: false } };
 // Depende de la cookie de sesión en cada visita — nunca debe quedar
@@ -28,6 +29,7 @@ export default async function AdminContributionsPage() {
         </div>
         <p className="admin-session">{admin.email}</p>
       </header>
+      <AdminNav />
       <ModerationDashboard initial={initial.ok ? initial.data : null} initialError={initial.ok ? null : initial.error} />
     </div>
   );

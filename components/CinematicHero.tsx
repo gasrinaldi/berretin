@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Dictionary } from "@/components/Dictionary";
 import { SearchBar } from "@/components/SearchBar";
+import { AuxNav } from "@/components/AuxNav";
 
 type CinematicHeroProps = {
   query: string;
@@ -345,6 +346,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           <div className="wrap">
             <header className="dictionary-intro">
               <p className="tagline">diccionario navegable del lunfardo porteño — palabras y expresiones, de dónde vienen y cómo se usan hoy</p>
+              <AuxNav className="dictionary-intro-nav" />
             </header>
             <Dictionary query={query} onQueryChange={onQueryChange} />
           </div>

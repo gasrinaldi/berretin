@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getWordGallery, getContributionMediaUrl } from "@/app/palabra/[slug]/gallery-actions";
 import type { GalleryContribution } from "@/lib/gallery";
 import { GalleryVoteReport } from "@/components/gallery/GalleryVoteReport";
+import { ContributionMeta } from "@/components/gallery/ContributionMeta";
 
 export function VeTab({ wordSlug }: { wordSlug: string }) {
   const [rows, setRows] = useState<GalleryContribution[]>([]);
@@ -63,7 +64,11 @@ export function VeTab({ wordSlug }: { wordSlug: string }) {
                 <span className="contribute-hint">{lightboxPendingId === row.id ? "cargando..." : "sin miniatura"}</span>
               )}
             </button>
-            {(row.authorAlias || row.location || row.decade) && <figcaption className="gallery-item-meta">{[row.authorAlias, row.location, row.decade].filter(Boolean).join(" · ")}</figcaption>}
+            {(row.authorAlias || row.location || row.decade) && (
+              <figcaption className="gallery-item-meta">
+                <ContributionMeta row={row} />
+              </figcaption>
+            )}
             <GalleryVoteReport contributionId={row.id} wordSlug={wordSlug} voteCount={row.voteCount} myVote={row.myVote} />
           </figure>
         ))}

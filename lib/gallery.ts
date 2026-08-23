@@ -13,6 +13,10 @@ export type GalleryContribution = {
   type: ContributionType;
   content: string;
   authorAlias: string | null;
+  // Alias del perfil público del autor (public.profiles.alias), solo si
+  // tiene uno — nunca el user_id. Nulo para aportes anónimos o de alguien
+  // sin perfil creado: en ambos casos el nombre se muestra sin link.
+  authorProfileAlias: string | null;
   location: string | null;
   decade: string | null;
   createdAt: string;

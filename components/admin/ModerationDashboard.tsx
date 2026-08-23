@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { listContributions, signOutAdmin } from "@/app/admin/aportes/actions";
+import { listContributions } from "@/app/admin/aportes/actions";
 import { CONTRIBUTION_TYPES } from "@/lib/contributions";
 import { DEFAULT_FILTERS, type ContributionRow, type ListFilters, type ListResult } from "@/lib/admin-contributions";
 import { ContributionCard } from "@/components/admin/ContributionCard";
@@ -24,7 +23,6 @@ type ModerationDashboardProps = {
 };
 
 export function ModerationDashboard({ initial, initialError }: ModerationDashboardProps) {
-  const router = useRouter();
   const [filters, setFilters] = useState<ListFilters>(DEFAULT_FILTERS);
   const [wordInput, setWordInput] = useState("");
   const [rows, setRows] = useState<ContributionRow[]>(initial?.rows ?? []);
@@ -95,15 +93,6 @@ export function ModerationDashboard({ initial, initialError }: ModerationDashboa
             {tab.label} {tab.value !== "all" ? `(${counts[tab.value as "pending" | "approved" | "rejected"]})` : ""}
           </button>
         ))}
-        <button
-          type="button"
-          className="back-btn admin-signout"
-          onClick={() => {
-            signOutAdmin().then(() => router.push("/admin/login"));
-          }}
-        >
-          cerrar sesión
-        </button>
       </div>
 
       <div className="admin-filters">

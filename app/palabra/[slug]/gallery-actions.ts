@@ -32,8 +32,9 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
     // Selección explícita de columnas públicas: nunca email, moderation_note,
     // ip_hash ni las rutas privadas de storage (image_path/audio_path) —
     // solo thumbnail_path, que se resuelve a una URL firmada acá mismo y no
-    // se devuelve como texto.
-    .select("id, type, content, author_alias, location, decade, created_at, image_path, thumbnail_path, audio_path", { count: "exact" })
+    // se devuelve como texto. user_id se pide para resolver el perfil
+    // público del autor más abajo, pero nunca se incluye en la respuesta.
+    .select("id, type, content, author_alias, location, decade, created_at, image_path, thumbnail_path, audio_path, user_id", { count: "exact" })
     .eq("word_id", entry.id)
     .eq("status", "approved")
     .in("type", types)
@@ -43,6 +44,15 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
   if (error) return { ok: false, error: "No pudimos cargar los aportes." };
 
   const rows = data ?? [];
+
+  // Aportes anónimos (sin user_id) quedan siempre sin link. Para el resto,
+  // solo se linkea si esa cuenta efectivamente tiene un perfil público.
+  const authorIds = [...new Set(rows.map((r) => r.user_id).filter((id): id is string => Boolean(id)))];
+  const profileAliasByUserId = new Map<string, string>();
+  if (authorIds.length > 0) {
+    const { data: profileRows } = await supabase.from("profiles").select("id, alias").in("id", authorIds);
+    profileRows?.forEach((p) => profileAliasByUserId.set(p.id, p.alias));
+  }
   const thumbPaths = rows.map((r) => r.thumbnail_path).filter((p): p is string => Boolean(p));
   const signedMap = new Map<string, string>();
   if (thumbPaths.length > 0) {
@@ -71,6 +81,7 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
     type: r.type,
     content: r.content,
     authorAlias: r.author_alias,
+    authorProfileAlias: r.user_id ? (profileAliasByUserId.get(r.user_id) ?? null) : null,
     location: r.location,
     decade: r.decade,
     createdAt: r.created_at,

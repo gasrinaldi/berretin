@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getAdminUser } from "@/lib/admin-auth";
 import { listChallenges } from "@/app/admin/desafio/actions";
 import { ChallengeForm } from "@/components/admin/ChallengeForm";
+import { AdminNav } from "@/components/admin/AdminNav";
 
 export const metadata: Metadata = { title: "Desafío mensual — Berretín", robots: { index: false, follow: false } };
 // Depende de la sesión en cada visita, igual que /admin/aportes.
@@ -23,6 +24,7 @@ export default async function AdminChallengePage() {
         </div>
         <p className="admin-session">{admin.email}</p>
       </header>
+      <AdminNav />
       {result.ok ? <ChallengeForm initialChallenges={result.rows} /> : <p className="contribute-error contribute-error-general">{result.error}</p>}
     </div>
   );
