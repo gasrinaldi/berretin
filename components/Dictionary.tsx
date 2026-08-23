@@ -9,6 +9,12 @@ import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false };
 
+// Techo defensivo para la restauración por sessionStorage: nunca se
+// dispara en el uso normal, solo evita un exceso de pedidos en paralelo
+// si quedara guardado un estado desproporcionado.
+const MAX_RESTORE_PAGES = 40;
+const SCROLL_STATE_KEY = "berretin:dictionary-scroll";
+
 type ApiResponse = {
   results: DictionaryEntry[];
   total: number;
@@ -16,6 +22,8 @@ type ApiResponse = {
   page: number;
   countsByLetter: Record<string, number>;
 };
+
+type ScrollState = { search: string; pagesLoaded: number; scrollY: number };
 
 function readStateFromUrl(): { query: string; filters: FilterState } {
   if (typeof window === "undefined") return { query: "", filters: EMPTY_FILTERS };
@@ -41,6 +49,36 @@ function writeStateToUrl(query: string, filters: FilterState) {
   const search = params.toString();
   const url = search ? `?${search}` : window.location.pathname;
   window.history.replaceState(null, "", url);
+  return search ? `?${search}` : "";
+}
+
+// El estado de scroll/paginación vive aparte de la URL (que ya guarda
+// búsqueda y filtros): es temporal, por pestaña, y no tiene sentido que
+// aparezca en un link compartido.
+function readScrollState(): ScrollState | null {
+  try {
+    const raw = sessionStorage.getItem(SCROLL_STATE_KEY);
+    return raw ? (JSON.parse(raw) as ScrollState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveScrollState(state: ScrollState) {
+  try {
+    sessionStorage.setItem(SCROLL_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // sessionStorage no disponible (modo privado, cuota llena): sin
+    // restauración, pero la navegación normal sigue funcionando igual.
+  }
+}
+
+// El hero cinematográfico mantiene el diccionario oculto (curtain fixed)
+// hasta que el progreso de scroll cruza su propio umbral de revelado —
+// esto vive en CinematicHero.tsx, que esta función no toca ni conoce por
+// dentro: solo lee el atributo data-revealed que ya expone.
+function isCurtainRevealed(): boolean {
+  return document.querySelector(".cinehero-curtain")?.getAttribute("data-revealed") === "true";
 }
 
 type DictionaryProps = {
@@ -65,13 +103,39 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // filtros aunque conservara la búsqueda, que llega por otra vía).
   const [hydrated, setHydrated] = useState(false);
   const requestId = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Hidratar desde la URL una sola vez al montar.
+  // Estado "vivo" para poder guardarlo en cualquier momento (scroll, cambio
+  // de página, desmontaje) sin depender de closures viejas de un efecto.
+  const currentSearchRef = useRef("");
+  const pagesLoadedRef = useRef(0);
+  const pendingRestoreRef = useRef<ScrollState | null>(null);
+  const pendingScrollYRef = useRef<number | null>(null);
+
+  // Hidratar desde la URL una sola vez al montar. Si hay un estado de
+  // scroll guardado que corresponde EXACTAMENTE a esta URL (misma
+  // búsqueda/filtros), es que se está volviendo de una palabra: se marca
+  // para restaurar en vez de arrancar en la página 0. Se consume una sola
+  // vez (se borra de sessionStorage) para que una visita nueva —aunque
+  // caiga en la misma búsqueda más tarde— no recupere un estado viejo.
   useEffect(() => {
     const hydrate = () => {
       const { query: urlQuery, filters: urlFilters } = readStateFromUrl();
       if (urlQuery) onQueryChange(urlQuery);
       setFilters(urlFilters);
+      // Sin esperar el debounce de 250ms: si no, el primer fetch (y una
+      // eventual restauración) dispararía sin la búsqueda todavía aplicada.
+      setDebouncedQuery(urlQuery);
+
+      const saved = readScrollState();
+      if (saved && saved.search === window.location.search && saved.pagesLoaded > 1) {
+        pendingRestoreRef.current = saved;
+        try {
+          sessionStorage.removeItem(SCROLL_STATE_KEY);
+        } catch {
+          // no-op
+        }
+      }
       setHydrated(true);
     };
     hydrate();
@@ -87,12 +151,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // Reflejar búsqueda y filtros en la URL, sin pisar lo que aún no se leyó.
   useEffect(() => {
     if (!hydrated) return;
-    writeStateToUrl(query, filters);
+    const search = writeStateToUrl(query, filters);
+    currentSearchRef.current = search;
   }, [query, filters, hydrated]);
 
-  const fetchPage = async (targetPage: number, replace: boolean) => {
-    const id = ++requestId.current;
-    setLoading(true);
+  const buildParams = (targetPage: number) => {
     const params = new URLSearchParams();
     if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
     filters.letras.forEach((l) => params.append("letra", l));
@@ -100,16 +163,26 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     filters.origenes.forEach((o) => params.append("origen", o));
     if (filters.sinCategoria) params.set("sinCategoria", "1");
     params.set("page", String(targetPage));
+    return params;
+  };
 
+  const fetchPageData = async (targetPage: number): Promise<ApiResponse> => {
+    const res = await fetch(`/api/dictionary?${buildParams(targetPage).toString()}`);
+    return res.json();
+  };
+
+  const fetchPage = async (targetPage: number, replace: boolean) => {
+    const id = ++requestId.current;
+    setLoading(true);
     try {
-      const res = await fetch(`/api/dictionary?${params.toString()}`);
-      const data: ApiResponse = await res.json();
+      const data = await fetchPageData(targetPage);
       if (id !== requestId.current) return; // respuesta obsoleta, se ignora
       setResults((prev) => (replace ? data.results : [...prev, ...data.results]));
       setTotal(data.total);
       setHasMore(data.hasMore);
       setCountsByLetter(data.countsByLetter);
       setPage(targetPage);
+      pagesLoadedRef.current = targetPage + 1;
     } catch {
       if (id !== requestId.current) return;
     } finally {
@@ -117,14 +190,113 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     }
   };
 
-  // Cada vez que cambia la búsqueda (ya debounced) o los filtros, se reinicia la paginación.
+  // Reconstruye de una sola vez los N bloques que ya estaban cargados
+  // (pedidos en paralelo, un solo setState) para no pintar primero solo la
+  // página 0 y recién después ir sumando el resto: eso sí se notaría como
+  // salto visual. La posición de scroll se aplica recién cuando esto
+  // termina, nunca antes.
+  const restorePages = async (pagesLoaded: number, scrollY: number) => {
+    const id = ++requestId.current;
+    setLoading(true);
+    const safeCount = Math.max(1, Math.min(pagesLoaded, MAX_RESTORE_PAGES));
+    try {
+      const pagesData = await Promise.all(Array.from({ length: safeCount }, (_, i) => fetchPageData(i)));
+      if (id !== requestId.current) return;
+      const last = pagesData[pagesData.length - 1];
+      setResults(pagesData.flatMap((p) => p.results));
+      setTotal(last.total);
+      setHasMore(last.hasMore);
+      setCountsByLetter(last.countsByLetter);
+      setPage(safeCount - 1);
+      pagesLoadedRef.current = safeCount;
+      pendingScrollYRef.current = scrollY;
+    } catch {
+      if (id !== requestId.current) return;
+      fetchPage(0, true); // la restauración falló: arrancar normal en vez de quedar vacío
+    } finally {
+      if (id === requestId.current) setLoading(false);
+    }
+  };
+
+  // Cada vez que cambia la búsqueda (ya debounced) o los filtros, se
+  // reinicia la paginación — salvo la primera vez tras hidratar, si hay
+  // una restauración pendiente para esta misma búsqueda. Se ignora por
+  // completo mientras !hydrated: si no, este efecto ya dispara una vez en
+  // el commit inicial (con filters/debouncedQuery todavía en su valor por
+  // defecto) y consume pendingRestoreRef ahí — antes de que el commit que
+  // sí trae los valores reales de la URL llegue a verlo.
   useEffect(() => {
+    if (!hydrated) return;
     const run = () => {
-      fetchPage(0, true);
+      const restore = pendingRestoreRef.current;
+      pendingRestoreRef.current = null;
+      if (restore) restorePages(restore.pagesLoaded, restore.scrollY);
+      else fetchPage(0, true);
     };
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery, filters]);
+  }, [debouncedQuery, filters, hydrated]);
+
+  // Carga automática progresiva: cuando el centinela del final de la
+  // lista entra en el viewport (con margen, para adelantarse antes de que
+  // se llegue a ver), se pide la página siguiente — mismo fetchPage que ya
+  // usa el botón, misma paginación de a 50 entradas, nunca todo junto.
+  // "Cargar más" queda como respaldo manual si el observer no dispara
+  // (navegador viejo, foco perdido, etc.).
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore || loading || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchPage(page + 1, false);
+      },
+      { rootMargin: "600px 0px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, loading, page]);
+
+  // Aplica la posición de scroll guardada recién después de que la
+  // restauración terminó de pintar. El hero mantiene el contenido fuera
+  // del flujo (position:fixed) hasta cruzar su propio umbral de revelado,
+  // así que primero hay que "empujar" ese cruce (el scroll queda clamped
+  // al alto del hero, pero eso ya alcanza para revelarlo) y solo después,
+  // con el documento ya a su alto real, aplicar la posición final.
+  useEffect(() => {
+    if (loading) return;
+    const targetY = pendingScrollYRef.current;
+    if (targetY == null) return;
+    pendingScrollYRef.current = null;
+
+    let cancelled = false;
+    const settle = (attempt: number) => {
+      if (cancelled) return;
+      window.scrollTo(0, targetY);
+      if (isCurtainRevealed() || attempt > 30) return;
+      requestAnimationFrame(() => settle(attempt + 1));
+    };
+    settle(0);
+    return () => {
+      cancelled = true;
+    };
+  }, [loading]);
+
+  // Guarda en el momento exacto del click (fase de captura en document, así
+  // corre antes que el navigate del Link) — no al desmontar: para entonces
+  // Next.js ya llevó el scroll a 0 para la página nueva, y guardar ahí
+  // pisaría la posición real con un 0.
+  useEffect(() => {
+    if (!hydrated) return;
+    const handleClick = () => {
+      if (pagesLoadedRef.current > 0) {
+        saveScrollState({ search: currentSearchRef.current, pagesLoaded: pagesLoadedRef.current, scrollY: window.scrollY });
+      }
+    };
+    document.addEventListener("click", handleClick, { capture: true });
+    return () => document.removeEventListener("click", handleClick, { capture: true });
+  }, [hydrated]);
 
   const groups = useMemo(() => {
     const ordered: { letter: string; entries: DictionaryEntry[] }[] = [];
@@ -175,9 +347,12 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
               <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
             ))}
             {hasMore && (
-              <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
-                {loading ? "cargando..." : "cargar más"}
-              </button>
+              <>
+                <div ref={sentinelRef} aria-hidden="true" />
+                <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
+                  {loading ? "cargando..." : "cargar más"}
+                </button>
+              </>
             )}
           </>
         ) : (
