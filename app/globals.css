@@ -17,7 +17,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .aux-nav.dictionary-intro-nav a:nth-child(1) { justify-self:start; }
 .aux-nav.dictionary-intro-nav a:nth-child(2) { justify-self:center; }
 .aux-nav.dictionary-intro-nav a:nth-child(3) { justify-self:end; }
-.controls { margin-top:32px; margin-bottom:36px; }
+.controls { margin-top:20px; margin-bottom:20px; }
 .search-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--line-strong); border-radius:2px; padding:12px 16px; margin-bottom:14px; }
 .search-row svg { flex-shrink:0; opacity:.5; }
 .search-row input { background:none; border:none; outline:none; color:var(--crema); font-family:inherit; font-size:15px; width:100%; }
@@ -37,12 +37,12 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-results-count { margin-top:10px; text-align:right; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
 
 /* ---- Filtros editoriales, siempre visibles (sin toggle, sin panel) ---- */
-.consult-filters { margin-bottom:8px; }
-.consult-section-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:16px; }
+.consult-filters { margin-bottom:4px; }
+.consult-section-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
 
-.consult-index { margin-bottom:28px; }
-.consult-tipo { margin-bottom:36px; }
-.consult-letters { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 4px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.consult-index { margin-bottom:16px; }
+.consult-tipo { margin-bottom:18px; }
+.consult-letters { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 4px; padding-bottom:10px; border-bottom:1px solid var(--line); }
 .consult-tipo .consult-letters { justify-content:flex-start; gap:10px 28px; }
 .consult-letter { position:relative; border:0; background:none; padding:6px 2px; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; text-transform:uppercase; transition:color .15s ease; }
 .consult-letter:hover { color:var(--crema); }
@@ -54,13 +54,17 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    desktop, donde ese bloque queda siempre a la vista. */
 .consult-facets-toggle { display:none; }
 
-.consult-facets { display:flex; flex-direction:column; gap:32px; margin-bottom:8px; }
-.consult-facet-group + .consult-facet-group { padding-top:24px; border-top:1px solid var(--line); }
-/* Grilla fluida: más columnas cuantas más entren, sin depender de un
-   conteo de filas calculado en JS — nunca deja huecos vacíos porque cada
-   fila se rellena con las columnas que el ancho real permite. */
-.consult-facet-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); column-gap:28px; row-gap:10px; }
-.consult-facet-item { display:flex; align-items:baseline; gap:10px; width:100%; border:0; background:none; padding:7px 0; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:400; font-size:15px; line-height:1.3; text-align:left; transition:color .15s ease; }
+.consult-facets { display:flex; flex-direction:column; gap:18px; margin-bottom:4px; }
+.consult-facet-group + .consult-facet-group { padding-top:14px; border-top:1px solid var(--line); }
+/* Grilla fluida (Origen): más columnas cuantas más entren, sin depender
+   de un conteo de filas calculado en JS — nunca deja huecos vacíos
+   porque cada fila se rellena con las columnas que el ancho real
+   permite. Categoría usa una grilla fija de 4 columnas (ver
+   .consult-facet-list-categoria) para las 12 entradas reales (11
+   categorías + "sin categoría") en 3 filas parejas y compactas. */
+.consult-facet-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); column-gap:20px; row-gap:6px; }
+.consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(4, 1fr); }
+.consult-facet-item { display:flex; align-items:baseline; gap:10px; width:100%; border:0; background:none; padding:4px 0; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:400; font-size:15px; line-height:1.3; text-align:left; transition:color .15s ease; }
 .consult-facet-item:hover { color:var(--crema); }
 .consult-facet-item.active { color:var(--brass); }
 .consult-facet-item:focus-visible { outline:1px solid var(--brass); outline-offset:2px; }
@@ -68,7 +72,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-facet-name { position:relative; }
 .consult-facet-item.active .consult-facet-name::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:1px; background:var(--brass); }
 
-.consult-status-row { display:flex; align-items:center; justify-content:flex-end; gap:14px; margin-top:28px; padding-top:16px; border-top:1px solid var(--line); }
+.consult-status-row { display:flex; align-items:center; justify-content:flex-end; gap:14px; margin-top:14px; padding-top:10px; border-top:1px solid var(--line); }
 .consult-clear-btn { border:0; background:none; padding:0; color:var(--brass); cursor:pointer; font-size:11px; letter-spacing:1.2px; text-transform:uppercase; font-family:inherit; }
 .consult-clear-btn:hover { color:var(--crema); }
 .consult-clear-btn:focus-visible { outline:1px solid var(--brass); outline-offset:3px; }
@@ -77,20 +81,22 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 @media (max-width:900px) {
   .consult-seal { height:96px; }
+  .consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(3, 1fr); }
 }
 
 @media (max-width:640px) {
   .consult-title { font-size:clamp(26px, 8vw, 34px); white-space:normal; }
   .consult-seal { display:none; }
-  .controls { margin-top:28px; margin-bottom:28px; }
+  .controls { margin-top:16px; margin-bottom:16px; }
   .consult-letters { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
   .consult-letter { flex-shrink:0; min-height:44px; padding:10px 7px; display:inline-flex; align-items:center; }
   .consult-facet-item { min-height:44px; }
+  .consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(2, 1fr); }
   .consult-status-row { justify-content:flex-start; flex-wrap:wrap; }
 
   /* Categoría/origen quedan detrás del botón "Filtros" — el buscador y el
      índice alfabético (arriba) nunca se ocultan. */
-  .consult-facets-toggle { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin-bottom:24px; padding:12px 2px; border:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:none; color:var(--crema); cursor:pointer; font:600 13px var(--font-space-grotesk), sans-serif; letter-spacing:.5px; text-transform:uppercase; }
+  .consult-facets-toggle { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin-bottom:14px; padding:12px 2px; border:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); background:none; color:var(--crema); cursor:pointer; font:600 13px var(--font-space-grotesk), sans-serif; letter-spacing:.5px; text-transform:uppercase; }
   .consult-facets-toggle-caret { color:var(--brass); font-size:12px; line-height:1; transition:transform .2s ease; }
   .consult-facets-toggle-caret.open { transform:rotate(180deg); }
   .consult-facets[data-open="false"] { display:none; }
@@ -239,6 +245,10 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 /* ---- Grilla editorial del listado (letra + fichas) ---- */
 .letter-block { margin-top:48px; }
+/* Solo el primer bloque se acerca al final de los filtros — el resto
+   conserva el ritmo entre letras, que no es "el gran espacio vacío"
+   del que se quejaba el pedido. */
+.letter-block:first-of-type { margin-top:18px; }
 .letter-portada { display:flex; align-items:baseline; gap:16px; padding-bottom:14px; border-bottom:1px solid var(--line-strong); }
 .letter-big { font-family:var(--font-fraunces), serif; font-weight:700; font-style:italic; font-size:64px; color:var(--brass); line-height:1; }
 .letter-count { font-size:12px; color:var(--muted); letter-spacing:.5px; }

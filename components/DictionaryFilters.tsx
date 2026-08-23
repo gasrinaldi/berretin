@@ -124,7 +124,7 @@ export function DictionaryFilters({ state, onChange, query, onQueryChange }: Dic
       <section className="consult-facets" aria-label="Categorías y orígenes" data-open={facetsOpen}>
         <div className="consult-facet-group">
           <h2 className="consult-section-title">Categoría</h2>
-          <div className="consult-facet-list">
+          <div className="consult-facet-list consult-facet-list-categoria">
             <button
               type="button"
               className={`consult-facet-item${state.sinCategoria ? " active" : ""}`}
