@@ -308,6 +308,23 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .discover-quiz-option.correct { border-color:#8FB08A; background:rgba(143,176,138,0.1); color:#8FB08A; }
 .discover-quiz-option.wrong { border-color:var(--error); background:rgba(217,135,112,0.1); color:var(--error); }
 .discover-quiz-result { display:flex; flex-direction:column; gap:6px; }
+
+.discover-illustration { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+.discover-illustration-img { width:160px; height:160px; object-fit:cover; border:1px solid var(--line-strong); border-radius:2px; display:block; }
+.discover-illustration-caption { display:flex; flex-direction:column; gap:10px; }
+
+.discover-trends { display:flex; flex-direction:column; }
+.discover-trend-item { display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:14px 0; border-top:1px solid var(--line); }
+.discover-trend-item:last-child { border-bottom:1px solid var(--line); }
+.discover-trend-word { font-family:var(--font-fraunces), serif; font-weight:600; font-size:17px; color:var(--crema); text-decoration:none; }
+.discover-trend-word:hover { color:var(--brass); }
+.discover-trend-meta { font-size:11px; letter-spacing:.3px; color:var(--muted); white-space:nowrap; }
+
+.discover-groups { display:flex; flex-direction:column; gap:20px; }
+.discover-group-title { font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; color:var(--brass); margin-bottom:6px; }
+.discover-group-words { font-size:14px; line-height:1.8; color:var(--crema-dim); }
+.discover-group-words a { color:inherit; }
+.discover-group-words a:hover { color:var(--brass); }
 .gallery-lightbox-close { position:fixed; top:16px; right:16px; color:var(--crema); }
 
 @media (max-width:640px) {

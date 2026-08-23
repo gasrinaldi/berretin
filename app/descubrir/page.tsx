@@ -3,6 +3,7 @@ import Link from "next/link";
 import facets from "@/data/dictionary-facets.json";
 import { getAllEntries } from "@/lib/dictionary";
 import { pickWordOfTheDay, pickRandomEntry, buildQuiz, buildThematicCollections } from "@/lib/discover";
+import { getRegionGroups, getDecadeGroups, getTrendingWords, getWeeklyIllustration } from "@/lib/discover-community";
 import { AuxNav } from "@/components/AuxNav";
 import { Footer } from "@/components/Footer";
 import { RandomWordCard } from "@/components/discover/RandomWordCard";
@@ -16,15 +17,20 @@ export const metadata: Metadata = {
 };
 // Palabra del día es determinística por fecha, pero la expresión aleatoria
 // y el quiz se recalculan en cada visita — la página entera queda dynamic.
+// Las secciones que leen Supabase (mapa, décadas, tendencias, ilustración)
+// están cacheadas aparte con unstable_cache, así que no pegan una consulta
+// nueva en cada visita pese a que la página sea dynamic.
 export const dynamic = "force-dynamic";
 
-export default function DescubrirPage() {
+export default async function DescubrirPage() {
   const entries = getAllEntries();
   const wordOfTheDay = pickWordOfTheDay(entries);
   const initialRandom = pickRandomEntry(entries);
   const quiz = buildQuiz(entries, 5);
   const collections = buildThematicCollections(entries, CATEGORIES);
   const wordOfTheDayBadges = [...wordOfTheDay.categorias, ...wordOfTheDay.origenes];
+
+  const [regionGroups, decadeGroups, trending, weeklyIllustration] = await Promise.all([getRegionGroups(), getDecadeGroups(), getTrendingWords(), getWeeklyIllustration()]);
 
   return (
     <>
@@ -67,6 +73,90 @@ export default function DescubrirPage() {
         <section className="discover-section">
           <h2 className="discover-section-title">Expresión aleatoria</h2>
           <RandomWordCard initial={initialRandom} />
+        </section>
+
+        <section className="discover-section">
+          <h2 className="discover-section-title">Ilustración de la semana</h2>
+          {weeklyIllustration ? (
+            <div className="discover-illustration">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={weeklyIllustration.thumbnailSignedUrl} alt="" className="discover-illustration-img" />
+              <div className="discover-illustration-caption">
+                <span className="ficha-word">{weeklyIllustration.word}</span>
+                <Link href={`/palabra/${weeklyIllustration.wordSlug}`} className="back-btn">
+                  ver ficha completa
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <p className="no-results">todavía no hay ilustraciones aprobadas para mostrar acá</p>
+          )}
+        </section>
+
+        <section className="discover-section">
+          <h2 className="discover-section-title">Tendencias</h2>
+          {trending.length === 0 ? (
+            <p className="no-results">todavía no hay suficiente actividad (votos o aportes) para armar un ranking</p>
+          ) : (
+            <ol className="discover-trends">
+              {trending.map((item) => (
+                <li key={item.wordSlug} className="discover-trend-item">
+                  <Link href={`/palabra/${item.wordSlug}`} className="discover-trend-word">
+                    {item.word}
+                  </Link>
+                  <span className="discover-trend-meta">
+                    {item.voteCount} {item.voteCount === 1 ? "voto" : "votos"} · {item.contributionCount} {item.contributionCount === 1 ? "aporte" : "aportes"}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
+        <section className="discover-section">
+          <h2 className="discover-section-title">Palabras por década</h2>
+          {decadeGroups.length === 0 ? (
+            <p className="no-results">todavía no hay aportes generacionales aprobados para agrupar</p>
+          ) : (
+            <div className="discover-groups">
+              {decadeGroups.map((group) => (
+                <div key={group.decade} className="discover-group">
+                  <h3 className="discover-group-title">{group.decade}</h3>
+                  <p className="discover-group-words">
+                    {group.words.map((w, i) => (
+                      <span key={w.wordSlug}>
+                        {i > 0 && " · "}
+                        <Link href={`/palabra/${w.wordSlug}`}>{w.word}</Link>
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="discover-section">
+          <h2 className="discover-section-title">Mapa por región</h2>
+          {regionGroups.length === 0 ? (
+            <p className="no-results">todavía no hay palabras con región asignada</p>
+          ) : (
+            <div className="discover-groups">
+              {regionGroups.map((group) => (
+                <div key={group.region} className="discover-group">
+                  <h3 className="discover-group-title">{group.region}</h3>
+                  <p className="discover-group-words">
+                    {group.words.map((w, i) => (
+                      <span key={w.wordSlug}>
+                        {i > 0 && " · "}
+                        <Link href={`/palabra/${w.wordSlug}`}>{w.word}</Link>
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="discover-section">

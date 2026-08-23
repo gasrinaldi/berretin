@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOutAdmin } from "@/app/admin/aportes/actions";
 
-// Navegación mínima entre las dos secciones del panel — antes cada página
+// Navegación mínima entre las secciones del panel — antes cada página
 // vivía aislada, sin forma de pasar de una a la otra ni (en /admin/desafio)
 // de cerrar sesión.
 export function AdminNav() {
@@ -18,6 +18,9 @@ export function AdminNav() {
       </Link>
       <Link href="/admin/desafio" className={pathname === "/admin/desafio" ? "active" : undefined}>
         desafío
+      </Link>
+      <Link href="/admin/regiones" className={pathname === "/admin/regiones" ? "active" : undefined}>
+        regiones
       </Link>
       <button
         type="button"
