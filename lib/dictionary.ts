@@ -95,6 +95,14 @@ export function getAllSlugs(): string[] {
   return ALL.map((e) => e.slug);
 }
 
+// Todo el diccionario ya normalizado (mismo orden y slugs que el resto de
+// la app) — usado por /descubrir para elegir palabra del día, expresión
+// aleatoria, preguntas de quiz y colecciones por categoría sin depender
+// de la paginación de searchEntries.
+export function getAllEntries(): DictionaryEntry[] {
+  return ALL.map(stripInternal);
+}
+
 export type SearchParams = {
   q?: string;
   letras?: string[];
