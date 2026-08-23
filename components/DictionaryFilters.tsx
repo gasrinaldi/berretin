@@ -55,20 +55,34 @@ export function DictionaryFilters({ state, onChange, query, onQueryChange }: Dic
     <div className="consult-filters">
       <section className="consult-index" aria-label="Índice alfabético">
         <h2 className="consult-section-title">Índice alfabético</h2>
-        <div className="consult-letters">
-          <button type="button" className={`consult-letter${state.letras.length === 0 ? " active" : ""}`} onClick={() => onChange({ ...state, letras: [] })}>
+        {/* Selección exclusiva: cada palabra empieza con una sola letra, así
+            que "todas" y las letras se comportan como un radiogroup — nunca
+            puede haber más de una activa a la vez. */}
+        <div className="consult-letters" role="radiogroup" aria-label="Filtrar por letra inicial">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={state.letras.length === 0}
+            className={`consult-letter${state.letras.length === 0 ? " active" : ""}`}
+            onClick={() => onChange({ ...state, letras: [] })}
+          >
             todas
           </button>
-          {LETTERS.map((letter) => (
-            <button
-              key={letter}
-              type="button"
-              className={`consult-letter${state.letras.includes(letter) ? " active" : ""}`}
-              onClick={() => onChange({ ...state, letras: toggleValue(state.letras, letter) })}
-            >
-              {letter}
-            </button>
-          ))}
+          {LETTERS.map((letter) => {
+            const isActive = state.letras.includes(letter);
+            return (
+              <button
+                key={letter}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                className={`consult-letter${isActive ? " active" : ""}`}
+                onClick={() => onChange({ ...state, letras: isActive ? [] : [letter] })}
+              >
+                {letter}
+              </button>
+            );
+          })}
         </div>
       </section>
 
