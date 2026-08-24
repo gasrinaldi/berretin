@@ -29,26 +29,29 @@ const RANGE_SEARCH_Y = 1;
 // El parallax de mouse se desvanece entre 0% y 32% del recorrido de scroll.
 const MOUSE_FADE_END = 0.32;
 
-// Crecimiento por scroll (único wrapper de cámara, nunca toca piso/
-// multitud/jóvenes): el fondo se amplía apenas y el tanguero crece desde
-// su base — magnitud heredada de la versión anterior del hero, ya que el
-// spec aprobado solo fija los valores de mouse y de humo.
-const FONDO_SCROLL_SCALE = 1.08;
+// Profundidad por scroll (único wrapper de cámara, nunca toca piso/
+// jóvenes): el puerto lejano (fondo) retrocede levemente, la multitud
+// profunda se reduce apenas anclada abajo, y el tanguero crece
+// claramente desde los pies — valores del spec V2 (humo v2).
+const FONDO_SCROLL_SCALE = 0.94;
+const MULTITUD_SCALE_TO = 0.97;
 const TANGUERO_SCALE_FROM = 0.9;
+const TANGUERO_SCALE_TO = 1.34;
 
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const fondoScrollRef = useRef<HTMLDivElement>(null);
   const fondoMouseRef = useRef<HTMLDivElement>(null);
+  const multitudRef = useRef<HTMLImageElement>(null);
   const tangueroRef = useRef<HTMLImageElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const logoMouseRef = useRef<HTMLDivElement>(null);
   const searchMouseRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLButtonElement>(null);
   const audioToggleRef = useRef<HTMLButtonElement>(null);
-  const smokeMainRef = useRef<HTMLDivElement>(null);
-  const smokeSecondaryRef = useRef<HTMLDivElement>(null);
+  const smokeMainRef = useRef<HTMLImageElement>(null);
+  const smokeSecondaryRef = useRef<HTMLImageElement>(null);
   const smokeGradientRef = useRef<HTMLDivElement>(null);
 
   const scrollProgressRef = useRef(0);
@@ -251,44 +254,53 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         },
       });
 
-      // Crecimiento por scroll: solo fondo (wrapper exterior) y tanguero.
+      // Profundidad: puerto lejano retrocede (nunca se acerca), multitud
+      // profunda se reduce apenas anclada abajo, tanguero crece
+      // claramente desde los pies — mismo tramo 0→0.85 para que la
+      // cámara lea como un único movimiento continuo.
       tl.to(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE, duration: 0.85 }, 0);
-      tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: 1, duration: 0.85 }, 0);
+      tl.to(multitudRef.current, { scale: MULTITUD_SCALE_TO, duration: 0.85 }, 0);
+      tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.85 }, 0);
 
-      // UI: sube y se desvanece entre 10% y 30%.
-      tl.to(contentRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.1);
-      tl.to(cueRef.current, { opacity: 0, duration: 0.2 }, 0.1);
+      // UI: sube y se desvanece entre 12% y 32%.
+      tl.to(contentRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.12);
+      tl.to(cueRef.current, { opacity: 0, duration: 0.2 }, 0.12);
 
-      // Disolución de toda la escena (nunca transforms individuales:
-      // opacity + filter compartidos en el wrapper de cámara) entre 30% y 80%.
+      // Escena: opacidad retrasada (recién desde 60%) y blur mínimo
+      // (2px, nunca 6px) — quien tapa la escena es el humo real de abajo,
+      // no un fade gris genérico del wrapper de cámara.
       tl.to(
         sceneRef.current,
-        { opacity: 0.25, filter: "blur(6px) saturate(0.7) brightness(0.85)", duration: 0.5 },
-        0.3
+        { opacity: 0.35, filter: "blur(2px) saturate(0.82) brightness(0.9)", duration: 0.36 },
+        0.6
       );
 
       // Botón de sonido: se apaga cerca del final del fade de audio, no
       // junto con el resto de la UI (el audio sigue sonando hasta 80%).
       tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
 
-      // Humo — textura y degradado sólido por separado. Entrada desde
-      // 0.27, duración 0.58 (termina en 0.85), escala final 1.10.
-      tl.fromTo(
-        smokeMainRef.current,
-        { opacity: 0, scale: 1 },
-        { opacity: 0.68, scale: 1.1, duration: 0.58 },
-        0.27
-      );
+      // Humo — dos PNG con alfa real, capas independientes (ya no se
+      // duplica 05-humo-tinta.png con distinto blur). La bruma difusa
+      // entra primero con movimiento mínimo; el humo denso lateral entra
+      // después, desde abajo y los costados, y termina de cubrir la
+      // escena orgánicamente (sin máscaras ni blur extra sobre el PNG).
       tl.fromTo(
         smokeSecondaryRef.current,
-        { opacity: 0, scale: 1.04 },
-        { opacity: 0.48, scale: 1.14, duration: 0.5 },
-        0.33
+        { opacity: 0, scale: 1.02, y: 10 },
+        { opacity: 0.55, scale: 1.06, y: 0, duration: 0.44 },
+        0.34
       );
-      // El degradado sólido llega a #0B0D10 pleno justo cuando termina la
-      // timeline (despinea), para que el diccionario (mismo --ink) siga
-      // sin costura ni bloque prematuro.
-      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.6 }, 0.4);
+      tl.fromTo(
+        smokeMainRef.current,
+        { opacity: 0, scale: 1.08, y: 26 },
+        { opacity: 0.85, scale: 1.14, y: 0, duration: 0.48 },
+        0.48
+      );
+      // El degradado sólido arranca recién cerca del 78% (no tapa el
+      // humo real antes de tiempo) y llega a #0B0D10 pleno justo cuando
+      // termina la timeline (despinea), para que el diccionario (mismo
+      // --ink) siga sin costura ni bloque prematuro.
+      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.22 }, 0.78);
 
       // Mouse: quickTo con power3.out, wrappers interiores independientes
       // del de scroll/cámara. mobile/pointer grueso se revisa en cada
@@ -408,7 +420,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             </div>
           </div>
           <img className="hero-plate hero-piso-mask" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
-          <img className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+          <img ref={multitudRef} className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
           <img ref={tangueroRef} className="hero-plate hero-tanguero" src="/splash/03-tanguero-anclado.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
           <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
         </div>
@@ -416,8 +428,26 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <div className="hero-vignette" aria-hidden="true" />
         <div className="hero-corner-shadow" aria-hidden="true" />
 
-        <div ref={smokeMainRef} className="hero-smoke hero-smoke-main" />
-        <div ref={smokeSecondaryRef} className="hero-smoke hero-smoke-secondary" />
+        <img
+          ref={smokeSecondaryRef}
+          className="hero-smoke hero-smoke-secondary"
+          src="/splash/07-bruma-difusa-inferior.png"
+          alt=""
+          width={1672}
+          height={941}
+          aria-hidden="true"
+          onLoad={() => ScrollTrigger.refresh()}
+        />
+        <img
+          ref={smokeMainRef}
+          className="hero-smoke hero-smoke-main"
+          src="/splash/06-humo-denso-lateral.png"
+          alt=""
+          width={1672}
+          height={941}
+          aria-hidden="true"
+          onLoad={() => ScrollTrigger.refresh()}
+        />
         <div ref={smokeGradientRef} className="hero-smoke-gradient" />
 
         <div ref={contentRef} className="cinehero-content">
