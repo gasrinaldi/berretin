@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Dictionary } from "@/components/Dictionary";
 import { SearchBar } from "@/components/SearchBar";
 import { AuxNav } from "@/components/AuxNav";
+import { Footer } from "@/components/Footer";
 
 type CinematicHeroProps = {
   query: string;
@@ -422,6 +423,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             </header>
             <Dictionary query={query} onQueryChange={onQueryChange} />
           </div>
+          <Footer />
         </div>
       </motion.div>
     </section>

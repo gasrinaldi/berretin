@@ -5,7 +5,6 @@ import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
 import { DictionaryIntro } from "@/components/DictionaryIntro";
 import { DictionaryFilters, EMPTY_FILTERS, type FilterState } from "@/components/DictionaryFilters";
-import { Footer } from "@/components/Footer";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 // Techo defensivo para la restauración por sessionStorage: nunca se
@@ -339,48 +338,45 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   }, [results]);
 
   return (
-    <>
-      <div className="dictionary-body">
-        <DictionaryIntro />
-        <div id="dictionary-search" className="controls">
-          <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
-          <p className="consult-results-count">
-            {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
-          </p>
-        </div>
-        <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
-        {/* Centinela fino (no #content entero, que al ser alto queda
-            "intersectando" casi todo el scroll y no vuelve a disparar el
-            observer al cruzar su borde superior): CinematicHero.tsx lo usa
-            para saber cuándo mostrar "volver al buscador". */}
-        <div id="results-sentinel" aria-hidden="true" />
-        <main id="content">
-          {groups.length > 0 ? (
-            <>
-              {groups.map((group) => (
-                <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
-              ))}
-              {hasMore && (
-                <>
-                  <div ref={sentinelRef} aria-hidden="true" />
-                  <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
-                    {loading ? "cargando..." : "cargar más"}
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            !loading && (
-              <p className="no-results">
-                {filters.categorias.length >= 2
-                  ? "No encontramos entradas que compartan todos estos filtros."
-                  : "no encontramos nada con eso — probá con otra palabra o quitá algún filtro"}
-              </p>
-            )
-          )}
-        </main>
+    <div className="dictionary-body">
+      <DictionaryIntro />
+      <div id="dictionary-search" className="controls">
+        <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
+        <p className="consult-results-count">
+          {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
+        </p>
       </div>
-      <Footer />
-    </>
+      <DictionaryFilters state={filters} onChange={setFilters} query={query} onQueryChange={onQueryChange} />
+      {/* Centinela fino (no #content entero, que al ser alto queda
+          "intersectando" casi todo el scroll y no vuelve a disparar el
+          observer al cruzar su borde superior): CinematicHero.tsx lo usa
+          para saber cuándo mostrar "volver al buscador". */}
+      <div id="results-sentinel" aria-hidden="true" />
+      <main id="content">
+        {groups.length > 0 ? (
+          <>
+            {groups.map((group) => (
+              <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
+            ))}
+            {hasMore && (
+              <>
+                <div ref={sentinelRef} aria-hidden="true" />
+                <button type="button" className="load-more-btn" onClick={() => fetchPage(page + 1, false)} disabled={loading}>
+                  {loading ? "cargando..." : "cargar más"}
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          !loading && (
+            <p className="no-results">
+              {filters.categorias.length >= 2
+                ? "No encontramos entradas que compartan todos estos filtros."
+                : "no encontramos nada con eso — probá con otra palabra o quitá algún filtro"}
+            </p>
+          )
+        )}
+      </main>
+    </div>
   );
 }
