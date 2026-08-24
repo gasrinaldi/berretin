@@ -8,7 +8,8 @@ import {
   TYPES_WITH_AUDIO,
   ALLOWED_IMAGE_LABEL,
   ALLOWED_AUDIO_LABEL,
-  CONSENT_TEXT,
+  CONSENT_TERMS_TEXT,
+  CONSENT_AUTHORSHIP_TEXT,
   CONSENT_NOTE,
   EMAIL_NOTE,
   CONTENT_MAX,
@@ -136,11 +137,17 @@ export function ContributeForm({ wordSlug, wordPalabra, onClose }: ContributeFor
             </div>
 
             <label className="contribute-consent">
-              <input type="checkbox" name="consent" required />
-              <span>{CONSENT_TEXT}</span>
+              <input type="checkbox" name="consentTerms" required />
+              <span>{CONSENT_TERMS_TEXT}</span>
+            </label>
+            {state.fieldErrors?.consentTerms && <p className="contribute-error">{state.fieldErrors.consentTerms}</p>}
+
+            <label className="contribute-consent">
+              <input type="checkbox" name="consentAuthorship" required />
+              <span>{CONSENT_AUTHORSHIP_TEXT}</span>
             </label>
             <p className="contribute-hint">{CONSENT_NOTE}</p>
-            {state.fieldErrors?.consent && <p className="contribute-error">{state.fieldErrors.consent}</p>}
+            {state.fieldErrors?.consentAuthorship && <p className="contribute-error">{state.fieldErrors.consentAuthorship}</p>}
 
             {state.status === "error" && state.message && (
               <p className="contribute-error contribute-error-general" role="alert">

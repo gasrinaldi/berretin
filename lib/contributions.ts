@@ -42,14 +42,24 @@ export const ALLOWED_IMAGE_LABEL = "JPG, PNG o WebP";
 export const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
 export const ALLOWED_AUDIO_LABEL = "MP3, WAV, OGG o WebM";
 
-export const CONSENT_TEXT = 'Declaro que este aporte es propio o que tengo autorización para compartirlo. Autorizo a Berretín a publicarlo, moderarlo, adaptarlo al formato de la plataforma y mostrarlo con el crédito indicado.';
-export const CONSENT_NOTE = "El autor conserva sus derechos y concede a Berretín una licencia no exclusiva para mostrar el aporte.";
+// Versión (fecha) de Términos/Privacidad/Reglas de aportes vigente — se
+// guarda tal cual en cada aporte (columna legal_version) para poder saber
+// bajo qué texto legal aceptó cada remitente, aunque el texto cambie más
+// adelante. Si se edita el contenido legal de fondo, actualizar acá.
+export const LEGAL_VERSION = "2026-08-24";
+
+export const CONSENT_TERMS_TEXT = "Acepto los Términos de uso y la Política de privacidad.";
+export const CONSENT_AUTHORSHIP_TEXT =
+  "Declaro que soy autor/a del contenido o tengo autorización para compartirlo, y autorizo a Berretín a almacenarlo, adaptarlo técnicamente, publicarlo y mostrarlo dentro del proyecto y sus canales oficiales.";
+export const CONSENT_NOTE = "El autor conserva la propiedad del contenido — la autorización a Berretín es gratuita, no exclusiva y limitada al funcionamiento y difusión del proyecto.";
 export const EMAIL_NOTE = "Es opcional y nunca se muestra públicamente: solo se usa para contactarte sobre este aporte, si hace falta.";
 export const SUCCESS_MESSAGE = "¡Gracias por aportar a Berretín! Tu propuesta quedó pendiente de revisión.";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type ContributionFieldErrors = Partial<Record<"type" | "content" | "authorAlias" | "email" | "location" | "decade" | "image" | "audio" | "consent", string>>;
+export type ContributionFieldErrors = Partial<
+  Record<"type" | "content" | "authorAlias" | "email" | "location" | "decade" | "image" | "audio" | "consentTerms" | "consentAuthorship", string>
+>;
 
 // Vive fuera de contribute-actions.ts porque un archivo "use server" solo
 // puede exportar funciones async: este tipo y esta constante son un valor

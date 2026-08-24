@@ -22,6 +22,7 @@ import {
   MAX_IMAGE_BYTES,
   MAX_AUDIO_BYTES,
   SUCCESS_MESSAGE,
+  LEGAL_VERSION,
   type ContributionFieldErrors,
   type ContributeFormState,
 } from "@/lib/contributions";
@@ -80,8 +81,16 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
   const decade = sanitizeText(String(formData.get("decade") ?? ""));
   if (decade.length > DECADE_MAX) fieldErrors.decade = `Máximo ${DECADE_MAX} caracteres.`;
 
-  const consent = formData.get("consent");
-  if (consent !== "on") fieldErrors.consent = "Necesitamos tu confirmación para poder recibir el aporte.";
+  // Autoridad real de los dos consentimientos: el cliente ya no deja
+  // enviar el formulario sin marcarlos, pero acá es donde de verdad se
+  // exigen — nunca se asume "on" por default ni se acepta un formulario
+  // armado a mano sin ambos.
+  if (formData.get("consentTerms") !== "on") {
+    fieldErrors.consentTerms = "Necesitamos que aceptes los Términos de uso y la Política de privacidad.";
+  }
+  if (formData.get("consentAuthorship") !== "on") {
+    fieldErrors.consentAuthorship = "Necesitamos tu confirmación de autoría/autorización para poder recibir el aporte.";
+  }
 
   const needsImage = TYPES_WITH_IMAGE.includes(rawType);
   const imageFile = formData.get("image");
@@ -304,6 +313,7 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     audio_size: audioSize,
     status: "pending",
     ip_hash: ipHash,
+    legal_version: LEGAL_VERSION,
   });
 
   if (insertError) {
