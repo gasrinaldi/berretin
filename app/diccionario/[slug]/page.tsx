@@ -105,7 +105,7 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="ficha-detail">
         <nav className="ficha-detail-nav">
-          <BackButton />
+          <BackButton hideArrow />
           <AuxNav />
         </nav>
 

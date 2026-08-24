@@ -452,6 +452,10 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 .ficha-detail-nav { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-bottom:20px; margin-bottom:48px; border-bottom:1px solid var(--line); }
 .ficha-detail-nav .back-btn, .ficha-detail-nav .aux-nav a { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; }
+/* Deja el vértice ornamental (.ficha-detail::before, 16px de ancho en
+   left:24px) solo en el margen izquierdo: el texto arranca 20px a su
+   derecha en vez de superponerse. */
+.ficha-detail-nav .back-btn { padding-left:36px; }
 .ficha-detail-nav .aux-nav { gap:26px; }
 
 .ficha-detail-grid { display:grid; grid-template-columns:120px 1fr; column-gap:56px; }

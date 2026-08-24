@@ -2,7 +2,14 @@
 
 import { useRouter } from "next/navigation";
 
-export function BackButton() {
+type BackButtonProps = {
+  // La ficha de palabra ya tiene su propio vértice ornamental en el
+  // margen izquierdo (.ficha-detail::before): ahí la flecha de texto
+  // queda de más, se superpone.
+  hideArrow?: boolean;
+};
+
+export function BackButton({ hideArrow = false }: BackButtonProps = {}) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -12,7 +19,7 @@ export function BackButton() {
 
   return (
     <button type="button" className="back-btn" onClick={handleClick}>
-      ← volver al diccionario
+      {hideArrow ? "volver al diccionario" : "← volver al diccionario"}
     </button>
   );
 }
