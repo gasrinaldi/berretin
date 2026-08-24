@@ -1,11 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { preload } from "react-dom";
 import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
 import { DictionaryIntro } from "@/components/DictionaryIntro";
 import { DictionaryFilters, EMPTY_FILTERS, type FilterState } from "@/components/DictionaryFilters";
+import alphabet from "@/data/berretin-alphabet.json";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
+
+// Precarga las dos láminas del alfabeto (BerretinInitial recorta de acá) UNA
+// SOLA VEZ, a nivel de módulo — nunca dentro del componente: llamar
+// preload() en cada montaje (por ejemplo al volver de una palabra con el
+// botón "atrás", donde Dictionary se vuelve a montar) hace que React
+// intente reinsertar el mismo <link rel="preload"> del <head> mientras el
+// de la visita anterior podía seguir ahí, y eso rompía con un
+// insertBefore/removeChild real contra el pin de GSAP del hero.
+preload(alphabet.sheets["a-n"].file, { as: "image" });
+preload(alphabet.sheets["n-z"].file, { as: "image" });
 
 // Techo defensivo para la restauración por sessionStorage: nunca se
 // dispara en el uso normal, solo evita un exceso de pedidos en paralelo
@@ -40,7 +52,11 @@ function readStateFromUrl(): { query: string; filters: FilterState } {
   };
 }
 
-function writeStateToUrl(query: string, filters: FilterState) {
+// Solo arma la URL — quien la escribe de verdad es el efecto que llama
+// router.replace(url, { scroll:false }), para que Next nunca intente
+// corregir el scroll en un cambio de filtro (esa corrección automática
+// era justo lo que hacía "desaparecer" la letra recién elegida).
+function buildUrlFromState(query: string, filters: FilterState) {
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query);
   filters.letras.forEach((l) => params.append("letra", l));
@@ -49,9 +65,8 @@ function writeStateToUrl(query: string, filters: FilterState) {
   if (filters.sinCategoria) params.set("sinCategoria", "1");
   if (filters.tipo !== "todas") params.set("tipo", filters.tipo);
   const search = params.toString();
-  const url = search ? `?${search}` : window.location.pathname;
-  window.history.replaceState(null, "", url);
-  return search ? `?${search}` : "";
+  const queryString = search ? `?${search}` : "";
+  return { url: queryString || window.location.pathname, search: queryString };
 }
 
 // El estado de scroll/paginación vive aparte de la URL (que ya guarda
@@ -169,9 +184,19 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   }, [query]);
 
   // Reflejar búsqueda y filtros en la URL, sin pisar lo que aún no se leyó.
+  // history.replaceState (no router.replace de Next): el router SÍ
+  // provoca una re-renderización del árbol que pisa el DOM que GSAP ya
+  // reordenó al pinear el hero (ScrollTrigger), reproduciendo el mismo
+  // conflicto insertBefore/removeChild que costó resolver en la tarea
+  // anterior. history.replaceState no pasa por React/Next en absoluto,
+  // así que de movida ya cumple "sin corrección de scroll": nunca hubo
+  // scroll restoration nativa de por medio (scrollRestoration:"manual",
+  // ver más arriba) — el efecto real que "hacía desaparecer" la letra
+  // era el remount de LetterBlock por key inestable (ver más abajo).
   useEffect(() => {
     if (!hydrated) return;
-    const search = writeStateToUrl(query, filters);
+    const { url, search } = buildUrlFromState(query, filters);
+    window.history.replaceState(null, "", url);
     currentSearchRef.current = search;
   }, [query, filters, hydrated]);
 
@@ -342,7 +367,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     <div className="dictionary-body">
       <DictionaryIntro />
       <div id="dictionary-search" className="controls">
-        <SearchBar value={query} onChange={onQueryChange} className="consult-search" />
+        {/* Mismo tratamiento beige que el buscador del hero (.cinehero-search)
+            — comparten proporciones, estilo y esta misma query/onChange, así
+            el crossfade entre uno y otro nunca se nota como un cambio de
+            componente. */}
+        <SearchBar value={query} onChange={onQueryChange} className="cinehero-search" showSubmit />
         <p className="consult-results-count">
           {total.toLocaleString("es-AR")} {total === 1 ? "entrada" : "entradas"}
         </p>
@@ -357,12 +386,16 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
         {groups.length > 0 ? (
           <>
             {groups.map((group) => (
-              // Con relevancia (búsqueda activa) la misma letra puede repetirse
-              // en grupos no contiguos (p.ej. "bocha" antes, "a bocha" después):
-              // key solo por letra colisionaría entre ambos. Se agrega el id de
-              // la primera entrada del grupo, que es único en todo el resultado.
+              // Sin búsqueda de texto, cada letra aparece una sola vez y en
+              // orden alfabético: key = letra sola, estable entre refetches
+              // que no la afectan (otro filtro cambia, la letra sigue ahí) —
+              // así BerretinInitial no se desmonta/remonta de más. Con
+              // relevancia (búsqueda activa) la misma letra SÍ puede
+              // repetirse en grupos no contiguos (p.ej. "bocha" antes, "a
+              // bocha" después): ahí hace falta el id de la primera entrada
+              // para no colisionar.
               <LetterBlock
-                key={`${group.letter}-${group.entries[0].id}`}
+                key={debouncedQuery.trim() ? `${group.letter}-${group.entries[0].id}` : group.letter}
                 letter={group.letter}
                 entries={group.entries}
                 total={countsByLetter[group.letter] ?? group.entries.length}
