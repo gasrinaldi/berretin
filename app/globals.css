@@ -22,6 +22,14 @@ body { display:flex; flex-direction:column; min-height:100svh; font-family:var(-
    propio layout cinematográfico anidado) queda afuera y no se ve
    afectada. */
 body > .wrap, body > .ficha-detail { flex:1 0 auto; }
+/* Contenedor de bloque estable para la home: el .pin-spacer que GSAP
+   inserta alrededor de .hero-stage (ver CinematicHero.tsx) queda así
+   adentro de un bloque normal en vez de directo bajo <body> (flex
+   column) — como flex item, el spacer no reservaba el recorrido
+   completo del pin. flex:0 0 auto (ni crece ni se encoge) para que el
+   propio .home-page tampoco quede sujeto al cálculo de flex-grow de
+   la línea de arriba. */
+.home-page { display:block; width:100%; min-width:0; flex:0 0 auto; }
 header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--line); }
 .logo { font-family:var(--font-fraunces), serif; font-weight:600; font-size:44px; letter-spacing:-.5px; margin-bottom:8px; }
 .logo span { color:var(--brass); font-style:italic; font-weight:500; }

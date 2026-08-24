@@ -228,6 +228,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           start: "top top",
           end: () => `+=${window.innerHeight * ((isMobileRef.current ? 50 : 78) / 100)}`,
           pin: true,
+          pinSpacing: true,
           scrub: 0.68,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
