@@ -3,11 +3,25 @@
 :root { --ink:#0B0D10; --surface:#1C2027; --crema:#EDE6D6; --crema-dim:rgba(237,230,214,0.78); --muted:#96907E; --brass:#C9A15A; --line:rgba(237,230,214,0.09); --line-strong:rgba(237,230,214,0.16); --error:#D98770; }
 * { box-sizing:border-box; margin:0; padding:0; }
 html, body { background:var(--ink); color:var(--crema); min-height:100vh; }
-body { font-family:var(--font-space-grotesk), sans-serif; }
-.wrap { max-width:900px; margin:0 auto; padding:48px 24px 100px; }
+/* Flex column + min-height:100svh para poder pegar el footer abajo en
+   páginas cortas (ver "body > .wrap" más abajo). */
+body { display:flex; flex-direction:column; min-height:100svh; font-family:var(--font-space-grotesk), sans-serif; }
+/* width:100% es necesario para que .wrap conserve su ancho de siempre
+   ahora que body es flex: como hijo flex sin width explícito, los
+   márgenes auto lo encogerían a su contenido en vez de ocupar el
+   ancho disponible hasta max-width. */
+.wrap { width:100%; max-width:900px; margin:0 auto; padding:48px 24px 100px; }
 /* Contenedor ancho solo para el diccionario (home): no toca .wrap, que
    siguen usando ficha de palabra, /descubrir, admin, etc. tal cual. */
 .wrap.dictionary-wrap { max-width:1320px; }
+/* El contenedor de contenido crece para ocupar el alto sobrante de
+   min-height:100svh del body cuando la página es corta, empujando el
+   footer al fondo del viewport; en páginas largas no hay sobrante y
+   esto no cambia nada. Solo aplica a .wrap/.ficha-detail (ficha de
+   palabra) cuando son hijos directos del body — la home (con su
+   propio layout cinematográfico anidado) queda afuera y no se ve
+   afectada. */
+body > .wrap, body > .ficha-detail { flex:1 0 auto; }
 header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--line); }
 .logo { font-family:var(--font-fraunces), serif; font-weight:600; font-size:44px; letter-spacing:-.5px; margin-bottom:8px; }
 .logo span { color:var(--brass); font-style:italic; font-weight:500; }
@@ -354,11 +368,14 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .not-found-text { font-size:14px; color:var(--muted); margin-bottom:32px; max-width:48ch; }
 
 /* ---- Footer ---- */
-/* Mismo ancho/margen que .wrap.dictionary-wrap; el margin-top negativo
-   resta el padding-bottom:100px de ese wrap para no duplicar el salto
-   antes del footer. */
-.site-footer { max-width:1320px; margin:-100px auto 0; padding:20px 24px 32px; border-top:1px solid var(--brass); }
-.site-footer > p { font-size:11px; line-height:1.7; color:var(--muted); max-width:64ch; }
+/* Mismo ancho/margen que .wrap.dictionary-wrap. El margin-top resta el
+   padding-bottom:100px de ese wrap (para no duplicar salto) y suma la
+   separación real pedida, clamp(96px, 10vw, 160px), antes del footer. */
+/* width:100% por el mismo motivo que .wrap/.ficha-detail: como hijo
+   flex de body, sin esto se encogería al ancho de su contenido (el
+   párrafo de copyright) en vez de ocupar el ancho disponible. */
+.site-footer { width:100%; max-width:1320px; margin:calc(clamp(96px, 10vw, 160px) - 100px) auto 0; padding:20px 24px 32px; border-top:1px solid var(--brass); }
+.site-footer > p { width:100%; font-size:11px; line-height:1.7; color:var(--muted); text-align:center; }
 .site-footer-legal { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; gap:16px; margin-top:14px; }
 .site-footer-legal a { font:11px/1 var(--font-space-grotesk), sans-serif; letter-spacing:.6px; color:var(--muted); text-decoration:none; transition:color .15s ease; }
 .site-footer-legal a:hover { color:var(--brass); }
@@ -426,7 +443,9 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 @media (max-width:900px) { .admin-filters { grid-template-columns:1fr 1fr; } .admin-card-body { flex-direction:column; } .admin-card-image { width:100%; max-width:220px; } .admin-meta-grid { grid-template-columns:1fr 1fr; } }
 
 /* ---- Ficha de archivo porteño (/palabra/[slug]) ---- */
-.ficha-detail { position:relative; max-width:1160px; margin:0 auto; padding:40px 24px 100px; }
+/* width:100% por el mismo motivo que en .wrap (ver comentario ahí):
+   sin esto, al ser hijo flex de body, se encogería a su contenido. */
+.ficha-detail { position:relative; width:100%; max-width:1160px; margin:0 auto; padding:40px 24px 100px; }
 .ficha-detail::before, .ficha-detail::after { content:""; position:absolute; width:16px; height:16px; border-color:var(--brass); opacity:.35; pointer-events:none; }
 .ficha-detail::before { top:40px; left:24px; border-top:1px solid; border-left:1px solid; }
 .ficha-detail::after { bottom:40px; right:24px; border-bottom:1px solid; border-right:1px solid; }
