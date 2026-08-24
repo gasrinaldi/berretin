@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getEntryBySlug, getEntryPosition, isExpression } from "@/lib/dictionary";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { SITE_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt } from "@/lib/site";
+import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt } from "@/lib/site";
 import { BackButton } from "@/components/BackButton";
 import { AuxNav } from "@/components/AuxNav";
 import { ShareButton } from "@/components/ShareButton";
@@ -53,6 +53,10 @@ export async function generateMetadata({ params }: PageProps<"/diccionario/[slug
   const title = `${capitalizeFirst(entry.palabra)}: significado en lunfardo argentino | ${SITE_NAME}`;
   const description = cleanExcerpt(entry.definicion);
   const url = `${SITE_URL}/diccionario/${entry.slug}`;
+  // Temporal mientras berretin.com.ar no esté conectado (ver lib/site.ts):
+  // openGraph.url/images van contra OG_URL, no contra el canonical de arriba.
+  const ogUrl = `${OG_URL}/diccionario/${entry.slug}`;
+  const ogImage = `${OG_URL}/brand/berretin-og.png`;
 
   return {
     title,
@@ -62,19 +66,19 @@ export async function generateMetadata({ params }: PageProps<"/diccionario/[slug
     openGraph: {
       title,
       description,
-      url,
+      url: ogUrl,
       siteName: SITE_NAME,
       locale: "es_AR",
       type: "article",
       // openGraph/twitter no heredan de layout.tsx cuando la página define
       // los suyos propios, así que la imagen hay que repetirla acá.
-      images: [{ url: "/brand/berretin-og.png", width: 1200, height: 630, alt: SITE_NAME }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: SITE_NAME }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/brand/berretin-og.png"],
+      images: [ogImage],
     },
   };
 }

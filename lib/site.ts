@@ -5,6 +5,16 @@ const DEFAULT_SITE_URL = "https://www.xn--berretn-dza.com.ar";
 
 export const SITE_URL = (process.env.SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, "");
 
+// URL temporal solo para Open Graph/Twitter (og:url, og:image,
+// twitter:image) mientras berretin.com.ar no esté conectado: esos
+// previews (WhatsApp, redes) necesitan una URL que resuelva de verdad,
+// a diferencia de canonical/sitemap/robots/JSON-LD, que ya apuntan al
+// dominio definitivo vía SITE_URL. Centralizada acá para volver a
+// SITE_URL en un solo lugar cuando el dominio esté listo.
+const DEFAULT_OG_URL = "https://berretin-steel.vercel.app";
+
+export const OG_URL = (process.env.OG_URL || DEFAULT_OG_URL).replace(/\/+$/, "");
+
 export const SITE_NAME = "Berretín";
 
 // Apagada por defecto: se activa recién cuando el dominio esté conectado
