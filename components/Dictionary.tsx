@@ -161,9 +161,10 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounce de la búsqueda tipeada (los filtros, al ser clics discretos, no lo necesitan).
+  // Debounce de la búsqueda tipeada (los filtros, al ser clics discretos, no
+  // lo necesitan). Vaciar el campo restaura de una, sin esperar los 250ms.
   useEffect(() => {
-    const timeout = setTimeout(() => setDebouncedQuery(query), 250);
+    const timeout = setTimeout(() => setDebouncedQuery(query), query.trim() ? 250 : 0);
     return () => clearTimeout(timeout);
   }, [query]);
 
@@ -356,7 +357,16 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
         {groups.length > 0 ? (
           <>
             {groups.map((group) => (
-              <LetterBlock key={group.letter} letter={group.letter} entries={group.entries} total={countsByLetter[group.letter] ?? group.entries.length} />
+              // Con relevancia (búsqueda activa) la misma letra puede repetirse
+              // en grupos no contiguos (p.ej. "bocha" antes, "a bocha" después):
+              // key solo por letra colisionaría entre ambos. Se agrega el id de
+              // la primera entrada del grupo, que es único en todo el resultado.
+              <LetterBlock
+                key={`${group.letter}-${group.entries[0].id}`}
+                letter={group.letter}
+                entries={group.entries}
+                total={countsByLetter[group.letter] ?? group.entries.length}
+              />
             ))}
             {hasMore && (
               <>
