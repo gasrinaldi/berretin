@@ -66,11 +66,15 @@ export async function generateMetadata({ params }: PageProps<"/diccionario/[slug
       siteName: SITE_NAME,
       locale: "es_AR",
       type: "article",
+      // openGraph/twitter no heredan de layout.tsx cuando la página define
+      // los suyos propios, así que la imagen hay que repetirla acá.
+      images: [{ url: "/brand/berretin-og.png", width: 1200, height: 630, alt: SITE_NAME }],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
+      images: ["/brand/berretin-og.png"],
     },
   };
 }

@@ -27,6 +27,18 @@ export const metadata: Metadata = {
   // específicas (la ficha de diccionario, el home con filtros en la URL)
   // pisan este valor con su propio robots cuando corresponde.
   robots: INDEXING_ALLOWED ? { index: true, follow: true } : { index: false, follow: false },
+  // Íconos generados desde public/brand/berretin-isologo.png (el PNG
+  // oficial, sin redibujar) — favicon.ico ya lo trae por convención de
+  // archivo; esto suma los tamaños extra (32/192/512) y el apple-touch
+  // sobre negro oficial #0B0D10, que Apple necesita opaco.
+  icons: {
+    icon: [
+      { url: "/brand/berretin-isologo-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/berretin-isologo-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/berretin-isologo-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/brand/berretin-isologo-180.png", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: siteTitle,
     description: siteDescription,
@@ -34,13 +46,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "es_AR",
     type: "website",
-    images: [{ url: "/brand/berretin-wordmark.png", width: 2079, height: 756, alt: SITE_NAME }],
+    images: [{ url: "/brand/berretin-og.png", width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/brand/berretin-wordmark.png"],
+    images: ["/brand/berretin-og.png"],
   },
 };
 
