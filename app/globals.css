@@ -131,18 +131,61 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .consult-facets[data-open="false"] { display:none; }
 }
 
-/* ---- Bienvenida cinematográfica (La Boca / puerto) ---- */
-.cinehero-shell { position:relative; }
-.cinehero-sticky { position:sticky; top:0; overflow:hidden; height:100vh; height:100svh; background:var(--ink); }
-.cinehero-layers { position:absolute; inset:0; }
+/* ---- Bienvenida cinematográfica (La Boca / puerto) — motor GSAP + ScrollTrigger ----
+   .hero-stage es a la vez trigger y elemento pineado: GSAP inserta su propio
+   spacer con la distancia exacta (end - start), así que no hay que calcular
+   ningún alto a mano ni queda espacio sobrante al despinear. */
+.hero-stage { position:relative; overflow:hidden; height:100vh; height:100svh; background:var(--ink); }
 
-/* Base compartida por las 2 placas (fondo limpio + escena maestra):
-   mismo inset/object-fit/position para que no pierdan registro. Cada una
-   viaja entera — nada de sectores ni personajes desplazándose aparte. */
-.cinehero-plate { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; will-change:transform; }
+/* Wrapper exterior (cámara/scroll) de toda la escena: acá pega el filtro
+   de disolución compartido (opacity/blur/saturate/brightness) — nunca un
+   transform, así piso/multitud/jóvenes (adentro, sin wrapper propio)
+   jamás se mueven ni escalan individualmente. */
+.hero-scene { position:absolute; inset:0; }
 
-.cinehero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
-.cinehero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
+.hero-layer { position:absolute; inset:0; }
+/* Base compartida por las placas: mismo inset/object-fit/position para
+   que ninguna pierda registro contra las demás. */
+.hero-plate { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
+
+/* Wrapper interior, independiente del de cámara/scroll: mouse-only (ver
+   gsap.quickTo en CinematicHero.tsx). Es el único punto de la escena que
+   se mueve con el mouse — piso/multitud/jóvenes quedan afuera de este
+   wrapper por completo. */
+.hero-mouse-wrap { position:absolute; inset:0; will-change:transform; }
+/* Misma función (wrapper interior solo-mouse) para el logo/tagline y el
+   buscador, que viven en flujo normal dentro de .cinehero-content en vez
+   de cubrir toda la escena. */
+.hero-ui-mouse-wrap { will-change:transform; }
+
+/* Piso inmóvil: segunda copia del mismo fondo (01-fondo-sin-apoyos),
+   recortada desde ~53% de alto — nunca se traslada ni escala, es la
+   referencia fija contra la que "crece" el tanguero. */
+.hero-piso-mask { -webkit-mask-image:linear-gradient(to bottom, transparent 0%, transparent 52%, #000 54%, #000 100%); mask-image:linear-gradient(to bottom, transparent 0%, transparent 52%, #000 54%, #000 100%); }
+
+.hero-multitud { filter:blur(.5px) saturate(.78) contrast(.92); opacity:.9; }
+
+/* Tanguero: única placa que escala con el scroll (crece desde abajo) —
+   transform-origin fija el punto de apoyo para que crezca hacia arriba,
+   nunca desde el centro. */
+.hero-tanguero { transform-origin:50% 100%; will-change:transform; }
+
+.hero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
+.hero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
+
+/* Humo de transición: la textura (dos pasadas, blur/saturate/contrast
+   estáticos — GSAP solo anima opacity/scale, nunca blur) va aparte del
+   degradado sólido hacia --ink, tal como pide el spec. Máscara vertical
+   progresiva: más presencia abajo, transparente arriba, para que la
+   entrada nunca lea como un bloque recto. */
+.hero-smoke { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; background-image:url(/splash/05-humo-tinta.png); background-size:cover; background-position:center bottom; -webkit-mask-image:linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.55) 45%, #000 100%); mask-image:linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.55) 45%, #000 100%); }
+.hero-smoke-main { filter:blur(9px) saturate(.72) contrast(.86); }
+.hero-smoke-secondary { filter:blur(12px) saturate(.68) contrast(.82); }
+/* Degradado sólido: capa propia (no mezclada con la textura de humo) que
+   termina exactamente en --ink — el mismo bit a bit que el fondo real del
+   diccionario, así el empalme final no deja línea ni salto. */
+.hero-smoke-gradient { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,.6) 55%, #0B0D10 100%); }
+
 .cinehero-content { position:relative; z-index:8; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
 .cinehero-wordmark-wrap { position:relative; display:inline-block; }
 .cinehero-logo { display:block; filter:none; mix-blend-mode:normal; }
@@ -181,18 +224,14 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .cinehero-search .search-submit-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:transform .2s ease; }
 .cinehero-search.search-row:focus-within .search-submit-btn svg { transform:translateX(4px); }
 
-/* Capa propia por encima de .cinehero-curtain (z-index:10, incluye el
-   degradado inferior hacia --ink): mismas dimensiones que .cinehero-sticky
-   (sticky, 100svh) para quedar pegada al mismo viewport, pero en su
-   propio stacking context — así el degradado y el filter/opacity de la
-   escena nunca se pintan por encima de estos dos controles. */
-.cinehero-controls-overlay { position:sticky; top:0; height:100vh; height:100svh; margin-top:-100vh; margin-top:-100svh; z-index:12; pointer-events:none; }
-.cinehero-controls-overlay > * { pointer-events:auto; }
-
-.cinehero-cue { position:absolute; left:50%; bottom:clamp(24px, 5vh, 48px); transform:translateX(-50%); border:0; background:none; color:#fff; cursor:pointer; font:700 13px var(--font-space-grotesk), sans-serif; letter-spacing:1.4px; text-transform:uppercase; text-shadow:0 2px 14px rgba(0,0,0,.62); display:flex; align-items:center; gap:8px; animation:cinehero-cue-bob 2.2s ease-in-out infinite; }
+/* Con GSAP pineando .hero-stage directamente ya no hace falta la capa
+   sticky aparte que estos controles necesitaban contra la vieja cortina
+   fixed: viven adentro de .hero-stage como cualquier otro control absoluto,
+   por encima de la escena (z-index) sin trucos de stacking context extra. */
+.cinehero-cue { position:absolute; z-index:8; left:50%; bottom:clamp(24px, 5vh, 48px); transform:translateX(-50%); border:0; background:none; color:#fff; cursor:pointer; font:700 13px var(--font-space-grotesk), sans-serif; letter-spacing:1.4px; text-transform:uppercase; text-shadow:0 2px 14px rgba(0,0,0,.62); display:flex; align-items:center; gap:8px; animation:cinehero-cue-bob 2.2s ease-in-out infinite; }
 .cinehero-cue span { color:#fff; font-size:16px; }
 @keyframes cinehero-cue-bob { 0%, 100% { transform:translate(-50%, 0); } 50% { transform:translate(-50%, 6px); } }
-.cinehero-audio-toggle { position:absolute; right:clamp(20px, 5vw, 56px); bottom:clamp(20px, 5vw, 48px); display:grid; width:52px; height:52px; place-items:center; border:1.5px solid rgba(255,255,255,.92); border-radius:50%; background:rgba(11,13,16,.55); color:#fff; cursor:pointer; text-shadow:0 2px 14px rgba(0,0,0,.62); transition:color .2s ease, border-color .2s ease, background-color .2s ease; }
+.cinehero-audio-toggle { position:absolute; z-index:8; right:clamp(20px, 5vw, 56px); bottom:clamp(20px, 5vw, 48px); display:grid; width:52px; height:52px; place-items:center; border:1.5px solid rgba(255,255,255,.92); border-radius:50%; background:rgba(11,13,16,.55); color:#fff; cursor:pointer; text-shadow:0 2px 14px rgba(0,0,0,.62); transition:color .2s ease, border-color .2s ease, background-color .2s ease; }
 .cinehero-audio-toggle:hover { border-color:#fff; color:var(--brass); background:rgba(11,13,16,.7); }
 .cinehero-audio-toggle svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; stroke-width:1.6; }
 .cinehero-audio-toggle > span { color:#fff; font-size:26px; line-height:1; }
@@ -206,12 +245,11 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .cinehero-audio-toggle > span { font-size:24px; }
 }
 
-/* "Volver al buscador": vive fuera de .cinehero-curtain (el propio
-   CinematicHero la renderiza como hermana de <section>), porque la
-   cortina tiene su propio transform (curtainY) y cualquier position:fixed
-   adentro terminaría fijo a ESE box transformado, no al viewport real —
-   mismo motivo por el que la flecha flotante original vivía ahí afuera.
-   React la monta/desmonta según showBackBtn (ver CinematicHero.tsx), que
+/* "Volver al buscador": vive fuera de .hero-stage (el propio
+   CinematicHero la renderiza como hermana de <section>) para que su
+   position:fixed sea siempre contra el viewport real, nunca contra un
+   ancestro con transform. React la monta/desmonta según showBackBtn
+   (ver CinematicHero.tsx), que
    observa el borde superior de #content: mientras título/buscador/filtros
    siguen a la vista ese borde no cruzó 0 todavía, así que el botón ni
    siquiera existe en el DOM. right: usa el hueco real fuera de las
@@ -228,31 +266,13 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .dictionary-back-btn:hover, .dictionary-back-btn:focus-visible { color:var(--brass); text-decoration-color:var(--brass); }
 .dictionary-back-btn:focus-visible { outline:1px solid var(--brass); outline-offset:3px; }
 
-/* El diccionario real como cortina: mientras el scroll está dentro del
-   recorrido, fixed + transform lo hace ascender tapando el hero; una vez
-   revelado, vuelve al flujo normal para poder seguir navegando. */
-.cinehero-curtain { z-index:10; }
-.cinehero-curtain[data-revealed="false"] { position:fixed; inset:0; }
-.cinehero-curtain[data-revealed="true"] { position:relative; }
-
-/* Niebla que viaja pegada a la cortina: en vez de un borde recto, el
-   diccionario se funde con la escena a través de un degradado vertical
-   amplio (transparente arriba, --ink sólido abajo). El color final tiene
-   que ser bit a bit el mismo --ink (rgb(11,13,16), no el rgb(20,23,28)
-   que tenía antes) — cualquier diferencia, por mínima que sea, se nota
-   como una línea justo donde termina la escena y empieza el fondo real.
-   Altura ~42vh para que el fundido arranque alrededor del 55–60% inferior
-   del hero (100% − 42% ≈ 58%) y llegue a --ink sólido recién en el borde
-   inferior, exactamente donde arranca la cortina. bottom:calc(100% - 2px)
-   sencilla: 2px de superposición contra .cinehero-curtain-clip por si
-   algún subpíxel dejara una costura entre ambos fondos ya idénticos. */
-.cinehero-curtain-fade { position:absolute; left:0; right:0; bottom:calc(100% - 2px); height:42vh; pointer-events:none; z-index:1; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,.12) 18%, rgba(11,13,16,.55) 55%, rgba(11,13,16,1) 100%); }
-.cinehero-curtain-clip { background:var(--ink); }
-.cinehero-curtain[data-revealed="false"] .cinehero-curtain-clip { height:100svh; overflow:hidden; }
-.cinehero-curtain[data-revealed="true"] .cinehero-curtain-clip { height:auto; overflow:visible; }
+/* Fallback estático para prefers-reduced-motion: sin pin, sin scroll-jack,
+   sin humo — la composición de control (00-maestra-v3.jpg) de una sola
+   vez, y el diccionario sigue de inmediato en el flujo normal. */
+.hero-reduced { position:relative; width:100%; height:100vh; height:100svh; background:var(--ink); }
+.hero-reduced img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; }
 
 @media (max-width:640px) { .cinehero-content { padding:24px 20px; } }
-@media (pointer:coarse) { .cinehero-plate { will-change:auto; } }
 .filter-chip { font-size:12px; letter-spacing:.3px; padding:6px 14px; border-radius:20px; border:1px solid var(--line-strong); background:transparent; color:var(--muted); cursor:pointer; font-family:inherit; transition:all .15s ease; text-transform:none; }
 .filter-chip:hover { border-color:var(--crema); color:var(--crema); }
 .filter-chip.active { background:var(--crema); color:var(--ink); border-color:var(--crema); font-weight:500; }

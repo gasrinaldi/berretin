@@ -1,76 +1,84 @@
 "use client";
 
-import { motion, useMotionValue, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
-import Image from "next/image";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { Dictionary } from "@/components/Dictionary";
 import { SearchBar } from "@/components/SearchBar";
 import { AuxNav } from "@/components/AuxNav";
 import { Footer } from "@/components/Footer";
+
+if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
 type CinematicHeroProps = {
   query: string;
   onQueryChange: (value: string) => void;
 };
 
-// Rango de parallax por placa (px en los extremos del viewport), tal como
-// lo pide el spec: dos placas completas (fondo + escena) más la capa UI.
-// Nada de esto mueve sectores de personajes por separado — cada placa
-// viaja entera, sin deformarse.
-const RANGE_BACK_X = 3;
-const RANGE_BACK_Y = 2;
-const RANGE_SCENE_X = 8;
-const RANGE_SCENE_Y = 5;
-const RANGE_UI_X = 11;
-const RANGE_UI_Y = 7;
+// Rango de parallax de mouse (px en los extremos), valores aprobados:
+// solo el puerto lejano (fondo) y la UI se mueven con el cursor — piso,
+// multitud, tanguero y jóvenes quedan siempre a 0px de mouse.
+const RANGE_FONDO_X = 9;
+const RANGE_FONDO_Y = 5.5;
+const RANGE_LOGO_X = 2.5;
+const RANGE_LOGO_Y = 1.5;
+const RANGE_SEARCH_X = 1.5;
+const RANGE_SEARCH_Y = 1;
 
-const BACK_BASE_SCALE = 1.04;
-const SCENE_SCALE_MIN = 1.055;
-const SCENE_SCALE_MAX = 1.065;
+// El parallax de mouse se desvanece entre 0% y 32% del recorrido de scroll.
+const MOUSE_FADE_END = 0.32;
 
-// Cuánto scroll extra (además del 100svh sticky) dura la bienvenida.
-// 70–85vh en desktop, 45–55svh en mobile, más corto aún con reduced-motion.
+// Crecimiento por scroll (único wrapper de cámara, nunca toca piso/
+// multitud/jóvenes): el fondo se amplía apenas y el tanguero crece desde
+// su base — magnitud heredada de la versión anterior del hero, ya que el
+// spec aprobado solo fija los valores de mouse y de humo.
+const FONDO_SCROLL_SCALE = 1.08;
+const TANGUERO_SCALE_FROM = 0.9;
+
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
-  const shellRef = useRef<HTMLElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
-  const reduceMotion = useReducedMotion();
-  const [canParallax] = useState(() => typeof window !== "undefined" && window.matchMedia("(pointer: fine)").matches);
-  // Arranca en false (igual que el servidor, sin window) para no generar
-  // un hydration mismatch en el "style" del shell; el efecto de abajo lo
-  // corrige apenas monta en cliente, y lo mantiene al rotar/resize.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const fondoScrollRef = useRef<HTMLDivElement>(null);
+  const fondoMouseRef = useRef<HTMLDivElement>(null);
+  const tangueroRef = useRef<HTMLImageElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const logoMouseRef = useRef<HTMLDivElement>(null);
+  const searchMouseRef = useRef<HTMLDivElement>(null);
+  const cueRef = useRef<HTMLButtonElement>(null);
+  const audioToggleRef = useRef<HTMLButtonElement>(null);
+  const smokeMainRef = useRef<HTMLDivElement>(null);
+  const smokeSecondaryRef = useRef<HTMLDivElement>(null);
+  const smokeGradientRef = useRef<HTMLDivElement>(null);
+
+  const scrollProgressRef = useRef(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isRevealed, setIsRevealed] = useState(false);
   // "Volver al diccionario": solo aparece una vez que el usuario ya
   // empezó a recorrer los resultados (el título/buscador/filtros todavía
   // están a la vista antes de eso). Observa #content, que Dictionary.tsx
   // siempre renderiza — no depende de conocer su estado interno.
   const [showBackBtn, setShowBackBtn] = useState(false);
-  // Corrección (px) para que la cortina, al pasar a position:relative, no
-  // deje un hueco: el hero oculto sigue reservando 100svh en el flujo,
-  // pero el recorrido visible es más corto, así que compensamos con un
-  // top negativo medido en el instante exacto del cambio (ver más abajo).
-  const [curtainTopOffset, setCurtainTopOffset] = useState(0);
 
-  const revealVh = isMobileViewport ? (reduceMotion ? 40 : 50) : reduceMotion ? 55 : 78;
-  const revealUnit = isMobileViewport ? "svh" : "vh";
-
-  // Re-sincroniza el breakpoint si el layout todavía no se había asentado
-  // al montar, o si el viewport cambia después (rotación, resize).
+  // Re-sincroniza breakpoint y reduced-motion si el layout todavía no se
+  // había asentado al montar, o si cambian después (rotación, resize, o
+  // el usuario cambia la preferencia del sistema en vivo).
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 640px)");
-    const sync = () => setIsMobileViewport(query.matches);
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
+    const mobileQuery = window.matchMedia("(max-width: 640px)");
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncMobile = () => setIsMobileViewport(mobileQuery.matches);
+    const syncMotion = () => setReduceMotion(motionQuery.matches);
+    syncMobile();
+    syncMotion();
+    mobileQuery.addEventListener("change", syncMobile);
+    motionQuery.addEventListener("change", syncMotion);
+    return () => {
+      mobileQuery.removeEventListener("change", syncMobile);
+      motionQuery.removeEventListener("change", syncMotion);
+    };
   }, []);
 
-  // El botón "volver" se muestra recién cuando el usuario cruzó el
-  // centinela que Dictionary.tsx pone justo antes de los resultados —
-  // mientras título/buscador/filtros siguen a la vista, todavía no lo
-  // cruzó. Un centinela fino (no #content entero, que al ser alto queda
-  // intersectando casi todo el scroll) dispara el observer de forma
-  // confiable en cada cruce, tanto al bajar como al volver a subir.
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
     let sentinel: HTMLElement | null = null;
@@ -95,143 +103,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const audioStartedRef = useRef(false);
   const mutedRef = useRef(false);
   const audioFrameRef = useRef<number | null>(null);
-
-  // Puntero crudo (-1..1) suavizado con spring: reacciona de inmediato y
-  // vuelve con naturalidad al centro al salir el mouse.
-  const pointerX = useMotionValue(0);
-  const pointerY = useMotionValue(0);
-  const smoothX = useSpring(pointerX, { stiffness: 90, damping: 16, mass: 0.5 });
-  const smoothY = useSpring(pointerY, { stiffness: 90, damping: 16, mass: 0.5 });
-
-  // Progreso de scroll, sin spring adicional: responde de forma directa,
-  // sin sensación amortiguada, para que un solo swipe fuerte alcance.
-  const { scrollYProgress: scrollProgress } = useScroll({ target: shellRef, offset: ["start start", "end end"] });
-
-  // 0–10%: parallax a pleno. Cae progresivamente hasta apagarse en 30%,
-  // justo cuando arranca el desvanecimiento de la escena.
-  const parallaxDamp = useTransform(scrollProgress, [0, 0.1, 0.3], [1, 1, 0], { clamp: true });
-  const dampedX = useTransform([smoothX, parallaxDamp], (values) => (values[0] as number) * (values[1] as number));
-  const dampedY = useTransform([smoothY, parallaxDamp], (values) => (values[0] as number) * (values[1] as number));
-
-  const backX = useTransform(dampedX, (v) => -v * RANGE_BACK_X);
-  const backY = useTransform(dampedY, (v) => -v * RANGE_BACK_Y);
-  const sceneX = useTransform(dampedX, (v) => -v * RANGE_SCENE_X);
-  const sceneY = useTransform(dampedY, (v) => -v * RANGE_SCENE_Y);
-  const contentParallaxX = useTransform(dampedX, (v) => -v * RANGE_UI_X);
-  const contentParallaxY = useTransform(dampedY, (v) => -v * RANGE_UI_Y);
-
-  // Escala de la escena "según cursor": crece apenas con la distancia al
-  // centro (1.055 en reposo, 1.065 en los extremos), amortiguada igual
-  // que el resto del parallax al avanzar el scroll.
-  const pointerMagnitude = useTransform([dampedX, dampedY], (values) => {
-    const nx = (values[0] as number) / RANGE_SCENE_X;
-    const ny = (values[1] as number) / RANGE_SCENE_Y;
-    return Math.min(1, Math.sqrt(nx * nx + ny * ny));
-  });
-  const sceneCursorScale = useTransform(pointerMagnitude, [0, 1], [SCENE_SCALE_MIN, SCENE_SCALE_MAX]);
-
-  // Avance de cámara sutil durante el desvanecimiento (30%–80%): empuja el
-  // zoom de la escena hasta ~1.10 y el del fondo en proporción, sin saltos.
-  const dissolveZoom = useTransform(scrollProgress, [0.3, 0.8], reduceMotion ? [1, 1] : [1, 1.1 / 1.06], { clamp: true });
-  const backScale = useTransform(dissolveZoom, (z) => BACK_BASE_SCALE * z);
-  const sceneScale = useTransform([sceneCursorScale, dissolveZoom], (values) => (values[0] as number) * (values[1] as number));
-
-  // La escena pierde contraste y se difumina progresivamente (30%–80%):
-  // nunca se apaga de golpe, y con reduced-motion se salta el blur/zoom.
-  const sceneOpacity = useTransform(scrollProgress, [0.3, 0.8], [1, 0.25], { clamp: true });
-  const sceneBlurPx = useTransform(scrollProgress, [0.3, 0.8], reduceMotion ? [0, 0] : [0, 6], { clamp: true });
-  const sceneSaturate = useTransform(scrollProgress, [0.3, 0.8], [1, 0.7], { clamp: true });
-  const sceneBrightness = useTransform(scrollProgress, [0.3, 0.8], [1, 0.85], { clamp: true });
-  const sceneFilter = useTransform(
-    [sceneBlurPx, sceneSaturate, sceneBrightness],
-    (values) => `blur(${values[0]}px) saturate(${values[1]}) brightness(${values[2]})`
-  );
-
-  // Logo, tagline y buscador suben ligeramente y se desvanecen (10%–30%).
-  const contentOpacity = useTransform(scrollProgress, [0.1, 0.3], [1, 0], { clamp: true });
-  const contentLiftY = useTransform(scrollProgress, [0.1, 0.3], reduceMotion ? [0, 0] : [0, -30], { clamp: true });
-  const contentY = useTransform([contentLiftY, contentParallaxY], (values) => (values[0] as number) + (values[1] as number));
-
-  // El diccionario real asciende como cortina entre 15% y 75%.
-  const curtainY = useTransform(scrollProgress, [0.15, 0.75], ["100%", "0%"], { clamp: true });
-
-  // El botón de sonido vive por encima de .cinehero-curtain para no
-  // quedar lavado por su degradado — pero eso también lo pondría por
-  // encima del contenido ya opaco del diccionario en cuanto la cortina,
-  // al subir, alcanza esa altura. Se deriva directamente de curtainY (no
-  // de scrollProgress por separado) para ir perfectamente sincronizado
-  // con la posición real de la cortina, sin importar el mapeo scroll↔
-  // progreso: apagado apenas antes de que curtainY llegue a la altura
-  // real del botón (bottom:20-48px ≈ 84-96% del viewport), el mismo
-  // momento en que igual hubiera quedado tapado. "Deslizá para entrar"
-  // no lo necesita: su propio contentOpacity (10%–30%) ya lo apaga antes.
-  const audioToggleOpacity = useTransform(curtainY, (latest) => {
-    const percent = parseFloat(latest as string);
-    return Math.min(1, Math.max(0, (percent - 84) / 12));
-  });
-
-  useEffect(() => {
-    if (!canParallax || reduceMotion) return;
-    const sticky = stickyRef.current;
-    if (!sticky) return;
-
-    const handleMove = (event: PointerEvent) => {
-      const bounds = sticky.getBoundingClientRect();
-      const nx = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
-      const ny = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
-      pointerX.set(nx);
-      pointerY.set(ny);
-    };
-    const handleLeave = () => {
-      pointerX.set(0);
-      pointerY.set(0);
-    };
-
-    sticky.addEventListener("pointermove", handleMove, { passive: true });
-    sticky.addEventListener("pointerleave", handleLeave, { passive: true });
-    return () => {
-      sticky.removeEventListener("pointermove", handleMove);
-      sticky.removeEventListener("pointerleave", handleLeave);
-    };
-  }, [canParallax, reduceMotion, pointerX, pointerY]);
-
-  // El hero solo se oculta (visibility:hidden) una vez que el diccionario
-  // ya está totalmente opaco y cubrió el viewport (80%–100%), nunca antes.
-  // Histéresis chica para que sea reversible sin parpadeo al retroceder.
-  //
-  // Al pasar a relative, la posición natural de la cortina en el flujo es
-  // "altura del hero" (siempre 100svh, oculto o no) — pero el recorrido
-  // visible es más corto, así que en el instante del cambio medimos la
-  // diferencia real contra el scroll actual y la aplicamos como "top"
-  // negativo constante, cerrando el hueco sin alterar ninguna otra fase.
-  useMotionValueEvent(scrollProgress, "change", (latest) => {
-    setIsRevealed((prev) => {
-      if (!prev && latest >= 0.85) {
-        const heroHeight = stickyRef.current?.offsetHeight ?? 0;
-        setCurtainTopOffset(heroHeight - window.scrollY);
-        return true;
-      }
-      if (prev && latest < 0.78) return false;
-      return prev;
-    });
-  });
-
-  // El sonido ambiente se apaga junto con la escena (30%–80%), no antes.
-  useMotionValueEvent(scrollProgress, "change", (latest) => {
-    if (!audioStartedRef.current || mutedRef.current) return;
-    const portAudio = portAudioRef.current;
-    const crowdAudio = crowdAudioRef.current;
-    if (!portAudio || !crowdAudio) return;
-    const fade = latest <= 0.3 ? 1 : Math.max(0, 1 - (latest - 0.3) / 0.5);
-    portAudio.volume = 0.7 * fade;
-    crowdAudio.volume = 0.45 * fade;
-    if (fade === 0 && !portAudio.paused) {
-      portAudio.pause();
-      crowdAudio.pause();
-    } else if (fade > 0 && portAudio.paused) {
-      void Promise.all([portAudio.play(), crowdAudio.play()]).catch(() => undefined);
-    }
-  });
 
   const fadeAudio = (targetPort: number, targetCrowd: number, duration: number, onComplete?: () => void) => {
     if (audioFrameRef.current !== null) window.cancelAnimationFrame(audioFrameRef.current);
@@ -309,95 +180,282 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   };
 
   const enterDictionary = () => {
-    shellRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "end" });
+    document.getElementById("dictionary-top")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   };
 
-  // Vuelve al inicio real de la sección del diccionario (nav + título +
-  // buscador + filtros), nunca directo al input — conserva query y
-  // filtros porque ambos viven en estado de React, ajeno a este scroll.
   const scrollToDictionaryTop = () => {
     document.getElementById("dictionary-top")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   };
 
+  // isMobileViewport arranca en false en el primer render (server, sin
+  // matchMedia) y se corrige apenas monta — el efecto de GSAP de más abajo
+  // lo lee de este ref en vez de tenerlo como dependencia: así la
+  // corrección post-montaje (o un resize real que cruce el breakpoint)
+  // solo dispara un ScrollTrigger.refresh() (recalcula end/parallax) en
+  // vez de destruir y recrear el pin mientras React sigue con ese mismo
+  // subárbol montado — eso último producía conflictos reales de DOM entre
+  // GSAP y React (insertBefore/removeChild sobre nodos que el pin-spacer
+  // ya había movido).
+  const isMobileRef = useRef(isMobileViewport);
+  useEffect(() => {
+    isMobileRef.current = isMobileViewport;
+    if (typeof window !== "undefined") ScrollTrigger.refresh();
+  }, [isMobileViewport]);
+
+  // Motor único: una timeline GSAP con ease:"none" maneja todo lo que
+  // depende del scroll (pin, crecimiento, disolución, humo); el mouse vive
+  // aparte, en wrappers interiores propios, vía gsap.quickTo. Nada de esto
+  // convive con RAF/listeners manuales ni con Framer Motion. Corre una
+  // sola vez por montaje (reduceMotion es la única dependencia real: si
+  // cambia, React desmonta esta rama entera y monta el fallback estático,
+  // así que el cleanup de gsap.context corre en un desmontaje real, nunca
+  // mientras el árbol sigue vivo).
+  useEffect(() => {
+    if (reduceMotion) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    // gsap.context() no propaga el return de su callback como cleanup —
+    // los listeners de mouse (que sí necesitan removerse aparte de las
+    // tweens/ScrollTrigger que sí revierte ctx.revert()) se guardan acá.
+    let removeMouseListeners: (() => void) | undefined;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        defaults: { ease: "none" },
+        scrollTrigger: {
+          trigger: stage,
+          start: "top top",
+          end: () => `+=${window.innerHeight * ((isMobileRef.current ? 50 : 78) / 100)}`,
+          pin: true,
+          scrub: 0.68,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            scrollProgressRef.current = self.progress;
+            if (!audioStartedRef.current || mutedRef.current) return;
+            const portAudio = portAudioRef.current;
+            const crowdAudio = crowdAudioRef.current;
+            if (!portAudio || !crowdAudio) return;
+            const p = self.progress;
+            const fade = p <= 0.3 ? 1 : Math.max(0, 1 - (p - 0.3) / 0.5);
+            portAudio.volume = 0.7 * fade;
+            crowdAudio.volume = 0.45 * fade;
+            if (fade === 0 && !portAudio.paused) {
+              portAudio.pause();
+              crowdAudio.pause();
+            } else if (fade > 0 && portAudio.paused) {
+              void Promise.all([portAudio.play(), crowdAudio.play()]).catch(() => undefined);
+            }
+          },
+        },
+      });
+
+      // Crecimiento por scroll: solo fondo (wrapper exterior) y tanguero.
+      tl.to(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE, duration: 0.85 }, 0);
+      tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: 1, duration: 0.85 }, 0);
+
+      // UI: sube y se desvanece entre 10% y 30%.
+      tl.to(contentRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.1);
+      tl.to(cueRef.current, { opacity: 0, duration: 0.2 }, 0.1);
+
+      // Disolución de toda la escena (nunca transforms individuales:
+      // opacity + filter compartidos en el wrapper de cámara) entre 30% y 80%.
+      tl.to(
+        sceneRef.current,
+        { opacity: 0.25, filter: "blur(6px) saturate(0.7) brightness(0.85)", duration: 0.5 },
+        0.3
+      );
+
+      // Botón de sonido: se apaga cerca del final del fade de audio, no
+      // junto con el resto de la UI (el audio sigue sonando hasta 80%).
+      tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
+
+      // Humo — textura y degradado sólido por separado. Entrada desde
+      // 0.27, duración 0.58 (termina en 0.85), escala final 1.10.
+      tl.fromTo(
+        smokeMainRef.current,
+        { opacity: 0, scale: 1 },
+        { opacity: 0.68, scale: 1.1, duration: 0.58 },
+        0.27
+      );
+      tl.fromTo(
+        smokeSecondaryRef.current,
+        { opacity: 0, scale: 1.04 },
+        { opacity: 0.48, scale: 1.14, duration: 0.5 },
+        0.33
+      );
+      // El degradado sólido llega a #0B0D10 pleno justo cuando termina la
+      // timeline (despinea), para que el diccionario (mismo --ink) siga
+      // sin costura ni bloque prematuro.
+      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.6 }, 0.4);
+
+      // Mouse: quickTo con power3.out, wrappers interiores independientes
+      // del de scroll/cámara. mobile/pointer grueso se revisa en cada
+      // movimiento (no al armar el efecto), así isMobileViewport puede
+      // cambiar sin tener que reconstruir todo el pin.
+      const xToFondo = gsap.quickTo(fondoMouseRef.current, "x", { duration: 0.72, ease: "power3.out" });
+      const yToFondo = gsap.quickTo(fondoMouseRef.current, "y", { duration: 0.72, ease: "power3.out" });
+      const xToLogo = gsap.quickTo(logoMouseRef.current, "x", { duration: 0.62, ease: "power3.out" });
+      const yToLogo = gsap.quickTo(logoMouseRef.current, "y", { duration: 0.62, ease: "power3.out" });
+      const xToSearch = gsap.quickTo(searchMouseRef.current, "x", { duration: 0.62, ease: "power3.out" });
+      const yToSearch = gsap.quickTo(searchMouseRef.current, "y", { duration: 0.62, ease: "power3.out" });
+
+      const handleMove = (event: PointerEvent) => {
+        if (isMobileRef.current || !window.matchMedia("(pointer: fine)").matches) return;
+        const bounds = stage.getBoundingClientRect();
+        const nx = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
+        const ny = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+        const fade = Math.max(0, 1 - scrollProgressRef.current / MOUSE_FADE_END);
+        xToFondo(-nx * RANGE_FONDO_X * fade);
+        yToFondo(-ny * RANGE_FONDO_Y * fade);
+        xToLogo(-nx * RANGE_LOGO_X * fade);
+        yToLogo(-ny * RANGE_LOGO_Y * fade);
+        xToSearch(-nx * RANGE_SEARCH_X * fade);
+        yToSearch(-ny * RANGE_SEARCH_Y * fade);
+      };
+      const handleLeave = () => {
+        xToFondo(0);
+        yToFondo(0);
+        xToLogo(0);
+        yToLogo(0);
+        xToSearch(0);
+        yToSearch(0);
+      };
+      stage.addEventListener("pointermove", handleMove, { passive: true });
+      stage.addEventListener("pointerleave", handleLeave, { passive: true });
+      removeMouseListeners = () => {
+        stage.removeEventListener("pointermove", handleMove);
+        stage.removeEventListener("pointerleave", handleLeave);
+      };
+    }, stage);
+
+    // El pin se calcula con el layout que exista en ese instante — si
+    // alguna placa todavía no terminó de cargar (tamaño real distinto al
+    // width/height declarado), el alto pineado queda mal hasta el primer
+    // resize. Se espera a que todas carguen (o ya estén completas, cache)
+    // y se refresca una vez más para no depender de eso.
+    const heroImages = Array.from(stage.querySelectorAll("img"));
+    const whenLoaded = Promise.all(
+      heroImages.map(
+        (img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener("load", () => resolve(), { once: true });
+                img.addEventListener("error", () => resolve(), { once: true });
+              })
+      )
+    );
+    whenLoaded.then(() => ScrollTrigger.refresh());
+
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener("resize", refresh);
+    return () => {
+      window.removeEventListener("resize", refresh);
+      removeMouseListeners?.();
+      ctx.revert();
+    };
+  }, [reduceMotion]);
+
+  if (reduceMotion) {
+    return (
+      <>
+        <div className="hero-reduced">
+          <img src="/splash/00-maestra-v3.jpg" alt="" width={1672} height={941} />
+          <div className="cinehero-content">
+            <div className="cinehero-wordmark-wrap">
+              <Image
+                className="cinehero-logo"
+                src="/brand/berretin-wordmark.png"
+                alt="Berretín"
+                width={2079}
+                height={756}
+                loading="eager"
+                sizes="(max-width: 640px) 88vw, 720px"
+                style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
+              />
+            </div>
+            <p className="cinehero-descriptor">diccionario de la calle argentina</p>
+            <p className="cinehero-subline">lunfardo porteño</p>
+            <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
+          </div>
+        </div>
+        <div className="wrap dictionary-wrap">
+          <header id="dictionary-top" className="dictionary-intro">
+            <AuxNav className="dictionary-intro-nav" />
+          </header>
+          <Dictionary query={query} onQueryChange={onQueryChange} />
+        </div>
+        <Footer />
+        {showBackBtn && (
+          <button type="button" className="dictionary-back-btn" onClick={scrollToDictionaryTop}>
+            <span className="dictionary-back-mark" aria-hidden="true" />
+            Volver al buscador
+          </button>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
-    <section ref={shellRef} className="cinehero-shell" style={{ height: `calc(100svh + ${revealVh}${revealUnit})` }}>
-      <div ref={stickyRef} className="cinehero-sticky" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
-        <motion.div className="cinehero-layers" aria-hidden="true" style={{ opacity: sceneOpacity, filter: sceneFilter }}>
-          <motion.img
-            className="cinehero-plate"
-            src="/splash/puerto-fondo-limpio.png"
-            alt=""
-            width={1672}
-            height={941}
-            fetchPriority="low"
-            style={{ x: backX, y: backY, scale: backScale }}
-          />
-          <motion.img
-            className="cinehero-plate"
-            src="/splash/escena-maestra.png"
-            alt=""
-            width={1672}
-            height={941}
-            // El plano que en verdad se ve completo (encima del fondo) es el
-            // LCP real del hero — el único que vale la pena priorizar.
-            fetchPriority="high"
-            style={{ x: sceneX, y: sceneY, scale: sceneScale }}
-          />
-        </motion.div>
-
-        <div className="cinehero-vignette" aria-hidden="true" />
-        <div className="cinehero-corner-shadow" aria-hidden="true" />
-
-        <motion.div className="cinehero-content" style={{ opacity: contentOpacity, x: contentParallaxX, y: contentY }}>
-          <div className="cinehero-wordmark-wrap">
-            <Image
-              className="cinehero-logo"
-              src="/brand/berretin-wordmark.png"
-              alt="Berretín"
-              width={2079}
-              height={756}
-              // El LCP real del hero es la escena de fondo (más grande y
-              // pintada antes) — el wordmark carga eager pero sin
-              // competirle la prioridad "high".
-              loading="eager"
-              sizes="(max-width: 640px) 88vw, 720px"
-              style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
-            />
-            <span className="cinehero-wordmark-sheen" aria-hidden="true" />
+      <div ref={stageRef} className="hero-stage">
+        <div ref={sceneRef} className="hero-scene" aria-hidden="true">
+          <div ref={fondoScrollRef} className="hero-layer">
+            <div ref={fondoMouseRef} className="hero-mouse-wrap">
+              <img className="hero-plate" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} fetchPriority="high" onLoad={() => ScrollTrigger.refresh()} />
+            </div>
           </div>
-          <p className="cinehero-descriptor">diccionario de la calle argentina</p>
-          <p className="cinehero-subline">lunfardo porteño</p>
-          <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
-        </motion.div>
+          <img className="hero-plate hero-piso-mask" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+          <img className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+          <img ref={tangueroRef} className="hero-plate hero-tanguero" src="/splash/03-tanguero-anclado.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+          <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+        </div>
 
-        <audio ref={portAudioRef} src="/sounds/puerto-ambiente.mp3" loop preload="auto" aria-hidden="true" />
-        <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
-      </div>
+        <div className="hero-vignette" aria-hidden="true" />
+        <div className="hero-corner-shadow" aria-hidden="true" />
 
-      {/* Capa aparte, hermana de .cinehero-sticky y con z-index por encima
-          de .cinehero-curtain (que incluye el degradado inferior que se
-          funde con --ink): así "deslizá para entrar" y el botón de sonido
-          nunca quedan pintados por debajo de ese degradado ni de ningún
-          filter/opacity de la escena — no heredan nada de esos elementos,
-          viven en su propio stacking context. */}
-      <div className="cinehero-controls-overlay" style={{ visibility: isRevealed ? "hidden" : "visible" }}>
-        <motion.button
-          className="cinehero-cue"
-          type="button"
-          onClick={enterDictionary}
-          style={{ opacity: contentOpacity }}
-        >
+        <div ref={smokeMainRef} className="hero-smoke hero-smoke-main" />
+        <div ref={smokeSecondaryRef} className="hero-smoke hero-smoke-secondary" />
+        <div ref={smokeGradientRef} className="hero-smoke-gradient" />
+
+        <div ref={contentRef} className="cinehero-content">
+          <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
+            <div className="cinehero-wordmark-wrap">
+              <Image
+                className="cinehero-logo"
+                src="/brand/berretin-wordmark.png"
+                alt="Berretín"
+                width={2079}
+                height={756}
+                // El LCP real del hero es la escena de fondo (más grande y
+                // pintada antes) — el wordmark carga eager pero sin
+                // competirle la prioridad "high".
+                loading="eager"
+                sizes="(max-width: 640px) 88vw, 720px"
+                style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
+              />
+              <span className="cinehero-wordmark-sheen" aria-hidden="true" />
+            </div>
+            <p className="cinehero-descriptor">diccionario de la calle argentina</p>
+            <p className="cinehero-subline">lunfardo porteño</p>
+          </div>
+          <div ref={searchMouseRef} className="hero-ui-mouse-wrap">
+            <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
+          </div>
+        </div>
+
+        <button ref={cueRef} className="cinehero-cue" type="button" onClick={enterDictionary}>
           deslizá para entrar <span aria-hidden="true">↓</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
+          ref={audioToggleRef}
           className="cinehero-audio-toggle"
           type="button"
           onClick={toggleMute}
           aria-label={isMuted ? "Activar sonido ambiente" : "Silenciar sonido ambiente"}
           aria-pressed={isMuted}
-          style={{ opacity: audioToggleOpacity }}
         >
           {isMuted ? (
             <span aria-hidden="true">×</span>
@@ -407,32 +465,26 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
               <path d="M17 9.5a4 4 0 0 1 0 5M19.5 7a7.5 7.5 0 0 1 0 10" />
             </svg>
           )}
-        </motion.button>
+        </button>
+
+        <audio ref={portAudioRef} src="/sounds/puerto-ambiente.mp3" loop preload="auto" aria-hidden="true" />
+        <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
       </div>
 
-      <motion.div
-        className="cinehero-curtain"
-        data-revealed={isRevealed ? "true" : "false"}
-        style={{ y: curtainY, top: isRevealed ? -curtainTopOffset : undefined }}
-      >
-        <div className="cinehero-curtain-fade" aria-hidden="true" />
-        <div className="cinehero-curtain-clip">
-          <div className="wrap dictionary-wrap">
-            <header id="dictionary-top" className="dictionary-intro">
-              <AuxNav className="dictionary-intro-nav" />
-            </header>
-            <Dictionary query={query} onQueryChange={onQueryChange} />
-          </div>
-          <Footer />
-        </div>
-      </motion.div>
-    </section>
-    {showBackBtn && (
-      <button type="button" className="dictionary-back-btn" onClick={scrollToDictionaryTop}>
-        <span className="dictionary-back-mark" aria-hidden="true" />
-        Volver al buscador
-      </button>
-    )}
+      <div className="wrap dictionary-wrap">
+        <header id="dictionary-top" className="dictionary-intro">
+          <AuxNav className="dictionary-intro-nav" />
+        </header>
+        <Dictionary query={query} onQueryChange={onQueryChange} />
+      </div>
+      <Footer />
+
+      {showBackBtn && (
+        <button type="button" className="dictionary-back-btn" onClick={scrollToDictionaryTop}>
+          <span className="dictionary-back-mark" aria-hidden="true" />
+          Volver al buscador
+        </button>
+      )}
     </>
   );
 }
