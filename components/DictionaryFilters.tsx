@@ -122,45 +122,47 @@ export function DictionaryFilters({ state, onChange, query, onQueryChange }: Dic
       </button>
 
       <section className="consult-facets" aria-label="Categorías y orígenes" data-open={facetsOpen}>
-        <div className="consult-facet-group">
-          <h2 className="consult-section-title">Categoría</h2>
-          <div className="consult-facet-list consult-facet-list-categoria">
-            <button
-              type="button"
-              className={`consult-facet-item${state.sinCategoria ? " active" : ""}`}
-              onClick={() => onChange({ ...state, sinCategoria: !state.sinCategoria, categorias: [], origenes: [] })}
-            >
-              <span className="consult-facet-index">01</span>
-              <span className="consult-facet-name">sin categoría</span>
-            </button>
-            {CATEGORIES.map((categoria, i) => (
+        <div className="consult-facets-row">
+          <div className="consult-facet-group consult-facet-group-categoria">
+            <h2 className="consult-section-title">Categoría</h2>
+            <div className="consult-facet-list consult-facet-list-categoria">
               <button
-                key={categoria}
                 type="button"
-                className={`consult-facet-item${state.categorias.includes(categoria) ? " active" : ""}`}
-                onClick={() => onChange({ ...state, sinCategoria: false, categorias: toggleValue(state.categorias, categoria) })}
+                className={`consult-facet-item${state.sinCategoria ? " active" : ""}`}
+                onClick={() => onChange({ ...state, sinCategoria: !state.sinCategoria, categorias: [], origenes: [] })}
               >
-                <span className="consult-facet-index">{String(i + 2).padStart(2, "0")}</span>
-                <span className="consult-facet-name">{categoria.toLocaleLowerCase("es")}</span>
+                <span className="consult-facet-index">01</span>
+                <span className="consult-facet-name">sin categoría</span>
               </button>
-            ))}
+              {CATEGORIES.map((categoria, i) => (
+                <button
+                  key={categoria}
+                  type="button"
+                  className={`consult-facet-item${state.categorias.includes(categoria) ? " active" : ""}`}
+                  onClick={() => onChange({ ...state, sinCategoria: false, categorias: toggleValue(state.categorias, categoria) })}
+                >
+                  <span className="consult-facet-index">{String(i + 2).padStart(2, "0")}</span>
+                  <span className="consult-facet-name">{categoria.toLocaleLowerCase("es")}</span>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="consult-facet-group">
-          <h2 className="consult-section-title">Origen</h2>
-          <div className="consult-facet-list">
-            {ORIGINS.map((origen, i) => (
-              <button
-                key={origen}
-                type="button"
-                className={`consult-facet-item${state.origenes.includes(origen) ? " active" : ""}`}
-                onClick={() => onChange({ ...state, sinCategoria: false, origenes: toggleValue(state.origenes, origen) })}
-              >
-                <span className="consult-facet-index">{String(i + 1).padStart(2, "0")}</span>
-                <span className="consult-facet-name">{origen.replace("Voz de origen ", "").toLocaleLowerCase("es")}</span>
-              </button>
-            ))}
+          <div className="consult-facet-group consult-facet-group-origen">
+            <h2 className="consult-section-title">Origen</h2>
+            <div className="consult-facet-list consult-facet-list-origen">
+              {ORIGINS.map((origen, i) => (
+                <button
+                  key={origen}
+                  type="button"
+                  className={`consult-facet-item${state.origenes.includes(origen) ? " active" : ""}`}
+                  onClick={() => onChange({ ...state, sinCategoria: false, origenes: toggleValue(state.origenes, origen) })}
+                >
+                  <span className="consult-facet-index">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="consult-facet-name">{origen.replace("Voz de origen ", "").toLocaleLowerCase("es")}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>

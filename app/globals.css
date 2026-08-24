@@ -55,15 +55,23 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-facets-toggle { display:none; }
 
 .consult-facets { display:flex; flex-direction:column; gap:18px; margin-bottom:4px; }
-.consult-facet-group + .consult-facet-group { padding-top:14px; border-top:1px solid var(--line); }
-/* Grilla fluida (Origen): más columnas cuantas más entren, sin depender
-   de un conteo de filas calculado en JS — nunca deja huecos vacíos
-   porque cada fila se rellena con las columnas que el ancho real
-   permite. Categoría usa una grilla fija de 4 columnas (ver
+/* Desktop: Categoría (3 columnas x 4 filas, llenado por columna) y
+   Origen como cuarta columna a la derecha, separadas por una línea
+   fina vertical — unidas en una sola fila para no dejar el espacio
+   extra que dejaba Origen como sección aparte. Tablet/mobile (ver
+   media queries) vuelven al apilado original con divisor horizontal. */
+.consult-facets-row { display:flex; align-items:flex-start; gap:24px; }
+.consult-facet-group-categoria { flex:3 1 0%; }
+.consult-facet-group-origen { flex:1 1 0%; padding-left:20px; border-left:1px solid var(--line); }
+/* Grilla fluida (Origen en tablet/mobile): más columnas cuantas más
+   entren, sin depender de un conteo de filas calculado en JS — nunca
+   deja huecos vacíos porque cada fila se rellena con las columnas que
+   el ancho real permite. Categoría usa una grilla fija (ver
    .consult-facet-list-categoria) para las 12 entradas reales (11
-   categorías + "sin categoría") en 3 filas parejas y compactas. */
+   categorías + "sin categoría"). */
 .consult-facet-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); column-gap:20px; row-gap:6px; }
-.consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(4, 1fr); }
+.consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(3, 1fr); grid-auto-flow:column; grid-template-rows:repeat(4, auto); }
+.consult-facet-list.consult-facet-list-origen { grid-template-columns:1fr; }
 .consult-facet-item { display:flex; align-items:baseline; gap:10px; width:100%; border:0; background:none; padding:4px 0; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:400; font-size:15px; line-height:1.3; text-align:left; transition:color .15s ease; }
 .consult-facet-item:hover { color:var(--crema); }
 .consult-facet-item.active { color:var(--brass); }
@@ -81,7 +89,14 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 @media (max-width:900px) {
   .consult-seal { height:96px; }
-  .consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(3, 1fr); }
+  /* Vuelve al apilado original (Categoría arriba, Origen abajo con
+     divisor horizontal) — el layout de fila con línea vertical es
+     solo de desktop. */
+  .consult-facets-row { flex-direction:column; gap:0; }
+  .consult-facet-group-origen { padding-left:0; border-left:0; }
+  .consult-facets-row .consult-facet-group + .consult-facet-group { padding-top:14px; border-top:1px solid var(--line); }
+  .consult-facet-list.consult-facet-list-categoria { grid-template-columns:repeat(3, 1fr); grid-auto-flow:row; grid-template-rows:none; }
+  .consult-facet-list.consult-facet-list-origen { grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); }
 }
 
 @media (max-width:640px) {
