@@ -339,10 +339,12 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .not-found-text { font-size:14px; color:var(--muted); margin-bottom:32px; max-width:48ch; }
 
 /* ---- Footer ---- */
-.site-footer { width:100%; border-top:1px solid var(--brass); }
-.site-footer-inner { max-width:1320px; margin:0 auto; padding:32px 24px 56px; }
-.site-footer-inner p { font-size:11px; line-height:1.7; color:var(--muted); max-width:64ch; }
-.site-footer-legal { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; gap:16px; margin-top:12px; }
+/* Mismo ancho/margen que .wrap.dictionary-wrap; el margin-top negativo
+   resta el padding-bottom:100px de ese wrap para no duplicar el salto
+   antes del footer. */
+.site-footer { max-width:1320px; margin:-100px auto 0; padding:20px 24px 32px; border-top:1px solid var(--brass); }
+.site-footer > p { font-size:11px; line-height:1.7; color:var(--muted); max-width:64ch; }
+.site-footer-legal { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; gap:16px; margin-top:14px; }
 .site-footer-legal a { font:11px/1 var(--font-space-grotesk), sans-serif; letter-spacing:.6px; color:var(--muted); text-decoration:none; transition:color .15s ease; }
 .site-footer-legal a:hover { color:var(--brass); }
 .site-footer-legal a:nth-child(1) { justify-self:start; }
