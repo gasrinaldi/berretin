@@ -36,7 +36,7 @@ const MOUSE_FADE_END = 0.32;
 const FONDO_SCROLL_SCALE = 0.94;
 const MULTITUD_SCALE_TO = 0.97;
 const TANGUERO_SCALE_FROM = 0.9;
-const TANGUERO_SCALE_TO = 1.34;
+const TANGUERO_SCALE_TO = 1.55;
 
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -262,45 +262,51 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       tl.to(multitudRef.current, { scale: MULTITUD_SCALE_TO, duration: 0.85 }, 0);
       tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.85 }, 0);
 
-      // UI: sube y se desvanece entre 12% y 32%.
-      tl.to(contentRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.12);
-      tl.to(cueRef.current, { opacity: 0, duration: 0.2 }, 0.12);
-
-      // Escena: opacidad retrasada (recién desde 60%) y blur mínimo
-      // (2px, nunca 6px) — quien tapa la escena es el humo real de abajo,
-      // no un fade gris genérico del wrapper de cámara.
-      tl.to(
-        sceneRef.current,
-        { opacity: 0.35, filter: "blur(2px) saturate(0.82) brightness(0.9)", duration: 0.36 },
-        0.6
+      // UI: wordmark y buscador se desvanecen progresivamente entre 18%
+      // y 52% — opacity + blur + una escala mínima, nunca display/
+      // visibility (para que la transición se lea suave, no un corte).
+      tl.fromTo(
+        contentRef.current,
+        { opacity: 1, filter: "blur(0px)", scale: 1 },
+        { opacity: 0, filter: "blur(7px)", scale: 0.985, duration: 0.34 },
+        0.18
       );
+      tl.to(cueRef.current, { opacity: 0, duration: 0.34 }, 0.18);
+
+      // La escena ya NO se oscurece con opacity/filter global — sin eso
+      // la pantalla nunca "se apaga sola"; lo que la tapa es el humo real
+      // (imágenes con alfa) y, al final, el velo sólido de abajo.
 
       // Botón de sonido: se apaga cerca del final del fade de audio, no
       // junto con el resto de la UI (el audio sigue sonando hasta 80%).
       tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
 
-      // Humo — dos PNG con alfa real, capas independientes (ya no se
-      // duplica 05-humo-tinta.png con distinto blur). La bruma difusa
-      // entra primero con movimiento mínimo; el humo denso lateral entra
-      // después, desde abajo y los costados, y termina de cubrir la
-      // escena orgánicamente (sin máscaras ni blur extra sobre el PNG).
+      // Humo — dos PNG con alfa real que arrancan por debajo del cuadro
+      // (yPercent) y ascienden. La bruma inferior entra primero y más
+      // tenue; el humo lateral entra después y algo más denso. Nunca
+      // tapan el centro del todo (opacidad tope baja) ni forman pared:
+      // el blur/saturate que las integra con #0B0D10 es una capa CSS fija,
+      // GSAP solo anima opacity/yPercent.
       tl.fromTo(
         smokeSecondaryRef.current,
-        { opacity: 0, scale: 1.02, y: 10 },
-        { opacity: 0.55, scale: 1.06, y: 0, duration: 0.44 },
-        0.34
+        { opacity: 0, yPercent: 35 },
+        { opacity: 0.3, yPercent: 0, duration: 0.38 },
+        0.48
       );
       tl.fromTo(
         smokeMainRef.current,
-        { opacity: 0, scale: 1.08, y: 26 },
-        { opacity: 0.85, scale: 1.14, y: 0, duration: 0.48 },
-        0.48
+        { opacity: 0, yPercent: 45 },
+        { opacity: 0.34, yPercent: 0, duration: 0.36 },
+        0.58
       );
-      // El degradado sólido arranca recién cerca del 78% (no tapa el
-      // humo real antes de tiempo) y llega a #0B0D10 pleno justo cuando
-      // termina la timeline (despinea), para que el diccionario (mismo
-      // --ink) siga sin costura ni bloque prematuro.
-      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.22 }, 0.78);
+
+      // Velo ascendente conectado al humo: mismo gradiente transparente→
+      // #0B0D10 de siempre, pero en vez de fundir su opacity (fade negro
+      // parejo en toda la pantalla) se traslada verticalmente — el
+      // elemento mide el doble del stage y el corte sólido queda siempre
+      // por debajo del borde con humo, hasta cubrir el cuadro entero
+      // (yPercent:-50) justo cuando termina la timeline/despinea.
+      tl.fromTo(smokeGradientRef.current, { yPercent: 0 }, { yPercent: -50, duration: 0.3 }, 0.7);
 
       // Mouse: quickTo con power3.out, wrappers interiores independientes
       // del de scroll/cámara. mobile/pointer grueso se revisa en cada
@@ -431,7 +437,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <img
           ref={smokeSecondaryRef}
           className="hero-smoke hero-smoke-secondary"
-          src="/splash/07-bruma-difusa-inferior.png"
+          src="/splash/08-bruma-inferior-v2.png"
           alt=""
           width={1672}
           height={941}
@@ -441,7 +447,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <img
           ref={smokeMainRef}
           className="hero-smoke hero-smoke-main"
-          src="/splash/06-humo-denso-lateral.png"
+          src="/splash/09-humo-lateral-v2.png"
           alt=""
           width={1672}
           height={941}

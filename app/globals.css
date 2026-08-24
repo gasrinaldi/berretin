@@ -186,14 +186,21 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 /* Humo de transición: dos PNG RGBA independientes con alfa real (sin
    background-image ni mask-image sintética que la reemplace) — GSAP solo
-   anima opacity/scale/y, nunca blur ni máscaras, para que la entrada
-   nunca lea como un bloque recto. La bruma difusa entra primero y por
-   debajo; el humo denso lateral entra después y por encima. */
-.hero-smoke { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; will-change:transform, opacity; }
-/* Degradado sólido: capa propia (no mezclada con la textura de humo) que
-   termina exactamente en --ink — el mismo bit a bit que el fondo real del
-   diccionario, así el empalme final no deja línea ni salto. */
-.hero-smoke-gradient { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,.6) 55%, #0B0D10 100%); }
+   anima opacity/yPercent, nunca máscaras, para que la entrada nunca lea
+   como un bloque recto. Blur + saturate rebajado (fijos, no animados)
+   integran el humo con #0B0D10 sin tapar el centro de la escena. La
+   bruma inferior entra primero y más tenue; el humo lateral entra
+   después y algo más denso. */
+.hero-smoke { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:blur(4px) saturate(.5); will-change:transform, opacity; }
+/* Velo ascendente: el doble de alto que el stage, con el corte
+   transparente→#0B0D10 a la mitad — en reposo (yPercent:0) esa mitad
+   sólida queda oculta por debajo del stage (overflow:hidden), así que
+   solo se ve la parte transparente. GSAP anima yPercent hasta -50, que
+   corre exactamente una altura de stage hacia arriba: el corte queda
+   siempre por debajo del borde de humo, hasta que la mitad sólida ocupa
+   el cuadro entero (bit a bit el mismo --ink que el diccionario, sin
+   costura ni salto). */
+.hero-smoke-gradient { position:absolute; left:0; right:0; top:0; height:200%; z-index:9; pointer-events:none; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,0) 44%, #0B0D10 56%, #0B0D10 100%); }
 
 .cinehero-content { position:relative; z-index:8; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
 .cinehero-wordmark-wrap { position:relative; display:inline-block; }
