@@ -32,7 +32,18 @@ function stripAccents(value: string) {
   return value.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 function normalize(value: string) {
-  return stripAccents(value).toLowerCase();
+  return stripAccents(value).toLowerCase().replace(/\s+/g, " ").trim();
+}
+// Prioridad de relevancia para una búsqueda con texto: 0) coincidencia
+// exacta del término, 1) el término empieza con la búsqueda, 2) el
+// término contiene la búsqueda, 3) la coincidencia está solo en la
+// definición (busquedaNormalizada, ya filtrada antes de llamar acá).
+function relevanceTier(entry: InternalEntry, query: string): number {
+  const word = normalize(entry.palabra);
+  if (word === query) return 0;
+  if (word.startsWith(query)) return 1;
+  if (word.includes(query)) return 2;
+  return 3;
 }
 // Clasificación automática, sin tocar el dataset: un término sin espacios
 // es "palabra", dos o más separados por espacios son "expresión". Se usa
@@ -164,6 +175,11 @@ export function searchEntries({ q = "", letras = [], categorias = [], origenes =
     if (categorias.length) filtered = filtered.filter((e) => categorias.every((c) => e.categorias.includes(c)));
     if (origenes.length) filtered = filtered.filter((e) => origenes.some((o) => e.origenes.includes(o)));
   }
+
+  // Relevancia solo con búsqueda activa (vacía conserva el orden alfabético
+  // de siempre). Sort estable: ALL ya viene alfabético, así que entradas
+  // con la misma prioridad quedan alfabéticas entre sí sin comparar de nuevo.
+  if (query) filtered = [...filtered].sort((a, b) => relevanceTier(a, query) - relevanceTier(b, query));
 
   const countsByLetter: Record<string, number> = {};
   for (const e of filtered) countsByLetter[e.letra] = (countsByLetter[e.letra] ?? 0) + 1;
