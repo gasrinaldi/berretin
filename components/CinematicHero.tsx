@@ -29,28 +29,20 @@ const RANGE_SEARCH_Y = 1;
 // El parallax de mouse se desvanece entre 0% y 32% del recorrido de scroll.
 const MOUSE_FADE_END = 0.32;
 
-// Profundidad por scroll (wrapper de cámara, nunca toca piso/jóvenes,
-// que quedan completamente anclados): fondo y multitud RETROCEDEN
-// (dolly-out) hasta ~0.95–0.97, y el tanguero CRECE desde los pies
-// hasta ~1.35–1.45 — el efecto contrario es justo el bug que esto
-// corrige. Fondo/multitud llevan overscan (.hero-layer, inset:-8%) para
-// que retroceder nunca revele un borde.
-const FONDO_SCALE_FROM = 1;
-const FONDO_SCALE_TO = 0.97;
-const MULTITUD_SCALE_FROM = 1;
-const MULTITUD_SCALE_TO = 0.95;
-const TANGUERO_SCALE_FROM = 1;
-const TANGUERO_SCALE_TO = 1.4;
+// Crecimiento por scroll (único wrapper de cámara, nunca toca piso/
+// multitud/jóvenes): el fondo se amplía apenas y el tanguero crece desde
+// su base — magnitud heredada de la versión anterior del hero, ya que el
+// spec aprobado solo fija los valores de mouse y de humo.
+const FONDO_SCROLL_SCALE = 1.08;
+const TANGUERO_SCALE_FROM = 0.9;
 
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const fondoScrollRef = useRef<HTMLDivElement>(null);
   const fondoMouseRef = useRef<HTMLDivElement>(null);
-  const multitudScrollRef = useRef<HTMLDivElement>(null);
   const tangueroRef = useRef<HTMLImageElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const logoGroupRef = useRef<HTMLDivElement>(null);
   const logoMouseRef = useRef<HTMLDivElement>(null);
   const searchMouseRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLButtonElement>(null);
@@ -258,17 +250,12 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         },
       });
 
-      // Profundidad por scroll: fondo y multitud retroceden (dolly-out),
-      // el tanguero crece desde los pies — los tres en el mismo tramo
-      // 0→0.85 para que la sensación de cámara sea una sola, continua.
-      tl.fromTo(fondoScrollRef.current, { scale: FONDO_SCALE_FROM }, { scale: FONDO_SCALE_TO, duration: 0.85 }, 0);
-      tl.fromTo(multitudScrollRef.current, { scale: MULTITUD_SCALE_FROM }, { scale: MULTITUD_SCALE_TO, duration: 0.85 }, 0);
-      tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.85 }, 0);
+      // Crecimiento por scroll: solo fondo (wrapper exterior) y tanguero.
+      tl.to(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE, duration: 0.85 }, 0);
+      tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: 1, duration: 0.85 }, 0);
 
-      // Logo/tagline suben y se desvanecen entre 10% y 30% — el buscador
-      // del hero NO comparte este fade (ver más abajo: sigue de pie hasta
-      // quedar tapado por el humo, para que nunca desaparezca el buscador).
-      tl.to(logoGroupRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.1);
+      // UI: sube y se desvanece entre 10% y 30%.
+      tl.to(contentRef.current, { opacity: 0, y: -30, duration: 0.2 }, 0.1);
       tl.to(cueRef.current, { opacity: 0, duration: 0.2 }, 0.1);
 
       // Disolución de toda la escena (nunca transforms individuales:
@@ -283,18 +270,24 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       // junto con el resto de la UI (el audio sigue sonando hasta 80%).
       tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
 
-      // Humo — textura y degradado sólido por separado, en ese orden de
-      // pintado (ver DOM: el degradado va ANTES en el markup para quedar
-      // detrás). El humo entra bien antes que el oscurecimiento final
-      // (0.15/0.2, mucho antes que el negro sólido) para que se vea de
-      // verdad como textura, no tapado por el degradado.
-      tl.fromTo(smokeMainRef.current, { opacity: 0, scale: 1 }, { opacity: 0.68, scale: 1.1, duration: 0.7 }, 0.15);
-      tl.fromTo(smokeSecondaryRef.current, { opacity: 0, scale: 1.04 }, { opacity: 0.48, scale: 1.14, duration: 0.65 }, 0.2);
-      // El negro pleno recién en el último tramo (0.75→1, justo cuando
-      // despinea) para no tapar el humo antes de tiempo ni dejar un
-      // bloque sólido prematuro — el diccionario comparte el mismo --ink,
-      // así que llegar a 1 exactamente al final no deja costura.
-      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.25 }, 0.75);
+      // Humo — textura y degradado sólido por separado. Entrada desde
+      // 0.27, duración 0.58 (termina en 0.85), escala final 1.10.
+      tl.fromTo(
+        smokeMainRef.current,
+        { opacity: 0, scale: 1 },
+        { opacity: 0.68, scale: 1.1, duration: 0.58 },
+        0.27
+      );
+      tl.fromTo(
+        smokeSecondaryRef.current,
+        { opacity: 0, scale: 1.04 },
+        { opacity: 0.48, scale: 1.14, duration: 0.5 },
+        0.33
+      );
+      // El degradado sólido llega a #0B0D10 pleno justo cuando termina la
+      // timeline (despinea), para que el diccionario (mismo --ink) siga
+      // sin costura ni bloque prematuro.
+      tl.to(smokeGradientRef.current, { opacity: 1, duration: 0.6 }, 0.4);
 
       // Mouse: quickTo con power3.out, wrappers interiores independientes
       // del de scroll/cámara. mobile/pointer grueso se revisa en cada
@@ -414,9 +407,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
             </div>
           </div>
           <img className="hero-plate hero-piso-mask" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
-          <div ref={multitudScrollRef} className="hero-layer">
-            <img className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
-          </div>
+          <img className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
           <img ref={tangueroRef} className="hero-plate hero-tanguero" src="/splash/03-tanguero-anclado.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
           <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
         </div>
@@ -424,39 +415,31 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <div className="hero-vignette" aria-hidden="true" />
         <div className="hero-corner-shadow" aria-hidden="true" />
 
-        {/* El degradado sólido va PRIMERO en el DOM (mismo z-index que las
-            texturas de humo) para pintar DETRÁS de ellas — si fuera último
-            las tapaba apenas empezaba a ganar opacidad. */}
-        <div ref={smokeGradientRef} className="hero-smoke-gradient" />
         <div ref={smokeMainRef} className="hero-smoke hero-smoke-main" />
         <div ref={smokeSecondaryRef} className="hero-smoke hero-smoke-secondary" />
+        <div ref={smokeGradientRef} className="hero-smoke-gradient" />
 
         <div ref={contentRef} className="cinehero-content">
-          <div ref={logoGroupRef}>
-            <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
-              <div className="cinehero-wordmark-wrap">
-                <Image
-                  className="cinehero-logo"
-                  src="/brand/berretin-wordmark.png"
-                  alt="Berretín"
-                  width={2079}
-                  height={756}
-                  // El LCP real del hero es la escena de fondo (más grande y
-                  // pintada antes) — el wordmark carga eager pero sin
-                  // competirle la prioridad "high".
-                  loading="eager"
-                  sizes="(max-width: 640px) 88vw, 720px"
-                  style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
-                />
-                <span className="cinehero-wordmark-sheen" aria-hidden="true" />
-              </div>
-              <p className="cinehero-descriptor">diccionario de la calle argentina</p>
-              <p className="cinehero-subline">lunfardo porteño</p>
+          <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
+            <div className="cinehero-wordmark-wrap">
+              <Image
+                className="cinehero-logo"
+                src="/brand/berretin-wordmark.png"
+                alt="Berretín"
+                width={2079}
+                height={756}
+                // El LCP real del hero es la escena de fondo (más grande y
+                // pintada antes) — el wordmark carga eager pero sin
+                // competirle la prioridad "high".
+                loading="eager"
+                sizes="(max-width: 640px) 88vw, 720px"
+                style={{ width: "min(clamp(520px, 45vw, 720px), 88vw)", height: "auto", objectFit: "contain" }}
+              />
+              <span className="cinehero-wordmark-sheen" aria-hidden="true" />
             </div>
+            <p className="cinehero-descriptor">diccionario de la calle argentina</p>
+            <p className="cinehero-subline">lunfardo porteño</p>
           </div>
-          {/* El buscador del hero NO se desvanece con el resto de la UI —
-              queda de pie hasta que el humo/degradado lo tapan, así nunca
-              hay un momento sin buscador visible (ver timeline GSAP). */}
           <div ref={searchMouseRef} className="hero-ui-mouse-wrap">
             <SearchBar id="hero-search" className="cinehero-search" showSubmit value={query} onChange={onQueryChange} onSubmit={enterDictionary} />
           </div>
