@@ -187,10 +187,16 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .hero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
 .hero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
 
-/* Humo de transición: dos PNG RGBA independientes con alfa real (sin
-   background-image ni mask-image sintética que la reemplace) — GSAP solo
-   anima opacity/yPercent, nunca máscaras, para que la entrada nunca lea
-   como un bloque recto. Blur + saturate rebajado (fijos, no animados)
+/* Capa de humo de transición: fixed y compartida entre hero y
+   dictionary-panel (no vive dentro de .hero-stage) para que quede por
+   encima de los dos — si estuviera dentro del hero, el panel real (con
+   su propio z-index) la taparía apenas empieza a subir. Sin fondo
+   propio, solo las dos imágenes con su alfa real. */
+.hero-transition-smoke { position:fixed; inset:0; z-index:30; pointer-events:none; }
+/* Humo: dos PNG RGBA independientes con alfa real (sin background-image
+   ni mask-image sintética que la reemplace) — GSAP solo anima
+   opacity/yPercent, nunca máscaras, para que la entrada nunca lea como
+   un bloque recto. Blur + saturate rebajado (fijos, no animados)
    integran el humo con #0B0D10 sin tapar el centro de la escena. La
    bruma inferior entra primero y más tenue; el humo lateral entra
    después y algo más denso. */

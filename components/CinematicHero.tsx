@@ -33,10 +33,10 @@ const MOUSE_FADE_END = 0.32;
 // jóvenes): el puerto lejano (fondo) retrocede levemente, la multitud
 // profunda se reduce apenas anclada abajo, y el tanguero crece
 // claramente desde los pies — valores del spec V2 (humo v2).
-const FONDO_SCROLL_SCALE = 0.94;
-const MULTITUD_SCALE_TO = 0.97;
+const FONDO_SCROLL_SCALE = 0.88;
+const MULTITUD_SCALE_TO = 0.94;
 const TANGUERO_SCALE_FROM = 0.9;
-const TANGUERO_SCALE_TO = 1.55;
+const TANGUERO_SCALE_TO = 2.4;
 
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -283,23 +283,26 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
 
       // Humo — dos PNG con alfa real que arrancan por debajo del cuadro
-      // (yPercent) y ascienden. La bruma inferior entra primero y más
-      // tenue; el humo lateral entra después y algo más denso. Nunca
-      // tapan el centro del todo (opacidad tope baja) ni forman pared:
-      // el blur/saturate que las integra con #0B0D10 es una capa CSS fija,
-      // GSAP solo anima opacity/yPercent.
+      // (yPercent) y ascienden, sostienen su opacidad y se desvanecen
+      // progresivamente antes de que termine la timeline (nunca un corte
+      // instantáneo). Viven en .hero-transition-smoke, una capa fixed
+      // aparte que queda por encima de hero y dictionary-panel — GSAP
+      // solo anima opacity/yPercent, nunca blur ni máscaras.
       tl.fromTo(
         smokeSecondaryRef.current,
-        { opacity: 0, yPercent: 35 },
-        { opacity: 0.3, yPercent: 0, duration: 0.38 },
-        0.48
+        { opacity: 0, yPercent: 32 },
+        { opacity: 0.38, yPercent: 0, duration: 0.23 },
+        0.42
       );
+      tl.to(smokeSecondaryRef.current, { opacity: 0, duration: 0.1 }, 0.9);
+
       tl.fromTo(
         smokeMainRef.current,
-        { opacity: 0, yPercent: 45 },
-        { opacity: 0.34, yPercent: 0, duration: 0.36 },
-        0.58
+        { opacity: 0, yPercent: 40 },
+        { opacity: 0.44, yPercent: 0, duration: 0.2 },
+        0.52
       );
+      tl.to(smokeMainRef.current, { opacity: 0, duration: 0.06 }, 0.94);
 
       // Ya no hay velo/gradiente propio del hero: quien tapa la escena es
       // el panel real del diccionario (dictionary-panel), que sube en
@@ -443,27 +446,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <div className="hero-vignette" aria-hidden="true" />
         <div className="hero-corner-shadow" aria-hidden="true" />
 
-        <img
-          ref={smokeSecondaryRef}
-          className="hero-smoke hero-smoke-secondary"
-          src="/splash/08-bruma-inferior-v2.png"
-          alt=""
-          width={1672}
-          height={941}
-          aria-hidden="true"
-          onLoad={() => ScrollTrigger.refresh()}
-        />
-        <img
-          ref={smokeMainRef}
-          className="hero-smoke hero-smoke-main"
-          src="/splash/09-humo-lateral-v2.png"
-          alt=""
-          width={1672}
-          height={941}
-          aria-hidden="true"
-          onLoad={() => ScrollTrigger.refresh()}
-        />
-
         <div ref={contentRef} className="cinehero-content">
           <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
             <div className="cinehero-wordmark-wrap">
@@ -514,6 +496,27 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
 
         <audio ref={portAudioRef} src="/sounds/puerto-ambiente.mp3" loop preload="auto" aria-hidden="true" />
         <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
+      </div>
+
+      <div className="hero-transition-smoke" aria-hidden="true">
+        <img
+          ref={smokeSecondaryRef}
+          className="hero-smoke hero-smoke-secondary"
+          src="/splash/08-bruma-inferior-v2.png"
+          alt=""
+          width={1672}
+          height={941}
+          onLoad={() => ScrollTrigger.refresh()}
+        />
+        <img
+          ref={smokeMainRef}
+          className="hero-smoke hero-smoke-main"
+          src="/splash/09-humo-lateral-v2.png"
+          alt=""
+          width={1672}
+          height={941}
+          onLoad={() => ScrollTrigger.refresh()}
+        />
       </div>
 
       <div ref={dictionaryPanelRef} className="dictionary-panel">
