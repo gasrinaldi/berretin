@@ -493,23 +493,29 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 @media (max-width:900px) { .admin-filters { grid-template-columns:1fr 1fr; } .admin-card-body { flex-direction:column; } .admin-card-image { width:100%; max-width:220px; } .admin-meta-grid { grid-template-columns:1fr 1fr; } }
 
 /* ---- Ficha de archivo porteño (/palabra/[slug]) ---- */
+/* Fila "volver al diccionario": vive fuera de .ficha-detail (antes
+   estaba adentro, junto con el nav de Descubrir/Cuenta/Desafío que ya
+   no existe acá) — mismo ancho/centrado que la ficha para que quede
+   alineada con su columna, y separada del vértice ornamental
+   (.ficha-detail::before, ahora en top:0) por su margin-bottom. */
+.ficha-back-row { width:100%; max-width:1160px; margin:0 auto 28px; padding:40px 24px 0; }
+.ficha-back-row .back-btn { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; }
+
 /* width:100% por el mismo motivo que en .wrap (ver comentario ahí):
    sin esto, al ser hijo flex de body, se encogería a su contenido. */
-.ficha-detail { position:relative; width:100%; max-width:1160px; margin:0 auto; padding:40px 24px 100px; }
+.ficha-detail { position:relative; width:100%; max-width:1160px; margin:0 auto; padding:24px 24px 100px; }
 .ficha-detail::before, .ficha-detail::after { content:""; position:absolute; width:16px; height:16px; border-color:var(--brass); opacity:.35; pointer-events:none; }
-.ficha-detail::before { top:40px; left:24px; border-top:1px solid; border-left:1px solid; }
+.ficha-detail::before { top:0; left:24px; border-top:1px solid; border-left:1px solid; }
 .ficha-detail::after { bottom:40px; right:24px; border-bottom:1px solid; border-right:1px solid; }
-
-.ficha-detail-nav { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; padding-bottom:20px; margin-bottom:48px; border-bottom:1px solid var(--line); }
-.ficha-detail-nav .back-btn, .ficha-detail-nav .aux-nav a { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; }
-/* Deja el vértice ornamental (.ficha-detail::before, 16px de ancho en
-   left:24px) solo en el margen izquierdo: el texto arranca 20px a su
-   derecha en vez de superponerse. */
-.ficha-detail-nav .back-btn { padding-left:36px; }
-.ficha-detail-nav .aux-nav { gap:26px; }
 
 .ficha-detail-grid { display:grid; grid-template-columns:120px 1fr; column-gap:56px; }
 .ficha-detail-sidebar { border-right:1px solid var(--line-strong); }
+/* La inicial es <BerretinInitial>, un <span> recortado de los PNG de
+   public/brand/alphabet (ver componente) que se dimensiona en "em"
+   relativos al font-size de este mismo selector — por eso font-size
+   sigue siendo la propiedad que controla su tamaño, aunque ya no
+   renderiza texto. font-family/color quedan como fallback si alguna
+   letra no estuviera en el mapa de coordenadas. */
 .ficha-detail-sidebar-letter { display:block; font-family:var(--font-fraunces), serif; font-weight:700; font-style:italic; font-size:80px; line-height:1; color:var(--brass); border-bottom:1px solid var(--line-strong); padding-bottom:20px; margin-bottom:16px; }
 .ficha-detail-registro { font-size:11px; letter-spacing:1px; color:var(--muted); }
 
@@ -571,7 +577,8 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 }
 
 @media (max-width:640px) {
-  .ficha-detail { padding:32px 20px 80px; }
+  .ficha-back-row { padding:32px 20px 0; margin-bottom:20px; }
+  .ficha-detail { padding:0 20px 80px; }
   .ficha-detail::before, .ficha-detail::after { display:none; }
   .ficha-detail-grid { grid-template-columns:1fr; }
   .ficha-detail-sidebar { display:flex; align-items:baseline; gap:14px; border-right:0; border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:24px; }
@@ -590,8 +597,8 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    Angosto (tablet/mobile, arriba) o excepcionalmente bajo (min-height)
    quedan afuera y conservan el scroll natural de siempre. */
 @media (min-width:901px) and (min-height:700px) {
-  .ficha-detail { padding:clamp(16px, 3vh, 40px) 24px clamp(16px, 2.5vh, 40px); }
-  .ficha-detail-nav { padding-bottom:clamp(10px, 1.5vh, 20px); margin-bottom:clamp(16px, 3vh, 48px); }
+  .ficha-back-row { padding:clamp(16px, 3vh, 40px) 24px 0; margin-bottom:clamp(24px, 2vh, 32px); }
+  .ficha-detail { padding:clamp(10px, 1.5vh, 24px) 24px clamp(16px, 2.5vh, 40px); }
   .ficha-detail-title { font-size:clamp(32px, min(6vw, 7.5vh), 104px); }
   .ficha-detail-meta { margin-top:clamp(6px, 1vh, 16px); }
   .ficha-detail-tabs-nav { margin:clamp(14px, 2.5vh, 40px) 0 clamp(12px, 2vh, 32px); }

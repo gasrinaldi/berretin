@@ -4,7 +4,7 @@ import { getEntryBySlug, getEntryPosition, isExpression } from "@/lib/dictionary
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt } from "@/lib/site";
 import { BackButton } from "@/components/BackButton";
-import { AuxNav } from "@/components/AuxNav";
+import { BerretinInitial } from "@/components/BerretinInitial";
 import { ShareButton } from "@/components/ShareButton";
 import { ContributeButton } from "@/components/ContributeButton";
 import { WordVote } from "@/components/WordVote";
@@ -111,17 +111,13 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="ficha-back-row">
+        <BackButton />
+      </div>
       <div className="ficha-detail">
-        <nav className="ficha-detail-nav">
-          <BackButton hideArrow />
-          <AuxNav />
-        </nav>
-
         <div className="ficha-detail-grid">
           <aside className="ficha-detail-sidebar">
-            <span className="ficha-detail-sidebar-letter" aria-hidden="true">
-              {entry.letra}
-            </span>
+            <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
             {registro && <p className="ficha-detail-registro">N.º {registro}</p>}
           </aside>
 
