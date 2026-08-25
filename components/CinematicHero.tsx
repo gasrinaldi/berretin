@@ -56,7 +56,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const audioToggleRef = useRef<HTMLButtonElement>(null);
   const smokeMainRef = useRef<HTMLImageElement>(null);
   const smokeSecondaryRef = useRef<HTMLImageElement>(null);
-  const heroVeilRef = useRef<HTMLDivElement>(null);
   const dictionaryPanelRef = useRef<HTMLDivElement>(null);
 
   const scrollProgressRef = useRef(0);
@@ -240,32 +239,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           pinSpacing: false,
           scrub: 0.68,
           invalidateOnRefresh: true,
-          // z-index elevado SOLO mientras el pin está activo: al liberar,
-          // GSAP deja el stage en su posición real compensada con un
-          // transform (para que no salte visualmente) — pero ese "resto"
-          // seguiría tapando al diccionario un buen tramo más si su
-          // z-index quedara alto de forma permanente. Bajándolo apenas
-          // termina, el diccionario aparece inmediato y sin salto. El
-          // .pin-spacer que GSAP inserta como nuevo padre de stage copia
-          // ese z-index a su propio inline style al crearse — hay que
-          // alternar la clase ahí también o el spacer se queda tapando
-          // igual, aunque el propio stage ya haya bajado.
-          onEnter: () => {
-            stage.classList.add("hero-pinned");
-            stage.parentElement?.classList.add("hero-pinned");
-          },
-          onEnterBack: () => {
-            stage.classList.add("hero-pinned");
-            stage.parentElement?.classList.add("hero-pinned");
-          },
-          onLeave: () => {
-            stage.classList.remove("hero-pinned");
-            stage.parentElement?.classList.remove("hero-pinned");
-          },
-          onLeaveBack: () => {
-            stage.classList.remove("hero-pinned");
-            stage.parentElement?.classList.remove("hero-pinned");
-          },
           onUpdate: (self) => {
             scrollProgressRef.current = self.progress;
             if (!audioStartedRef.current || mutedRef.current) return;
@@ -286,39 +259,37 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         },
       });
 
-      // ACTO 1 (0→0.55) — profundidad: el diccionario todavía no se ve
-      // (el hero tiene mayor z-index y lo tapa por completo mientras dura
-      // el pin). Puerto lejano siempre sobre-escaneado (nunca <1) para
+      // Profundidad: puerto lejano siempre sobre-escaneado (nunca <1) para
       // que retroceder no descubra bordes; multitud se reduce apenas
-      // anclada abajo. El tanguero empieza a crecer acá pero termina
-      // recién ~70% (sigue en escena entrado el Acto 2).
+      // anclada abajo. El tanguero crece desde los pies y completa su
+      // escala final ~70% del recorrido.
       tl.fromTo(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE_FROM }, { scale: FONDO_SCROLL_SCALE_TO, duration: 0.55 }, 0);
       tl.to(multitudRef.current, { scale: MULTITUD_SCALE_TO, duration: 0.55 }, 0);
       tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.7 }, 0);
 
-      // UI: wordmark y buscador se desvanecen progresivamente dentro del
-      // Acto 1 — opacity + blur + una escala mínima, nunca display/
-      // visibility (para que la transición se lea suave, no un corte).
+      // UI: wordmark, descriptor y buscador mantienen opacity:1 hasta 42%
+      // y se desvanecen lento entre 42% y 72% — opacity + blur + una
+      // escala mínima, nunca display/visibility (para que la transición
+      // se lea suave, no un corte).
       tl.fromTo(
         contentRef.current,
         { opacity: 1, filter: "blur(0px)", scale: 1 },
-        { opacity: 0, filter: "blur(7px)", scale: 0.985, duration: 0.34 },
-        0.18
+        { opacity: 0, filter: "blur(6px)", scale: 0.985, duration: 0.3 },
+        0.42
       );
-      tl.to(cueRef.current, { opacity: 0, duration: 0.34 }, 0.18);
+      tl.to(cueRef.current, { opacity: 0, duration: 0.3 }, 0.42);
 
-      // Botón de sonido: se apaga ya entrado el Acto 2, no junto con el
-      // resto de la UI (el audio sigue sonando hasta 80%).
+      // Botón de sonido: se apaga bien entrada la transición, no junto
+      // con el resto de la UI (el audio sigue sonando hasta 80%).
       tl.to(audioToggleRef.current, { opacity: 0, duration: 0.15 }, 0.65);
 
       // Humo — dos PNG con alfa real que entran desde el primer scroll
-      // (todavía tenues en el Acto 1) y ascienden (yPercent). Una vez
-      // que llegan, sostienen su opacidad sin volver a bajarla: en el
-      // Acto 2 son ellos los que tapan piernas → cuerpo → escena entera,
-      // y deben seguir visibles hasta liberar el pin. Viven dentro de
-      // .hero-stage otra vez (ya no una capa fixed compartida), por
-      // encima del velo ascendente para formar un borde orgánico. GSAP
-      // solo anima opacity/yPercent, nunca blur ni máscaras.
+      // (todavía tenues al principio) y ascienden (yPercent). Una vez que
+      // llegan, sostienen su opacidad sin volver a bajarla: no hace falta
+      // apagarlos porque viven dentro de .dictionary-smoke-bridge, que
+      // sale físicamente por arriba del viewport en cuanto el diccionario
+      // llega a top:0 (ver JSX/CSS) — no hay velo ni fundido propio del
+      // hero, quien tapa la escena es el humo real.
       tl.fromTo(
         smokeSecondaryRef.current,
         { opacity: 0, yPercent: 55 },
@@ -332,12 +303,13 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         0.12
       );
 
-      // ACTO 2 (0.55→1) — transición: la cámara deja de ser protagonista
-      // y el velo ascendente (#0B0D10, gradiente amplio — nunca una
-      // línea recta) sube lento hasta cubrir el cuadro entero justo
-      // cuando termina la timeline/se libera el pin, mismo --ink que el
-      // diccionario para que no quede costura.
-      tl.fromTo(heroVeilRef.current, { yPercent: 0 }, { yPercent: -50, duration: 0.45 }, 0.55);
+      // Ancla la duración total de la timeline en exactamente 1 (0%→100%
+      // del scroll pineado). Sin el velo, ningún tween real llega hasta
+      // el final — el último es audioToggle en 0.8 — y GSAP calcula la
+      // duración de la timeline como el final del tween más tardío: sin
+      // este anchor quedaría en 0.8 y reescalaría (×1.25) la posición
+      // efectiva de todos los demás tweens respecto del scroll real.
+      tl.to({}, { duration: 0.001 }, 1);
 
       // Mouse: quickTo con power3.out, wrappers interiores independientes
       // del de scroll/cámara. mobile/pointer grueso se revisa en cada
@@ -476,29 +448,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           <div className="hero-vignette" aria-hidden="true" />
           <div className="hero-corner-shadow" aria-hidden="true" />
 
-          <div ref={heroVeilRef} className="hero-ascend-veil" aria-hidden="true" />
-
-          <div className="hero-transition-smoke" aria-hidden="true">
-            <img
-              ref={smokeSecondaryRef}
-              className="hero-smoke hero-smoke-secondary"
-              src="/splash/08-bruma-inferior-v2.png"
-              alt=""
-              width={1672}
-              height={941}
-              onLoad={() => ScrollTrigger.refresh()}
-            />
-            <img
-              ref={smokeMainRef}
-              className="hero-smoke hero-smoke-main"
-              src="/splash/09-humo-lateral-v2.png"
-              alt=""
-              width={1672}
-              height={941}
-              onLoad={() => ScrollTrigger.refresh()}
-            />
-          </div>
-
           <div ref={contentRef} className="cinehero-content">
             <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
               <div className="cinehero-wordmark-wrap">
@@ -553,6 +502,26 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       </div>
 
       <div ref={dictionaryPanelRef} className="dictionary-panel">
+        <div className="dictionary-smoke-bridge" aria-hidden="true">
+          <img
+            ref={smokeSecondaryRef}
+            className="hero-smoke hero-smoke-secondary"
+            src="/splash/08-bruma-inferior-v2.png"
+            alt=""
+            width={1672}
+            height={941}
+            onLoad={() => ScrollTrigger.refresh()}
+          />
+          <img
+            ref={smokeMainRef}
+            className="hero-smoke hero-smoke-main"
+            src="/splash/09-humo-lateral-v2.png"
+            alt=""
+            width={1672}
+            height={941}
+            onLoad={() => ScrollTrigger.refresh()}
+          />
+        </div>
         <div className="wrap dictionary-wrap">
           <header id="dictionary-top" className="dictionary-intro">
             <AuxNav className="dictionary-intro-nav" />

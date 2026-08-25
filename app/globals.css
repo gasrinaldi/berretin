@@ -150,16 +150,6 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .hero-story { height:160svh; }
 @media (max-width:640px) { .hero-story { height:135svh; } }
 .hero-stage { position:relative; overflow:hidden; height:100vh; height:100svh; background:var(--ink); }
-/* z-index por encima de .dictionary-panel SOLO mientras el pin está
-   activo (clase .hero-pinned, agregada/quitada por onEnter/onLeave en
-   CinematicHero.tsx sobre .hero-stage Y sobre el .pin-spacer que GSAP
-   inserta como su padre): el hero (fixed, cubriendo el viewport entero)
-   tapa físicamente al diccionario aunque este ya esté subiendo por
-   debajo en flujo normal, así nunca se ve antes de que termine la
-   transición — y al liberar el pin baja de nuevo, para que el
-   diccionario quede visible de inmediato y no bloqueado por el resto
-   compensado con transform que GSAP deja tras despinear. */
-.hero-pinned { z-index:25; }
 
 /* Wrapper exterior (cámara/scroll) de toda la escena: acá pega el filtro
    de disolución compartido (opacity/blur/saturate/brightness) — nunca un
@@ -203,28 +193,28 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .hero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
 .hero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
 
-/* Capa de humo de transición: vive otra vez dentro de .hero-stage (ya no
-   es una capa fixed compartida con el diccionario — con el hero por
-   encima en z-index, no hace falta) y sale junto con el hero al liberar
-   el pin. El wrapper no necesita posicionamiento propio: sus imágenes
-   son position:absolute y resuelven contra .hero-stage. */
+/* Humo de transición: las imágenes con alfa real ahora viven dentro de
+   .dictionary-smoke-bridge (ver más abajo), no en .hero-stage — la
+   regla en sí no cambia (inset:0 resuelve contra el bridge igual que
+   antes resolvía contra el stage). */
 .hero-smoke { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:blur(4px) saturate(.5); will-change:transform, opacity; }
 
-/* Velo ascendente: el doble de alto que el stage, con el corte
-   transparente→#0B0D10 a la mitad — en reposo (yPercent:0) esa mitad
-   sólida queda oculta por debajo del stage (overflow:hidden), así que
-   solo se ve la parte transparente. GSAP anima yPercent hasta -50, que
-   corre exactamente una altura de stage hacia arriba: el corte (un
-   degradado amplio, nunca una línea recta) queda siempre por debajo del
-   borde de humo, hasta que la mitad sólida ocupa el cuadro entero (bit
-   a bit el mismo --ink que el diccionario). Por debajo del humo en
-   z-index para que este forme el borde orgánico por encima. */
-.hero-ascend-veil { position:absolute; left:0; right:0; top:0; height:200%; z-index:8; pointer-events:none; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,0) 44%, #0B0D10 56%, #0B0D10 100%); }
-
-/* Panel real del diccionario: sigue en flujo normal por debajo del hero
-   (que lo tapa por z-index mientras dura el pin, ver .hero-stage), así
-   que al liberar el pin aparece ya en su posición final, sin salto. */
+/* Panel real del diccionario: sigue en flujo normal, sin ningún truco de
+   z-index sobre el hero — se revela progresivamente a medida que sube
+   por detrás del stage pineado (fixed), tal como corresponde a un
+   elemento normal del documento. */
 .dictionary-panel { position:relative; z-index:20; width:100%; background:var(--ink); }
+/* Puente de humo: primer hijo de .dictionary-panel, colgado por encima
+   de su propio borde superior (bottom:100%) — sube en flujo normal
+   junto con el diccionario (no es una capa fixed aparte) y desaparece
+   por arriba del viewport apenas dictionary-panel llega a top:0. Detrás
+   del contenido real (.wrap.dictionary-wrap lo sigue en el DOM, así que
+   pinta encima) y siempre por encima del hero fijo, gracias al z-index
+   de .dictionary-panel. Fondo transparente salvo una franja inferior
+   que converge a #0B0D10 — el mismo píxel final que .dictionary-panel,
+   sin placa ni línea recta. */
+.dictionary-smoke-bridge { position:absolute; left:0; right:0; bottom:100%; height:70svh; overflow:hidden; pointer-events:none; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,0) 62%, #0B0D10 100%); }
+@media (max-width:640px) { .dictionary-smoke-bridge { height:60svh; } }
 
 .cinehero-content { position:relative; z-index:8; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
 .cinehero-wordmark-wrap { position:relative; display:inline-block; }
