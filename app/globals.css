@@ -581,6 +581,26 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .ficha-detail-bottom { grid-template-columns:1fr; gap:36px; }
 }
 
+/* ---- Ficha: compactación desktop para que todo (nav, título, tabs,
+   definición, voto/acciones y footer) entre en 100svh sin scroll —
+   mismo diseño/estructura, solo paddings/márgenes verticales y los dos
+   tamaños de fuente (título, definición) vía clamp() combinando vw y
+   vh, así también responden al alto del viewport y no solo al ancho
+   (una expresión larga como "a cada muerte de obispo" sigue entrando).
+   Angosto (tablet/mobile, arriba) o excepcionalmente bajo (min-height)
+   quedan afuera y conservan el scroll natural de siempre. */
+@media (min-width:901px) and (min-height:700px) {
+  .ficha-detail { padding:clamp(16px, 3vh, 40px) 24px clamp(16px, 2.5vh, 40px); }
+  .ficha-detail-nav { padding-bottom:clamp(10px, 1.5vh, 20px); margin-bottom:clamp(16px, 3vh, 48px); }
+  .ficha-detail-title { font-size:clamp(32px, min(6vw, 7.5vh), 104px); }
+  .ficha-detail-meta { margin-top:clamp(6px, 1vh, 16px); }
+  .ficha-detail-tabs-nav { margin:clamp(14px, 2.5vh, 40px) 0 clamp(12px, 2vh, 32px); }
+  .ficha-definition-label { margin-bottom:clamp(8px, 1.2vh, 16px); }
+  .ficha-definition-text { font-size:clamp(20px, min(3.2vw, 4.6vh), 54px); }
+  .ficha-detail-bottom { margin-top:clamp(16px, 3vh, 56px); padding-top:clamp(10px, 1.8vh, 32px); }
+  .ficha-detail + .site-footer { margin-top:clamp(8px, 1.5vh, 44px); padding:clamp(8px, 1.2vh, 20px) 24px clamp(10px, 1.6vh, 32px); }
+}
+
 /* ---- Cuenta / perfil público ---- */
 .account-onboarding { max-width:420px; }
 .account-dashboard { display:flex; flex-direction:column; gap:28px; max-width:640px; }
