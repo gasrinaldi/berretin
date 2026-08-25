@@ -176,10 +176,13 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    despegue del piso. */
 .hero-multitud { filter:blur(.5px) saturate(.78) contrast(.92); opacity:.9; transform-origin:50% 100%; will-change:transform; }
 
-/* Tanguero: única placa que escala con el scroll (crece desde abajo) —
-   transform-origin fija el punto de apoyo para que crezca hacia arriba,
-   nunca desde el centro. */
-.hero-tanguero { transform-origin:50% 100%; will-change:transform; }
+/* Tanguero: recorte RGBA ajustado a la figura (no el lienzo 1672×941
+   completo) — dos elementos separados a propósito. El wrapper solo fija
+   posición/encuadre (nunca se anima); GSAP solo escala la imagen
+   interior, con transform-origin en su propia base, así los pies quedan
+   siempre en la misma coordenada del wrapper sin importar la escala. */
+.hero-tanguero-wrap { position:absolute; left:50%; bottom:28.59%; height:19.98%; transform:translateX(-50%); }
+.hero-tanguero-img { width:100%; height:100%; object-fit:contain; transform-origin:50% 100%; will-change:transform; }
 
 .hero-vignette { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at center, rgba(20,23,28,.12) 0%, rgba(20,23,28,.4) 58%, rgba(20,23,28,.74) 100%), linear-gradient(180deg, rgba(20,23,28,.34) 0%, rgba(20,23,28,.06) 38%, rgba(20,23,28,.64) 100%); }
 .hero-corner-shadow { position:absolute; inset:0; z-index:7; pointer-events:none; background:radial-gradient(ellipse at 0% 100%, rgba(10,12,15,.82) 0%, rgba(10,12,15,.46) 22%, transparent 55%); }
@@ -192,15 +195,17 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    bruma inferior entra primero y más tenue; el humo lateral entra
    después y algo más denso. */
 .hero-smoke { position:absolute; inset:0; z-index:9; pointer-events:none; opacity:0; width:100%; height:100%; object-fit:cover; object-position:center bottom; filter:blur(4px) saturate(.5); will-change:transform, opacity; }
-/* Velo ascendente: el doble de alto que el stage, con el corte
-   transparente→#0B0D10 a la mitad — en reposo (yPercent:0) esa mitad
-   sólida queda oculta por debajo del stage (overflow:hidden), así que
-   solo se ve la parte transparente. GSAP anima yPercent hasta -50, que
-   corre exactamente una altura de stage hacia arriba: el corte queda
-   siempre por debajo del borde de humo, hasta que la mitad sólida ocupa
-   el cuadro entero (bit a bit el mismo --ink que el diccionario, sin
-   costura ni salto). */
-.hero-smoke-gradient { position:absolute; left:0; right:0; top:0; height:200%; z-index:9; pointer-events:none; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, rgba(11,13,16,0) 44%, #0B0D10 56%, #0B0D10 100%); }
+
+/* Panel real del diccionario: sube en flujo normal sobre el hero (el
+   pin ya no reserva espacio propio — ver pinSpacing:false/endTrigger en
+   CinematicHero.tsx), así que necesita su propio z-index y fondo sólido
+   para taparlo físicamente en vez de un velo aparte dentro del hero. */
+.dictionary-panel { position:relative; z-index:20; width:100%; background:var(--ink); }
+/* Borde superior suave: pseudo-elemento absoluto (no ocupa alto en el
+   flujo) que cuelga por encima del panel y termina exactamente donde
+   este empieza — el humo del hero se mezcla visualmente con este
+   degradado a medida que el panel lo va tapando. */
+.dictionary-panel::before { content:""; position:absolute; left:0; right:0; top:-38svh; height:38svh; pointer-events:none; background:linear-gradient(to bottom, rgba(11,13,16,0) 0%, #0B0D10 100%); }
 
 .cinehero-content { position:relative; z-index:8; display:flex; height:100%; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; text-shadow:0 2px 18px rgba(0,0,0,.5); }
 .cinehero-wordmark-wrap { position:relative; display:inline-block; }

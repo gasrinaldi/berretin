@@ -52,7 +52,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const audioToggleRef = useRef<HTMLButtonElement>(null);
   const smokeMainRef = useRef<HTMLImageElement>(null);
   const smokeSecondaryRef = useRef<HTMLImageElement>(null);
-  const smokeGradientRef = useRef<HTMLDivElement>(null);
+  const dictionaryPanelRef = useRef<HTMLDivElement>(null);
 
   const scrollProgressRef = useRef(0);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -229,9 +229,10 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         scrollTrigger: {
           trigger: stage,
           start: "top top",
-          end: () => `+=${window.innerHeight * ((isMobileRef.current ? 50 : 78) / 100)}`,
+          endTrigger: dictionaryPanelRef.current,
+          end: "top top",
           pin: true,
-          pinSpacing: true,
+          pinSpacing: false,
           scrub: 0.68,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
@@ -300,13 +301,11 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         0.58
       );
 
-      // Velo ascendente conectado al humo: mismo gradiente transparente→
-      // #0B0D10 de siempre, pero en vez de fundir su opacity (fade negro
-      // parejo en toda la pantalla) se traslada verticalmente — el
-      // elemento mide el doble del stage y el corte sólido queda siempre
-      // por debajo del borde con humo, hasta cubrir el cuadro entero
-      // (yPercent:-50) justo cuando termina la timeline/despinea.
-      tl.fromTo(smokeGradientRef.current, { yPercent: 0 }, { yPercent: -50, duration: 0.3 }, 0.7);
+      // Ya no hay velo/gradiente propio del hero: quien tapa la escena es
+      // el panel real del diccionario (dictionary-panel), que sube en
+      // flujo normal (pinSpacing:false) y queda por encima (z-index) hasta
+      // cubrirla del todo — el humo conecta visualmente ambos tramos por
+      // su propio borde superior (ver .dictionary-panel::before en CSS).
 
       // Mouse: quickTo con power3.out, wrappers interiores independientes
       // del de scroll/cámara. mobile/pointer grueso se revisa en cada
@@ -427,7 +426,17 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           </div>
           <img className="hero-plate hero-piso-mask" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
           <img ref={multitudRef} className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
-          <img ref={tangueroRef} className="hero-plate hero-tanguero" src="/splash/03-tanguero-anclado.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+          <div className="hero-tanguero-wrap">
+            <img
+              ref={tangueroRef}
+              className="hero-tanguero-img"
+              src="/splash/03-tanguero-recorte-anclado.png"
+              alt=""
+              width={69}
+              height={189}
+              onLoad={() => ScrollTrigger.refresh()}
+            />
+          </div>
           <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
         </div>
 
@@ -454,7 +463,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
           aria-hidden="true"
           onLoad={() => ScrollTrigger.refresh()}
         />
-        <div ref={smokeGradientRef} className="hero-smoke-gradient" />
 
         <div ref={contentRef} className="cinehero-content">
           <div ref={logoMouseRef} className="hero-ui-mouse-wrap">
@@ -508,11 +516,13 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
         <audio ref={crowdAudioRef} src="/sounds/gente-murmullo.mp3" loop preload="auto" aria-hidden="true" />
       </div>
 
-      <div className="wrap dictionary-wrap">
-        <header id="dictionary-top" className="dictionary-intro">
-          <AuxNav className="dictionary-intro-nav" />
-        </header>
-        <Dictionary query={query} onQueryChange={onQueryChange} />
+      <div ref={dictionaryPanelRef} className="dictionary-panel">
+        <div className="wrap dictionary-wrap">
+          <header id="dictionary-top" className="dictionary-intro">
+            <AuxNav className="dictionary-intro-nav" />
+          </header>
+          <Dictionary query={query} onQueryChange={onQueryChange} />
+        </div>
       </div>
       <Footer />
 
