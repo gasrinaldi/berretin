@@ -17,11 +17,13 @@ body { display:flex; flex-direction:column; min-height:100svh; font-family:var(-
 /* El contenedor de contenido crece para ocupar el alto sobrante de
    min-height:100svh del body cuando la página es corta, empujando el
    footer al fondo del viewport; en páginas largas no hay sobrante y
-   esto no cambia nada. Solo aplica a .wrap/.ficha-detail (ficha de
-   palabra) cuando son hijos directos del body — la home (con su
-   propio layout cinematográfico anidado) queda afuera y no se ve
-   afectada. */
-body > .wrap, body > .ficha-detail { flex:1 0 auto; }
+   esto no cambia nada. Solo aplica a .wrap cuando es hijo directo del
+   body — la home (con su propio layout cinematográfico anidado) queda
+   afuera y no se ve afectada. .ficha-detail (ficha de palabra)
+   deliberadamente NO crece: estirarla dejaba un bloque vacío exagerado
+   antes del footer en páginas cortas — footer y ficha se reparten el
+   alto de forma natural, sin estirar nada a la fuerza. */
+body > .wrap { flex:1 0 auto; }
 /* Contenedor de bloque estable para la home: el .pin-spacer que GSAP
    inserta alrededor de .hero-stage (ver CinematicHero.tsx) queda así
    adentro de un bloque normal en vez de directo bajo <body> (flex
@@ -495,10 +497,13 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 /* ---- Ficha de archivo porteño (/palabra/[slug]) ---- */
 /* Fila "volver al diccionario": vive fuera de .ficha-detail (antes
    estaba adentro, junto con el nav de Descubrir/Cuenta/Desafío que ya
-   no existe acá) — mismo ancho/centrado que la ficha para que quede
-   alineada con su columna, y separada del vértice ornamental
-   (.ficha-detail::before, ahora en top:0) por su margin-bottom. */
-.ficha-back-row { width:100%; max-width:1160px; margin:0 auto 28px; padding:40px 24px 0; }
+   no existe acá), como hermano previo en el DOM, nunca dentro de la
+   tarjeta ni de su vértice. max-width más ancho que el de la ficha
+   (1320px vs 1160px, mismo ancho que .dictionary-wrap) para que su
+   columna arranque más a la izquierda que la de la ficha — en el
+   margen exterior, no alineada con ella — y separada del vértice
+   ornamental (.ficha-detail::before, en top:0) por su margin-bottom. */
+.ficha-back-row { width:100%; max-width:1320px; margin:0 auto 28px; padding:40px 24px 0; }
 .ficha-back-row .back-btn { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; }
 
 /* width:100% por el mismo motivo que en .wrap (ver comentario ahí):
@@ -515,8 +520,17 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    relativos al font-size de este mismo selector — por eso font-size
    sigue siendo la propiedad que controla su tamaño, aunque ya no
    renderiza texto. font-family/color quedan como fallback si alguna
-   letra no estuviera en el mapa de coordenadas. */
-.ficha-detail-sidebar-letter { display:block; font-family:var(--font-fraunces), serif; font-weight:700; font-style:italic; font-size:80px; line-height:1; color:var(--brass); border-bottom:1px solid var(--line-strong); padding-bottom:20px; margin-bottom:16px; }
+   letra no estuviera en el mapa de coordenadas.
+   El propio componente fija un margin-bottom NEGATIVO inline (compensa
+   la floritura/cola bajo el renglón para alinear con texto vecino en
+   su uso original, LetterBlock) — acá lo neutralizamos con !important
+   (nada más le gana a un inline style) para que el glifo completo,
+   floritura incluida, quede contenido dentro de .ficha-detail-sidebar-
+   letter-frame, que es quien realmente separa la letra del N.º de
+   ficha con un padding-bottom constante, sin importar cuánto sobresalga
+   la cola de cada letra. */
+.ficha-detail-sidebar-letter-frame { display:block; border-bottom:1px solid var(--line-strong); padding-bottom:20px; margin-bottom:16px; }
+.ficha-detail-sidebar-letter { display:block; font-family:var(--font-fraunces), serif; font-weight:700; font-style:italic; font-size:80px; line-height:1; color:var(--brass); margin-bottom:0 !important; }
 .ficha-detail-registro { font-size:11px; letter-spacing:1px; color:var(--muted); }
 
 .ficha-detail-main { min-width:0; }
@@ -582,7 +596,8 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
   .ficha-detail::before, .ficha-detail::after { display:none; }
   .ficha-detail-grid { grid-template-columns:1fr; }
   .ficha-detail-sidebar { display:flex; align-items:baseline; gap:14px; border-right:0; border-bottom:1px solid var(--line-strong); padding-bottom:14px; margin-bottom:24px; }
-  .ficha-detail-sidebar-letter { font-size:36px; border-bottom:0; padding-bottom:0; margin-bottom:0; }
+  .ficha-detail-sidebar-letter-frame { border-bottom:0; padding-bottom:0; margin-bottom:0; }
+  .ficha-detail-sidebar-letter { font-size:36px; }
   .ficha-detail-tabs-nav { gap:22px; }
   .ficha-detail-seal { display:none; }
   .ficha-detail-bottom { grid-template-columns:1fr; gap:36px; }

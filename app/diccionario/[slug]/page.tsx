@@ -117,7 +117,9 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
       <div className="ficha-detail">
         <div className="ficha-detail-grid">
           <aside className="ficha-detail-sidebar">
-            <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
+            <span className="ficha-detail-sidebar-letter-frame">
+              <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
+            </span>
             {registro && <p className="ficha-detail-registro">N.º {registro}</p>}
           </aside>
 
