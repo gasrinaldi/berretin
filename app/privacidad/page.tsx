@@ -75,6 +75,26 @@ export default function PrivacidadPage() {
             </section>
 
             <section>
+              <h2>Cookies</h2>
+              <p>
+                Usamos una sola cookie funcional, <strong>berretin_vid</strong>, para que puedas votar (&ldquo;¿todavía se usa?&rdquo; y &ldquo;me sirvió&rdquo;)
+                sin necesidad de crear una cuenta:
+              </p>
+              <ul>
+                <li>Guarda un identificador aleatorio generado por nuestro servidor — nunca tu nombre, tu email ni tu IP.</li>
+                <li>En la base de datos solo guardamos un hash irreversible de ese identificador, nunca el valor original.</li>
+                <li>Sirve para recordar qué votaste y evitar votos duplicados desde el mismo navegador.</li>
+                <li>Dura aproximadamente 400 días.</li>
+                <li>No se usa para publicidad, seguimiento comercial ni para armar un perfil tuyo.</li>
+              </ul>
+              <p>
+                Al ser estrictamente funcional — necesaria para ofrecer y proteger la votación anónima — no hace falta pedirte consentimiento aparte para usarla.
+                Igual que con aportes y reportes (ver &ldquo;Seguridad&rdquo; más arriba), también podemos usar temporalmente un hash de tu IP para limitar
+                automatización o abuso en los votos, sin guardar la IP real.
+              </p>
+            </section>
+
+            <section>
               <h2>Cuánto tiempo los conservamos</h2>
               <p>
                 Mientras tu cuenta o tus aportes sigan activos en el sitio. Los aportes rechazados en la moderación y los archivos que quedaron sin publicar se
