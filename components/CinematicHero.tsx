@@ -29,6 +29,15 @@ const RANGE_SEARCH_Y = 1;
 // El parallax de mouse se desvanece entre 0% y 32% del recorrido de scroll.
 const MOUSE_FADE_END = 0.32;
 
+// Elección de silenciar el sonido ambiente, persistida en sessionStorage
+// (por pestaña, nunca entre pestañas ni sesiones futuras): CinematicHero
+// se desmonta al entrar a una palabra y se remonta entero al volver al
+// diccionario (Atrás o "volver al diccionario"), así que sin esto
+// mutedRef/isMuted arrancan en false de nuevo en cada remount y el sonido
+// podía reactivarse solo con el próximo scroll o click, pisando la
+// elección del usuario.
+const HERO_AUDIO_MUTED_KEY = "berretin-hero-audio-muted";
+
 // Profundidad por scroll (único wrapper de cámara, nunca toca piso/
 // jóvenes): el puerto lejano (fondo) SIEMPRE queda sobre-escaneado
 // (nunca <1) para que retroceder jamás descubra bordes vacíos — solo
@@ -152,6 +161,30 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     }
   };
 
+  // mutedRef/isMuted arrancan en false en el primer render (igual que
+  // isMobileViewport: en el server no hay sessionStorage) y se corrigen
+  // acá, apenas monta — ANTES de que el efecto de abajo registre los
+  // listeners de "primera interacción" (mismo orden de declaración =
+  // mismo orden de ejecución para efectos con [] como dependencia). Así,
+  // si el usuario ya había apagado el sonido en esta pestaña, startAudio()
+  // lo respeta desde el primer intento y nunca llega a arrancar solo.
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(HERO_AUDIO_MUTED_KEY) === "1") {
+        mutedRef.current = true;
+        // El valor lo trae sessionStorage (fuente externa), no se deriva
+        // de otro estado de React — mismo caso que syncMobile/syncMotion
+        // más arriba, que la regla no marca por leer de matchMedia() en
+        // vez de sessionStorage directamente.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsMuted(true);
+      }
+    } catch {
+      // Privacidad/sandboxing: sin sessionStorage se sigue como si no
+      // hubiera preferencia guardada (mismo comportamiento que hoy).
+    }
+  }, []);
+
   useEffect(() => {
     const handleFirstInteraction = () => {
       void startAudio();
@@ -162,11 +195,18 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     window.addEventListener("pointerdown", handleFirstInteraction, { passive: true, once: true });
     window.addEventListener("touchstart", handleFirstInteraction, { passive: true, once: true });
     window.addEventListener("scroll", handleFirstInteraction, { passive: true, once: true });
+    const portAudio = portAudioRef.current;
+    const crowdAudio = crowdAudioRef.current;
     return () => {
       window.removeEventListener("pointerdown", handleFirstInteraction);
       window.removeEventListener("touchstart", handleFirstInteraction);
       window.removeEventListener("scroll", handleFirstInteraction);
       if (audioFrameRef.current !== null) window.cancelAnimationFrame(audioFrameRef.current);
+      // Corte explícito al desmontar (entrar a una palabra, por ejemplo):
+      // quitar los <audio> del DOM ya detiene la reproducción, pero se
+      // pausan también acá para que quede explícito y no dependa de eso.
+      portAudio?.pause();
+      crowdAudio?.pause();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -175,6 +215,12 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
     const nextMuted = !mutedRef.current;
     mutedRef.current = nextMuted;
     setIsMuted(nextMuted);
+    try {
+      window.sessionStorage.setItem(HERO_AUDIO_MUTED_KEY, nextMuted ? "1" : "0");
+    } catch {
+      // Privacidad/sandboxing: la elección no persiste entre remounts de
+      // esta pestaña, pero el toggle en sí sigue funcionando igual.
+    }
     if (!nextMuted) {
       if (audioStartedRef.current) {
         fadeAudio(0.7, 0.45, 700);
