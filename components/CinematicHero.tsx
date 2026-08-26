@@ -18,7 +18,7 @@ type CinematicHeroProps = {
 
 // Rango de parallax de mouse (px en los extremos), valores aprobados:
 // solo el puerto lejano (fondo) y la UI se mueven con el cursor — piso,
-// multitud, tanguero y jóvenes quedan siempre a 0px de mouse.
+// tanguero y jóvenes quedan siempre a 0px de mouse.
 const RANGE_FONDO_X = 9;
 const RANGE_FONDO_Y = 5.5;
 const RANGE_LOGO_X = 2.5;
@@ -41,12 +41,10 @@ const HERO_AUDIO_MUTED_KEY = "berretin-hero-audio-muted";
 // Profundidad por scroll (único wrapper de cámara, nunca toca piso/
 // jóvenes): el puerto lejano (fondo) SIEMPRE queda sobre-escaneado
 // (nunca <1) para que retroceder jamás descubra bordes vacíos — solo
-// pasa de muy acercado a apenas acercado. La multitud profunda se
-// reduce apenas anclada abajo, y el tanguero crece claramente desde
-// los pies.
+// pasa de muy acercado a apenas acercado. El tanguero crece claramente
+// desde los pies.
 const FONDO_SCROLL_SCALE_FROM = 1.16;
 const FONDO_SCROLL_SCALE_TO = 1.02;
-const MULTITUD_SCALE_TO = 0.94;
 const TANGUERO_SCALE_FROM = 1.1;
 const TANGUERO_SCALE_TO = 2.4;
 // Asentamiento inicial (0%→30% del recorrido): el tanguero entra con leve
@@ -64,7 +62,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const sceneRef = useRef<HTMLDivElement>(null);
   const fondoScrollRef = useRef<HTMLDivElement>(null);
   const fondoMouseRef = useRef<HTMLDivElement>(null);
-  const multitudRef = useRef<HTMLImageElement>(null);
   const tangueroRef = useRef<HTMLImageElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const logoMouseRef = useRef<HTMLDivElement>(null);
@@ -314,11 +311,9 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       });
 
       // Profundidad: puerto lejano siempre sobre-escaneado (nunca <1) para
-      // que retroceder no descubra bordes; multitud se reduce apenas
-      // anclada abajo. El tanguero crece desde los pies y completa su
-      // escala final ~70% del recorrido.
+      // que retroceder no descubra bordes. El tanguero crece desde los
+      // pies y completa su escala final ~70% del recorrido.
       tl.fromTo(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE_FROM }, { scale: FONDO_SCROLL_SCALE_TO, duration: 0.55 }, 0);
-      tl.to(multitudRef.current, { scale: MULTITUD_SCALE_TO, duration: 0.55 }, 0);
       tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.7 }, 0);
       tl.fromTo(
         tangueroRef.current,
@@ -490,7 +485,6 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
               </div>
             </div>
             <img className="hero-plate hero-piso-mask" src="/splash/01-fondo-sin-apoyos.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
-            <img ref={multitudRef} className="hero-plate hero-multitud" src="/splash/02-multitud-profunda.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
             <div className="hero-tanguero-wrap">
               <img
                 ref={tangueroRef}

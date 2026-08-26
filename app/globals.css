@@ -158,8 +158,8 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 /* Wrapper exterior (cámara/scroll) de toda la escena: acá pega el filtro
    de disolución compartido (opacity/blur/saturate/brightness) — nunca un
-   transform, así piso/multitud/jóvenes (adentro, sin wrapper propio)
-   jamás se mueven ni escalan individualmente. */
+   transform, así piso/jóvenes (adentro, sin wrapper propio) jamás se
+   mueven ni escalan individualmente. */
 .hero-scene { position:absolute; inset:0; }
 
 .hero-layer { position:absolute; inset:0; }
@@ -169,8 +169,8 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 
 /* Wrapper interior, independiente del de cámara/scroll: mouse-only (ver
    gsap.quickTo en CinematicHero.tsx). Es el único punto de la escena que
-   se mueve con el mouse — piso/multitud/jóvenes quedan afuera de este
-   wrapper por completo. */
+   se mueve con el mouse — piso/jóvenes quedan afuera de este wrapper por
+   completo. */
 .hero-mouse-wrap { position:absolute; inset:0; will-change:transform; }
 /* Misma función (wrapper interior solo-mouse) para el logo/tagline y el
    buscador, que viven en flujo normal dentro de .cinehero-content en vez
@@ -181,11 +181,6 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
    recortada desde ~53% de alto — nunca se traslada ni escala, es la
    referencia fija contra la que "crece" el tanguero. */
 .hero-piso-mask { -webkit-mask-image:linear-gradient(to bottom, transparent 0%, transparent 52%, #000 54%, #000 100%); mask-image:linear-gradient(to bottom, transparent 0%, transparent 52%, #000 54%, #000 100%); }
-
-/* Multitud profunda: se reduce muy levemente con el scroll, anclada
-   abajo (mismo transform-origin que el tanguero) para que nunca se
-   despegue del piso. */
-.hero-multitud { filter:blur(.5px) saturate(.78) contrast(.92); opacity:.9; transform-origin:50% 100%; will-change:transform; }
 
 /* Tanguero: recorte RGBA ajustado a la figura (no el lienzo 1672×941
    completo) — dos elementos separados a propósito. El wrapper solo fija
