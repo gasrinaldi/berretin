@@ -481,10 +481,10 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
               <img
                 ref={tangueroRef}
                 className="hero-tanguero-img"
-                src="/splash/03-tanguero-recorte-anclado.png"
+                src="/splash/03-tanguero-maestro-vertical-4k.png"
                 alt=""
-                width={69}
-                height={189}
+                width={1495}
+                height={4096}
                 onLoad={() => ScrollTrigger.refresh()}
               />
             </div>
