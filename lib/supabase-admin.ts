@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
-// Solo se importa desde contribute-actions.ts ("use server"): Next.js
-// garantiza que ese archivo nunca se incluye en el bundle del navegador,
-// así que la service role key jamás llega al cliente.
+// Solo se importa desde archivos "use server" (contribute-actions.ts,
+// admin/login/actions.ts, etc.): Next.js garantiza que esos archivos nunca
+// se incluyen en el bundle del navegador, así que la service role key
+// jamás llega al cliente.
 export function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

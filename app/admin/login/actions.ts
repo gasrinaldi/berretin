@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { AdminSignInState } from "@/lib/admin-login-state";
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
@@ -26,6 +27,17 @@ export async function adminSignIn(_prevState: AdminSignInState, formData: FormDa
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { status: "error", error: "El panel no está disponible en este momento." };
 
+  // admin_login_attempts no tiene policies para anon/authenticated (RLS
+  // habilitada, deny-all): solo el cliente service_role puede leerla o
+  // escribirla, así que el conteo de intentos y el insert usan
+  // getSupabaseAdmin() en vez del cliente de sesión de arriba.
+  let supabaseAdmin;
+  try {
+    supabaseAdmin = getSupabaseAdmin();
+  } catch {
+    return { status: "error", error: "El panel no está disponible en este momento." };
+  }
+
   const ipHash = await getClientIpHash();
 
   // Límite de intentos: no se distingue "contraseña incorrecta" de
@@ -33,7 +45,7 @@ export async function adminSignIn(_prevState: AdminSignInState, formData: FormDa
   // en qué estado está — igual el mensaje final es el mismo tipo de error.
   if (ipHash) {
     const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
-    const { count, error: countError } = await supabase
+    const { count, error: countError } = await supabaseAdmin
       .from("admin_login_attempts")
       .select("id", { count: "exact", head: true })
       .eq("ip_hash", ipHash)
@@ -49,7 +61,7 @@ export async function adminSignIn(_prevState: AdminSignInState, formData: FormDa
   const success = !error && data.session?.user?.email?.toLowerCase() === adminEmail;
 
   if (ipHash) {
-    await supabase.from("admin_login_attempts").insert({ ip_hash: ipHash, success });
+    await supabaseAdmin.from("admin_login_attempts").insert({ ip_hash: ipHash, success });
   }
 
   if (!success) {
