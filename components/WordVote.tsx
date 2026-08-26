@@ -1,27 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { getWordVoteSummary, castVote } from "@/app/diccionario/[slug]/community-actions";
+import { getWordVoteSummary, castVote, removeVote } from "@/app/diccionario/[slug]/community-actions";
 import { VOTE_OPTIONS, type VoteValue, type VoteSummary } from "@/lib/community";
 
-// Chequea la sesión en el cliente a propósito: la página de palabra es
-// estática/ISR (se sirve igual a todo el mundo), así que el estado de
-// login nunca puede depender de lo que se calculó en el servidor al
-// generar esa página — se resuelve acá, después de montar.
+// Votar no exige cuenta: identidad anónima vía cookie server-side (ver
+// lib/anon-voter.ts). El login queda opcional, para perfil/historial/
+// reputación — acá no hace falta chequear sesión para nada.
 export function WordVote({ wordSlug }: { wordSlug: string }) {
-  const [loggedIn, setLoggedIn] = useState(false);
   const [summary, setSummary] = useState<VoteSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    if (supabase) {
-      supabase.auth.getUser().then(({ data }) => setLoggedIn(Boolean(data.user)));
-    }
     getWordVoteSummary(wordSlug).then((result) => {
       if (result.ok) setSummary(result.data);
       else setLoadError(result.error);
@@ -29,10 +21,12 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
   }, [wordSlug]);
 
   const handleVote = async (value: VoteValue) => {
-    if (!loggedIn || pending) return;
+    if (pending) return;
     setPending(true);
     setError(null);
-    const result = await castVote(wordSlug, value);
+    // Tocar la opción ya activa retira el voto en vez de reafirmarlo.
+    const isRetract = summary?.myVote === value;
+    const result = isRetract ? await removeVote(wordSlug) : await castVote(wordSlug, value);
     setPending(false);
     if (!result.ok) {
       setError(result.error);
@@ -42,8 +36,9 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
       if (!prev) return prev;
       const counts = { ...prev.counts };
       if (prev.myVote) counts[prev.myVote] = Math.max(0, counts[prev.myVote] - 1);
-      counts[value] += 1;
-      return { counts, total: prev.myVote ? prev.total : prev.total + 1, myVote: value };
+      if (!isRetract) counts[value] += 1;
+      const total = isRetract ? Math.max(0, prev.total - 1) : prev.myVote ? prev.total : prev.total + 1;
+      return { counts, total, myVote: isRetract ? null : value };
     });
   };
 
@@ -69,7 +64,7 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
           const pct = summary.total > 0 ? Math.round((count / summary.total) * 100) : 0;
           const active = summary.myVote === opt.value;
           return (
-            <button key={opt.value} type="button" className={`ficha-vote-option${active ? " active" : ""}`} disabled={!loggedIn || pending} onClick={() => handleVote(opt.value)}>
+            <button key={opt.value} type="button" className={`ficha-vote-option${active ? " active" : ""}`} disabled={pending} onClick={() => handleVote(opt.value)}>
               <span className="ficha-vote-dot" aria-hidden="true" />
               {opt.label} <span className="ficha-vote-pct">{pct}%</span>
             </button>
@@ -81,12 +76,6 @@ export function WordVote({ wordSlug }: { wordSlug: string }) {
       </div>
       <p className="ficha-vote-count">
         {summary.total} {summary.total === 1 ? "voto" : "votos"}
-        {!loggedIn && (
-          <>
-            {" · "}
-            <Link href="/cuenta">iniciá sesión</Link> para votar
-          </>
-        )}
       </p>
       {error && <p className="contribute-error">{error}</p>}
     </div>

@@ -3,6 +3,8 @@
 import { getCurrentUser } from "@/lib/auth-user";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { getClientIpHash } from "@/lib/client-ip";
+import { getOrCreateAnonVoterHash, readAnonVoterHash } from "@/lib/anon-voter";
+import { checkVoteRateLimit } from "@/lib/vote-rate-limit";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { sanitizeText } from "@/lib/contributions";
 import { isVoteValue, isReportReason, REPORT_COMMENT_MAX, type VoteValue, type VoteSummary, type ReportFormState } from "@/lib/community";
@@ -30,10 +32,16 @@ export async function getWordVoteSummary(wordSlug: string): Promise<{ ok: true; 
   }
   const total = (data ?? []).length;
 
+  // Sin cuenta: se identifica por el hash de la cookie anónima si ya
+  // existe (no se crea una acá — esto es solo lectura). Sin cookie
+  // todavía = nunca votó, no hace falta ninguna consulta extra.
   const user = await getCurrentUser();
+  const identityColumn = user ? "user_id" : "anon_id_hash";
+  const identityValue = user ? user.id : await readAnonVoterHash();
+
   let myVote: VoteValue | null = null;
-  if (user) {
-    const { data: mine } = await supabase.from("word_votes").select("value").eq("word_id", entry.id).eq("user_id", user.id).maybeSingle();
+  if (identityValue) {
+    const { data: mine } = await supabase.from("word_votes").select("value").eq("word_id", entry.id).eq(identityColumn, identityValue).maybeSingle();
     if (mine && isVoteValue(mine.value)) myVote = mine.value;
   }
 
@@ -41,9 +49,6 @@ export async function getWordVoteSummary(wordSlug: string): Promise<{ ok: true; 
 }
 
 export async function castVote(wordSlug: string, value: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Iniciá sesión para votar." };
-
   if (!isVoteValue(value)) return { ok: false, error: "Voto inválido." };
 
   const entry = getEntryBySlug(wordSlug);
@@ -56,11 +61,64 @@ export async function castVote(wordSlug: string, value: string): Promise<{ ok: t
     return { ok: false, error: "No disponible en este momento." };
   }
 
-  const { error } = await supabase
-    .from("word_votes")
-    .upsert({ user_id: user.id, word_id: entry.id, word_slug: entry.slug, value, updated_at: new Date().toISOString() }, { onConflict: "user_id,word_id" });
+  // Con cuenta: user_id (como siempre). Sin cuenta: anon_id_hash, con
+  // cookie generada server-side si hace falta — nunca se confía en un id
+  // que mande el cliente.
+  const user = await getCurrentUser();
+  const identityColumn = user ? "user_id" : "anon_id_hash";
+  const identityValue = user ? user.id : await getOrCreateAnonVoterHash();
+
+  const ipHash = await getClientIpHash();
+  if (ipHash) {
+    const limitError = await checkVoteRateLimit(supabase, "word_votes", ipHash, "updated_at");
+    if (limitError) return { ok: false, error: limitError };
+  }
+
+  const { data: existing } = await supabase.from("word_votes").select("id").eq("word_id", entry.id).eq(identityColumn, identityValue).maybeSingle();
+
+  const now = new Date().toISOString();
+  if (existing) {
+    const { error } = await supabase.from("word_votes").update({ value, ip_hash: ipHash, updated_at: now }).eq("id", existing.id);
+    if (error) return { ok: false, error: "No pudimos guardar tu voto." };
+    return { ok: true };
+  }
+
+  const { error } = await supabase.from("word_votes").insert({
+    user_id: user?.id ?? null,
+    anon_id_hash: user ? null : identityValue,
+    word_id: entry.id,
+    word_slug: entry.slug,
+    value,
+    ip_hash: ipHash,
+    updated_at: now,
+  });
 
   if (error) return { ok: false, error: "No pudimos guardar tu voto." };
+  return { ok: true };
+}
+
+// Retirar el voto ("¿todavía se usa?"): a diferencia de "me sirvió"
+// (contribution_votes), acá el voto no es un simple toggle de existencia
+// — tiene un value obligatorio (si/poco/no) — así que retirarlo es una
+// acción aparte de castVote, no una rama del mismo insert/update.
+export async function removeVote(wordSlug: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const entry = getEntryBySlug(wordSlug);
+  if (!entry) return { ok: false, error: "Palabra no encontrada." };
+
+  let supabase;
+  try {
+    supabase = getSupabaseAdmin();
+  } catch {
+    return { ok: false, error: "No disponible en este momento." };
+  }
+
+  const user = await getCurrentUser();
+  const identityColumn = user ? "user_id" : "anon_id_hash";
+  const identityValue = user ? user.id : await readAnonVoterHash();
+  if (!identityValue) return { ok: true }; // nunca votó (ni cuenta ni cookie): nada que retirar
+
+  const { error } = await supabase.from("word_votes").delete().eq("word_id", entry.id).eq(identityColumn, identityValue);
+  if (error) return { ok: false, error: "No pudimos retirar tu voto." };
   return { ok: true };
 }
 

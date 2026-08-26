@@ -2,6 +2,9 @@
 
 import { getCurrentUser } from "@/lib/auth-user";
 import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET, CONTRIBUTIONS_AUDIO_BUCKET } from "@/lib/supabase-admin";
+import { getClientIpHash } from "@/lib/client-ip";
+import { getOrCreateAnonVoterHash, readAnonVoterHash } from "@/lib/anon-voter";
+import { checkVoteRateLimit } from "@/lib/vote-rate-limit";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { GALLERY_USO_TYPES, GALLERY_VE_TYPES, GALLERY_PAGE_SIZE, GALLERY_THUMB_TTL_SECONDS, GALLERY_FULL_TTL_SECONDS, type GalleryTab, type GalleryContribution, type GalleryPage } from "@/lib/gallery";
 
@@ -67,12 +70,17 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
   let myVotedIds = new Set<string>();
 
   if (ids.length > 0) {
-    const { data: votes } = await supabase.from("contribution_votes").select("contribution_id, user_id").in("contribution_id", ids);
+    const { data: votes } = await supabase.from("contribution_votes").select("contribution_id, user_id, anon_id_hash").in("contribution_id", ids);
     for (const v of votes ?? []) voteCounts.set(v.contribution_id, (voteCounts.get(v.contribution_id) ?? 0) + 1);
 
     const user = await getCurrentUser();
     if (user) {
       myVotedIds = new Set((votes ?? []).filter((v) => v.user_id === user.id).map((v) => v.contribution_id));
+    } else {
+      const anonHash = await readAnonVoterHash();
+      if (anonHash) {
+        myVotedIds = new Set((votes ?? []).filter((v) => v.anon_id_hash === anonHash).map((v) => v.contribution_id));
+      }
     }
   }
 
@@ -127,9 +135,6 @@ export async function getContributionMediaUrl(contributionId: string, kind: "ima
 }
 
 export async function toggleContributionVote(contributionId: string): Promise<Ok<{ voted: boolean }> | Err> {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false, error: "Iniciá sesión para votar." };
-
   let supabase;
   try {
     supabase = getSupabaseAdmin();
@@ -140,7 +145,14 @@ export async function toggleContributionVote(contributionId: string): Promise<Ok
   const { data: contrib } = await supabase.from("word_contributions").select("status").eq("id", contributionId).maybeSingle();
   if (!contrib || contrib.status !== "approved") return { ok: false, error: "Este aporte no está disponible." };
 
-  const { data: existing } = await supabase.from("contribution_votes").select("id").eq("user_id", user.id).eq("contribution_id", contributionId).maybeSingle();
+  // Con cuenta: user_id. Sin cuenta: anon_id_hash, con cookie generada
+  // server-side si hace falta — nunca se confía en un id que mande el
+  // cliente.
+  const user = await getCurrentUser();
+  const identityColumn = user ? "user_id" : "anon_id_hash";
+  const identityValue = user ? user.id : await getOrCreateAnonVoterHash();
+
+  const { data: existing } = await supabase.from("contribution_votes").select("id").eq("contribution_id", contributionId).eq(identityColumn, identityValue).maybeSingle();
 
   if (existing) {
     const { error } = await supabase.from("contribution_votes").delete().eq("id", existing.id);
@@ -148,7 +160,18 @@ export async function toggleContributionVote(contributionId: string): Promise<Ok
     return { ok: true, voted: false };
   }
 
-  const { error } = await supabase.from("contribution_votes").insert({ user_id: user.id, contribution_id: contributionId });
+  const ipHash = await getClientIpHash();
+  if (ipHash) {
+    const limitError = await checkVoteRateLimit(supabase, "contribution_votes", ipHash, "created_at");
+    if (limitError) return { ok: false, error: limitError };
+  }
+
+  const { error } = await supabase.from("contribution_votes").insert({
+    user_id: user?.id ?? null,
+    anon_id_hash: user ? null : identityValue,
+    contribution_id: contributionId,
+    ip_hash: ipHash,
+  });
   if (error) return { ok: false, error: "No pudimos actualizar tu voto." };
   return { ok: true, voted: true };
 }
