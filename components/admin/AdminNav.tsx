@@ -25,6 +25,9 @@ export function AdminNav() {
       <Link href="/admin/reportes" className={pathname === "/admin/reportes" ? "active" : undefined}>
         reportes
       </Link>
+      <Link href="/admin/sitio" className={pathname === "/admin/sitio" ? "active" : undefined}>
+        sitio
+      </Link>
       <button
         type="button"
         className="back-btn"

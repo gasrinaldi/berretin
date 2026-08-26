@@ -428,6 +428,13 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .not-found-title { font-family:var(--font-fraunces), serif; font-weight:600; font-size:clamp(26px, 4vw, 38px); margin-bottom:14px; }
 .not-found-text { font-size:14px; color:var(--muted); margin-bottom:32px; max-width:48ch; }
 
+/* ---- Mantenimiento ---- */
+.maintenance-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:70svh; padding-top:64px; padding-bottom:64px; }
+.maintenance-eyebrow { font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; letter-spacing:4px; text-transform:uppercase; color:var(--brass); margin-bottom:32px; }
+.maintenance-title { font-family:var(--font-fraunces), serif; font-weight:600; font-size:clamp(26px, 4vw, 40px); line-height:1.3; max-width:22ch; margin-bottom:16px; }
+.maintenance-text { font-size:15px; line-height:1.7; color:var(--muted); max-width:44ch; }
+@media (max-width:640px) { .maintenance-wrap { min-height:60svh; padding-top:40px; padding-bottom:40px; } }
+
 /* ---- Footer ---- */
 /* Mismo ancho/margen que .wrap.dictionary-wrap. El margin-top resta el
    padding-bottom:100px de ese wrap (para no duplicar salto) y suma la
@@ -500,6 +507,17 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .admin-history-panel { background:rgba(237,230,214,0.03); }
 .admin-history-panel ul { display:flex; flex-direction:column; gap:6px; }
 .admin-history-panel li { font-size:12px; color:var(--muted); }
+
+/* ---- /admin/sitio: modo mantenimiento ---- */
+.admin-maintenance-card { max-width:520px; display:flex; flex-direction:column; gap:14px; }
+.admin-maintenance-headline { font-family:var(--font-fraunces), serif; font-weight:600; font-size:20px; }
+.admin-maintenance-switch-row { display:flex; align-items:center; gap:14px; margin-top:6px; }
+.admin-switch { position:relative; flex-shrink:0; width:64px; height:34px; border-radius:34px; border:1px solid var(--line-strong); background:rgba(237,230,214,0.05); cursor:pointer; padding:0; transition:background-color .15s ease, border-color .15s ease; }
+.admin-switch:disabled { cursor:default; opacity:.6; }
+.admin-switch-knob { position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:var(--muted); transition:transform .18s ease, background-color .15s ease; }
+.admin-switch-on { border-color:rgba(217,135,112,0.5); background:rgba(217,135,112,0.12); }
+.admin-switch-on .admin-switch-knob { transform:translateX(30px); background:var(--error); }
+.admin-maintenance-switch-label { font:12px/1 var(--font-space-grotesk), sans-serif; letter-spacing:1px; text-transform:uppercase; color:var(--crema-dim); }
 
 @media (max-width:900px) { .admin-filters { grid-template-columns:1fr 1fr; } .admin-card-body { flex-direction:column; } .admin-card-image { width:100%; max-width:220px; } .admin-meta-grid { grid-template-columns:1fr 1fr; } }
 
