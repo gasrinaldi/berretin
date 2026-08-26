@@ -1,7 +1,7 @@
 "use server";
 
-import { createHash, randomUUID } from "node:crypto";
-import { headers } from "next/headers";
+import { randomUUID } from "node:crypto";
+import { getClientIpHash } from "@/lib/client-ip";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { getCurrentUser } from "@/lib/auth-user";
 import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET, CONTRIBUTIONS_AUDIO_BUCKET } from "@/lib/supabase-admin";
@@ -34,14 +34,6 @@ const AUDIO_DAILY_LIMIT = 3;
 
 function errorState(message: string, fieldErrors?: ContributionFieldErrors): ContributeFormState {
   return { status: "error", message, fieldErrors };
-}
-
-async function getClientIpHash(): Promise<string | null> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0]!.trim() : headerList.get("x-real-ip");
-  if (!ip) return null;
-  return createHash("sha256").update(ip).digest("hex");
 }
 
 export async function submitContribution(_prevState: ContributeFormState, formData: FormData): Promise<ContributeFormState> {

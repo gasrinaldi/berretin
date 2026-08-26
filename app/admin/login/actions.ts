@@ -1,21 +1,12 @@
 "use server";
 
-import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getClientIpHash } from "@/lib/client-ip";
 import type { AdminSignInState } from "@/lib/admin-login-state";
 
 const RATE_LIMIT_WINDOW_MINUTES = 15;
 const RATE_LIMIT_MAX_FAILURES = 5;
-
-async function getClientIpHash(): Promise<string | null> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0]!.trim() : headerList.get("x-real-ip");
-  if (!ip) return null;
-  return createHash("sha256").update(ip).digest("hex");
-}
 
 export async function adminSignIn(_prevState: AdminSignInState, formData: FormData): Promise<AdminSignInState> {
   const password = String(formData.get("password") ?? "");

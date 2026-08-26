@@ -1,23 +1,14 @@
 "use server";
 
-import { createHash } from "node:crypto";
-import { headers } from "next/headers";
 import { getCurrentUser } from "@/lib/auth-user";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getClientIpHash } from "@/lib/client-ip";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { sanitizeText } from "@/lib/contributions";
 import { isVoteValue, isReportReason, REPORT_COMMENT_MAX, type VoteValue, type VoteSummary, type ReportFormState } from "@/lib/community";
 
 const REPORT_RATE_LIMIT_SECONDS = 30;
 const REPORT_DAILY_LIMIT = 10;
-
-async function getClientIpHash(): Promise<string | null> {
-  const headerList = await headers();
-  const forwarded = headerList.get("x-forwarded-for");
-  const ip = forwarded ? forwarded.split(",")[0]!.trim() : headerList.get("x-real-ip");
-  if (!ip) return null;
-  return createHash("sha256").update(ip).digest("hex");
-}
 
 export async function getWordVoteSummary(wordSlug: string): Promise<{ ok: true; data: VoteSummary } | { ok: false; error: string }> {
   const entry = getEntryBySlug(wordSlug);

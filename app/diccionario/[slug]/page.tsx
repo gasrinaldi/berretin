@@ -110,7 +110,9 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* JSON.stringify no escapa "<": si algún día un campo trajera
+          literalmente "</script>", cortaría el tag antes de tiempo. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <div className="ficha-back-row">
         <BackButton />
       </div>
