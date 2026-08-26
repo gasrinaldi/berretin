@@ -27,6 +27,7 @@ export function WordCard({ entry }: { entry: DictionaryEntry }) {
 
   return (
     <MotionLink
+      id={`word-${entry.slug}`}
       href={`/diccionario/${entry.slug}`}
       className="ficha"
       style={reduceMotion ? undefined : { rotateX, rotateY }}

@@ -12,6 +12,9 @@ import type { DictionaryEntry } from "@/app/api/dictionary/route";
 // si quedara guardado un estado desproporcionado.
 const MAX_RESTORE_PAGES = 40;
 const SCROLL_STATE_KEY = "berretin:dictionary-scroll";
+// "Pequeño margen" pedido para que la tarjeta restaurada no quede pegada
+// al borde superior del viewport.
+const RESTORED_CARD_TOP_MARGIN = 16;
 
 type ApiResponse = {
   results: DictionaryEntry[];
@@ -21,7 +24,7 @@ type ApiResponse = {
   countsByLetter: Record<string, number>;
 };
 
-type ScrollState = { search: string; pagesLoaded: number; scrollY: number };
+type ScrollState = { search: string; pagesLoaded: number; wordSlug: string };
 
 function readStateFromUrl(): { query: string; filters: FilterState } {
   if (typeof window === "undefined") return { query: "", filters: EMPTY_FILTERS };
@@ -75,14 +78,6 @@ function saveScrollState(state: ScrollState) {
   }
 }
 
-// El hero cinematográfico mantiene el diccionario oculto (curtain fixed)
-// hasta que el progreso de scroll cruza su propio umbral de revelado —
-// esto vive en CinematicHero.tsx, que esta función no toca ni conoce por
-// dentro: solo lee el atributo data-revealed que ya expone.
-function isCurtainRevealed(): boolean {
-  return document.querySelector(".cinehero-curtain")?.getAttribute("data-revealed") === "true";
-}
-
 type DictionaryProps = {
   query: string;
   onQueryChange: (value: string) => void;
@@ -111,7 +106,12 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   const currentSearchRef = useRef("");
   const pagesLoadedRef = useRef(0);
   const pendingRestoreRef = useRef<ScrollState | null>(null);
-  const pendingScrollYRef = useRef<number | null>(null);
+  const pendingWordSlugRef = useRef<string | null>(null);
+  // Token de la alineación de tarjeta en curso: incrementarlo cancela
+  // cualquier corrección de scroll todavía corriendo. Solo se toca al
+  // desmontar de verdad — la carga automática (más abajo) puede seguir
+  // alternando `loading` mientras tanto sin interrumpirla.
+  const alignmentTokenRef = useRef(0);
 
   // El navegador (y Next.js, para navegaciones "atrás") intentan restaurar
   // el scroll por su cuenta apenas cambia la ruta — antes de que este
@@ -147,7 +147,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
       // usuario puede haber scrolleado bastante dentro de ella — lo que
       // importa para decidir si vale la pena restaurar es que haya *algo*
       // guardado para esta misma búsqueda, no cuántas páginas hacían falta.
-      if (saved && saved.search === window.location.search && saved.pagesLoaded >= 1) {
+      if (saved && saved.search === window.location.search && saved.pagesLoaded >= 1 && saved.wordSlug) {
         pendingRestoreRef.current = saved;
         try {
           sessionStorage.removeItem(SCROLL_STATE_KEY);
@@ -163,7 +163,17 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
 
   // Debounce de la búsqueda tipeada (los filtros, al ser clics discretos, no
   // lo necesitan). Vaciar el campo restaura de una, sin esperar los 250ms.
+  // Se salta la primera corrida (montaje): ahí `debouncedQuery` ya arranca
+  // igual a `query` (mismo valor inicial), así que no hay nada que
+  // debouncear todavía — si no se salta, ese primer timeout(0) dispara con
+  // el `query` viejo (antes de que hydrate() aplique la URL) y pisa el
+  // debouncedQuery ya hidratado, tirando abajo la restauración.
+  const isFirstQueryEffect = useRef(true);
   useEffect(() => {
+    if (isFirstQueryEffect.current) {
+      isFirstQueryEffect.current = false;
+      return;
+    }
     const timeout = setTimeout(() => setDebouncedQuery(query), query.trim() ? 250 : 0);
     return () => clearTimeout(timeout);
   }, [query]);
@@ -214,9 +224,9 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // Reconstruye de una sola vez los N bloques que ya estaban cargados
   // (pedidos en paralelo, un solo setState) para no pintar primero solo la
   // página 0 y recién después ir sumando el resto: eso sí se notaría como
-  // salto visual. La posición de scroll se aplica recién cuando esto
-  // termina, nunca antes.
-  const restorePages = async (pagesLoaded: number, scrollY: number) => {
+  // salto visual. La alineación de la tarjeta visitada se aplica recién
+  // cuando esto termina, nunca antes.
+  const restorePages = async (pagesLoaded: number, wordSlug: string) => {
     const id = ++requestId.current;
     setLoading(true);
     const safeCount = Math.max(1, Math.min(pagesLoaded, MAX_RESTORE_PAGES));
@@ -230,7 +240,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
       setCountsByLetter(last.countsByLetter);
       setPage(safeCount - 1);
       pagesLoadedRef.current = safeCount;
-      pendingScrollYRef.current = scrollY;
+      pendingWordSlugRef.current = wordSlug;
     } catch {
       if (id !== requestId.current) return;
       fetchPage(0, true); // la restauración falló: arrancar normal en vez de quedar vacío
@@ -251,7 +261,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     const run = () => {
       const restore = pendingRestoreRef.current;
       pendingRestoreRef.current = null;
-      if (restore) restorePages(restore.pagesLoaded, restore.scrollY);
+      if (restore) restorePages(restore.pagesLoaded, restore.wordSlug);
       else fetchPage(0, true);
     };
     run();
@@ -279,50 +289,72 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, loading, page]);
 
-  // Aplica la posición de scroll guardada recién después de que la
-  // restauración terminó de pintar. El hero mantiene el contenido fuera
-  // del flujo (position:fixed) hasta cruzar su propio umbral de revelado,
-  // así que primero hay que "empujar" ese cruce (el scroll queda clamped
-  // al alto del hero, pero eso ya alcanza para revelarlo) y solo después,
-  // con el documento ya a su alto real, aplicar la posición final.
+  // Alinea la tarjeta de la palabra visitada como primera fila visible
+  // (con un pequeño margen arriba) recién después de que la restauración
+  // terminó de pintar — nunca un scroll numérico fijo, que no tiene en
+  // cuenta que el layout puede diferir levemente de cuando se guardó.
+  // Recalcula la posición contra la tarjeta en cada intento y para de
+  // reafirmarla recién cuando el resultado ya coincide varias veces
+  // seguidas — así cubre tanto el caso rápido (unos pocos cuadros) como
+  // una carrera más larga contra el navegador o el propio router de
+  // Next.js, sin forzar el scroll por más tiempo del necesario (que se
+  // notaría si el usuario scrollea a mano mientras tanto).
   //
-  // Sigue reafirmando la posición unos cuadros más incluso después de
-  // cruzar el umbral: tanto el navegador como el propio router de
-  // Next.js intentan restaurar SU idea de scroll en una navegación
-  // "atrás", a veces después de que este efecto ya corrió una vez — sin
-  // este margen, esa restauración ajena termina ganando la carrera.
+  // requestAnimationFrame en vez de setTimeout: un setTimeout(50ms)
+  // pierde en la práctica la carrera contra la restauración nativa de
+  // scroll del navegador/Next.js tras router.back(); reafirmar antes de
+  // cada pintado sí la gana. Corre con un token propio (no un cleanup de
+  // efecto atado a `loading`): la carga automática de más abajo puede
+  // alternar `loading` mientras tanto (dispara su propio fetch apenas el
+  // centinela queda cerca) sin cortar esta corrección a mitad de camino.
+  const alignCardToTop = (targetSlug: string) => {
+    const token = ++alignmentTokenRef.current;
+    let stableStreak = 0;
+    const deadline = performance.now() + 3000;
+    const tick = () => {
+      if (alignmentTokenRef.current !== token) return;
+      const card = document.getElementById(`word-${targetSlug}`);
+      if (card) {
+        const target = Math.max(0, card.getBoundingClientRect().top + window.scrollY - RESTORED_CARD_TOP_MARGIN);
+        stableStreak = Math.abs(window.scrollY - target) < 1 ? stableStreak + 1 : 0;
+        if (stableStreak <= 4) window.scrollTo(0, target);
+      }
+      if (stableStreak > 4 || performance.now() > deadline) return;
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+
   useEffect(() => {
     if (loading) return;
-    const targetY = pendingScrollYRef.current;
-    if (targetY == null) return;
-    pendingScrollYRef.current = null;
-
-    let cancelled = false;
-    let revealedAt: number | null = null;
-    const settle = (attempt: number) => {
-      if (cancelled) return;
-      window.scrollTo(0, targetY);
-      if (revealedAt == null && isCurtainRevealed()) revealedAt = attempt;
-      const settledLongEnough = revealedAt != null && attempt - revealedAt > 6;
-      if (settledLongEnough || attempt > 40) return;
-      setTimeout(() => settle(attempt + 1), 50);
-    };
-    settle(0);
-    return () => {
-      cancelled = true;
-    };
+    const targetSlug = pendingWordSlugRef.current;
+    if (targetSlug == null) return;
+    pendingWordSlugRef.current = null;
+    alignCardToTop(targetSlug);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
-  // Guarda en el momento exacto del click (fase de captura en document, así
-  // corre antes que el navigate del Link) — no al desmontar: para entonces
-  // Next.js ya llevó el scroll a 0 para la página nueva, y guardar ahí
-  // pisaría la posición real con un 0.
+  // Cancela una alineación en curso solo ante un desmontaje real (irse de
+  // la página), nunca por los cambios de `loading` de la carga automática.
+  useEffect(() => {
+    return () => {
+      alignmentTokenRef.current += 1;
+    };
+  }, []);
+
+  // Guarda en el momento exacto del click sobre una tarjeta de palabra
+  // (fase de captura en document, así corre antes que el navigate del
+  // Link) — no al desmontar: para entonces Next.js ya cambió de página.
+  // Solo interesa el click que efectivamente lleva a una palabra: es la
+  // que hay que alinear arriba al volver, no cualquier navegación.
   useEffect(() => {
     if (!hydrated) return;
-    const handleClick = () => {
-      if (pagesLoadedRef.current > 0) {
-        saveScrollState({ search: currentSearchRef.current, pagesLoaded: pagesLoadedRef.current, scrollY: window.scrollY });
-      }
+    const handleClick = (event: MouseEvent) => {
+      if (pagesLoadedRef.current === 0) return;
+      const link = (event.target as HTMLElement | null)?.closest<HTMLAnchorElement>('a[href^="/diccionario/"]');
+      const slug = link?.getAttribute("href")?.slice("/diccionario/".length);
+      if (!slug) return;
+      saveScrollState({ search: currentSearchRef.current, pagesLoaded: pagesLoadedRef.current, wordSlug: slug });
     };
     document.addEventListener("click", handleClick, { capture: true });
     return () => document.removeEventListener("click", handleClick, { capture: true });
