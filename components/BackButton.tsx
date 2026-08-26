@@ -34,7 +34,7 @@ export function BackButton({ hideArrow = false }: BackButtonProps = {}) {
     // dónde "volver" de forma segura: se manda siempre al comienzo del
     // diccionario en vez de arriesgar salir del sitio.
     if (cameFromDictionary && typeof window !== "undefined" && window.history.length > 1) router.back();
-    else router.push("/");
+    else router.push("/#dictionary-top");
   };
 
   return (
