@@ -15,10 +15,11 @@ export function isVoteValue(value: string): value is VoteValue {
 
 export type VoteSummary = { counts: Record<VoteValue, number>; total: number; myVote: VoteValue | null };
 
-export type ReportReason = "wrong_definition" | "offensive" | "spam" | "other";
+export type ReportReason = "wrong_definition" | "wrong_word" | "offensive" | "spam" | "other";
 
 export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
   { value: "wrong_definition", label: "Definición incorrecta" },
+  { value: "wrong_word", label: "La palabra o expresión es incorrecta" },
   { value: "offensive", label: "Contenido ofensivo" },
   { value: "spam", label: "Spam" },
   { value: "other", label: "Otro motivo" },

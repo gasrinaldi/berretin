@@ -36,7 +36,10 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .logo { font-family:var(--font-fraunces), serif; font-weight:600; font-size:44px; letter-spacing:-.5px; margin-bottom:8px; }
 .logo span { color:var(--brass); font-style:italic; font-weight:500; }
 .tagline { font-size:13px; color:var(--muted); max-width:420px; line-height:1.5; }
-.dictionary-intro { margin-bottom:0; padding-bottom:20px; }
+/* scroll-margin-top: "volver al buscador" (CinematicHero.tsx) apunta acá
+   con scrollIntoView({block:"start"}); sin esto el nav Descubrir/Cuenta/
+   Desafío queda pegado al borde superior del viewport. */
+.dictionary-intro { margin-bottom:0; padding-bottom:20px; scroll-margin-top:28px; }
 .aux-nav.dictionary-intro-nav { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; margin-top:0; }
 .aux-nav.dictionary-intro-nav a:nth-child(1) { justify-self:start; }
 .aux-nav.dictionary-intro-nav a:nth-child(2) { justify-self:center; }
