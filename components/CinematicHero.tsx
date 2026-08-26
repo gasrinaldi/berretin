@@ -488,7 +488,7 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
                 onLoad={() => ScrollTrigger.refresh()}
               />
             </div>
-            <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={1672} height={941} onLoad={() => ScrollTrigger.refresh()} />
+            <img className="hero-plate" src="/splash/04-jovenes-apoyos-anclados.png" alt="" width={4096} height={2306} onLoad={() => ScrollTrigger.refresh()} />
           </div>
 
           <div className="hero-vignette" aria-hidden="true" />
