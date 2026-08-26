@@ -3,10 +3,17 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // Next.js 16 renombró middleware.ts a proxy.ts (mismo comportamiento).
-// Acá solo se refresca la sesión de Supabase y se redirige a /admin/login
-// si hace falta — la autorización real (email == ADMIN_EMAIL) se vuelve a
-// verificar en cada página y cada server action, nunca se confía solo en
-// esto (así lo recomienda la propia doc de Proxy de Next.js).
+// Dos usos según la ruta:
+// - /admin/*: refresca la sesión Y redirige a /admin/login si el usuario
+//   no es ADMIN_EMAIL — la autorización real se vuelve a verificar en
+//   cada página y cada server action, nunca se confía solo en esto (así
+//   lo recomienda la propia doc de Proxy de Next.js).
+// - /cuenta/*: SOLO refresca la sesión, sin chequeo de admin. Antes no
+//   corría acá: createSupabaseServerClient() no puede escribir cookies
+//   desde una Server Component de solo lectura (ver lib/supabase/
+//   server.ts), así que si el access token vencía sin pasar antes por
+//   este proxy, /cuenta veía la sesión como inválida y mostraba el login
+//   de nuevo pese a que el usuario seguía con una sesión válida.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -14,8 +21,8 @@ export async function proxy(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Sin configurar todavía: dejamos pasar a /admin/login, que ya explica
-    // que el panel no está disponible, en vez de romper con un 500.
+    // Sin configurar todavía: dejamos pasar (a /admin/login o /cuenta, que
+    // ya explican que no está disponible) en vez de romper con un 500.
     return response;
   }
 
@@ -36,6 +43,12 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  if (!request.nextUrl.pathname.startsWith("/admin")) {
+    // /cuenta/*: la sesión ya quedó refrescada arriba (setAll corrió si
+    // hacía falta) — no hay chequeo de admin que hacer acá.
+    return response;
+  }
+
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const isAuthorized = Boolean(user?.email && adminEmail && user.email.toLowerCase() === adminEmail);
 
@@ -48,5 +61,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/aportes/:path*", "/admin/desafio/:path*", "/admin/regiones/:path*"],
+  matcher: ["/admin/aportes/:path*", "/admin/desafio/:path*", "/admin/regiones/:path*", "/cuenta/:path*"],
 };

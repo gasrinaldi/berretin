@@ -66,7 +66,8 @@ export function AccountDashboard({ email, profile: initialProfile, contributions
   if (!profile) {
     return (
       <div className="account-onboarding">
-        <p className="contribute-hint">Ingresaste como {email}. Elegí un alias público para terminar de crear tu perfil.</p>
+        <h2 className="admin-title account-history-title">Completar perfil</h2>
+        <p className="contribute-hint">Ingresaste como {email}. Elegí un alias público para terminar de completar tu perfil.</p>
         <form className="contribute-form" onSubmit={handleCreate}>
           <div className="contribute-field">
             <label htmlFor="onboarding-alias">Alias (minúsculas, números o _, 3 a {ALIAS_MAX} caracteres)</label>
@@ -82,7 +83,7 @@ export function AccountDashboard({ email, profile: initialProfile, contributions
           </div>
           {error && <p className="contribute-error">{error}</p>}
           <button type="submit" className="share-btn" disabled={pending}>
-            {pending ? "creando..." : "crear perfil"}
+            {pending ? "completando..." : "completar perfil"}
           </button>
         </form>
       </div>

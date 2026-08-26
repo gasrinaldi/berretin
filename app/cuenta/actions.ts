@@ -54,8 +54,13 @@ export async function createProfile(alias: string, location: string, avatarUrl: 
     return unavailable();
   }
 
+  // Si ya existe un perfil para este usuario (usuario de Supabase Auth sin
+  // perfil que reintenta, doble submit, dos pestañas) lo "recuperamos" en
+  // vez de devolver error: createProfile queda idempotente, nunca duplica
+  // la fila y el usuario avanza igual al panel en vez de quedar trabado
+  // viendo el formulario de onboarding con un mensaje de error.
   const { data: existing } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
-  if (existing) return { ok: false, error: "Ya tenés un perfil creado." };
+  if (existing) return { ok: true };
 
   const { data: taken } = await supabase.from("profiles").select("id").eq("alias", cleanAlias).maybeSingle();
   if (taken) return { ok: false, error: "Ese alias ya está en uso." };
@@ -67,7 +72,18 @@ export async function createProfile(alias: string, location: string, avatarUrl: 
     avatar_url: cleanAvatar || null,
   });
 
-  if (error) return { ok: false, error: error.code === "23505" ? "Ese alias ya está en uso." : "No pudimos crear tu perfil." };
+  // 23505 (unique_violation) acá puede ser la carrera del propio id (dos
+  // requests que pasaron el chequeo de "existing" antes de que la primera
+  // terminara de insertar) o del alias — en la del id, la fila ya está
+  // creada por la otra request, así que también es un éxito, no un error.
+  if (error) {
+    if (error.code === "23505") {
+      const { data: nowExists } = await supabase.from("profiles").select("id").eq("id", user.id).maybeSingle();
+      if (nowExists) return { ok: true };
+      return { ok: false, error: "Ese alias ya está en uso." };
+    }
+    return { ok: false, error: "No pudimos crear tu perfil." };
+  }
   return { ok: true };
 }
 
