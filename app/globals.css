@@ -560,6 +560,20 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .ficha-definition-text { font-family:var(--font-fraunces), serif; font-weight:500; font-size:clamp(30px, 4vw, 54px); line-height:1.25; color:var(--crema); overflow-wrap:break-word; }
 .ficha-detail-seal { position:absolute; top:-8px; right:0; width:auto; height:130px; pointer-events:none; }
 
+/* Significados alternativos aprobados: mismas clases .ficha-definition-*
+   que la definición principal (mismo lenguaje visual), como acepciones
+   numeradas debajo de ella. Autor/votos/reporte quedan discretos, con las
+   clases chicas que ya usa el resto de la galería. */
+.ficha-alt-meanings { display:flex; flex-direction:column; gap:32px; margin-top:32px; }
+.ficha-alt-meaning-block { max-width:640px; }
+.ficha-alt-meaning-meta { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
+
+/* Información regional y generacional aprobada: subsecciones separadas de
+   las definiciones, con el mismo estilo de tarjeta que el resto de los
+   aportes de la galería. */
+.ficha-regional-generational { display:flex; flex-direction:column; gap:28px; margin-top:40px; padding-top:32px; border-top:1px solid var(--line); max-width:640px; }
+.ficha-info-subsection .ficha-definition-label { margin-bottom:16px; }
+
 .ficha-detail-bottom { display:grid; grid-template-columns:1fr 1fr; gap:56px; margin-top:56px; padding-top:32px; border-top:1px solid var(--line-strong); }
 
 .ficha-vote { display:flex; flex-direction:column; }

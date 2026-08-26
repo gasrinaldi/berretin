@@ -1,15 +1,19 @@
 import type { ContributionType } from "@/lib/contributions";
 
 // Qué tipos de aporte aprobado aparecen en cada pestaña de la ficha de
-// palabra. "Significado" no lista nada de acá: es la definición actual
-// del diccionario, ya disponible en la página sin fetch aparte. El audio
-// tiene su propia pestaña ("Cómo se pronuncia"): nunca se mezcla con los
-// aportes de texto de "Cómo se usa".
-export const GALLERY_USO_TYPES: ContributionType[] = ["example", "alternative_meaning", "regional", "generational"];
+// palabra. "Cómo se usa" es solo `example`. "Cómo se ve" es solo `image`.
+// "Cómo se pronuncia" es solo `audio`. Los significados alternativos y la
+// información regional/generacional se resuelven aparte y se muestran
+// dentro de "Significado", debajo de la definición principal — nunca acá.
+// `correction` nunca se lista en ninguna pestaña pública: es solo para
+// moderación.
+export const GALLERY_USO_TYPES: ContributionType[] = ["example"];
 export const GALLERY_VE_TYPES: ContributionType[] = ["image"];
 export const GALLERY_PRONUNCIA_TYPES: ContributionType[] = ["audio"];
+export const GALLERY_SIGNIFICADO_ALT_TYPES: ContributionType[] = ["alternative_meaning"];
+export const GALLERY_SIGNIFICADO_REGIONAL_TYPES: ContributionType[] = ["regional", "generational"];
 
-export type GalleryTab = "uso" | "ve" | "pronuncia";
+export type GalleryTab = "uso" | "ve" | "pronuncia" | "significado_alt" | "significado_regional";
 
 export type GalleryContribution = {
   id: string;

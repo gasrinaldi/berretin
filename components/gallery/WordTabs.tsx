@@ -4,6 +4,8 @@ import { useState } from "react";
 import { UsoTab } from "@/components/gallery/UsoTab";
 import { VeTab } from "@/components/gallery/VeTab";
 import { PronunciaTab } from "@/components/gallery/PronunciaTab";
+import { AlternativeMeaningsSection } from "@/components/gallery/AlternativeMeaningsSection";
+import { RegionalGenerationalSection } from "@/components/gallery/RegionalGenerationalSection";
 import { BerretinSeal } from "@/components/BerretinSeal";
 
 type WordTabsProps = {
@@ -49,6 +51,8 @@ export function WordTabs({ wordSlug, definicion }: WordTabsProps) {
           <span className="ficha-definition-label">Definición</span>
           <p className="ficha-definition-text">{definicion}</p>
         </div>
+        {active === "significado" && <AlternativeMeaningsSection wordSlug={wordSlug} />}
+        {active === "significado" && <RegionalGenerationalSection wordSlug={wordSlug} />}
         <BerretinSeal className="ficha-detail-seal" />
       </div>
 

@@ -10,6 +10,8 @@ import {
   GALLERY_USO_TYPES,
   GALLERY_VE_TYPES,
   GALLERY_PRONUNCIA_TYPES,
+  GALLERY_SIGNIFICADO_ALT_TYPES,
+  GALLERY_SIGNIFICADO_REGIONAL_TYPES,
   GALLERY_PAGE_SIZE,
   GALLERY_THUMB_TTL_SECONDS,
   GALLERY_FULL_TTL_SECONDS,
@@ -36,7 +38,16 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
     return unavailable();
   }
 
-  const types = tab === "uso" ? GALLERY_USO_TYPES : tab === "ve" ? GALLERY_VE_TYPES : GALLERY_PRONUNCIA_TYPES;
+  const types =
+    tab === "uso"
+      ? GALLERY_USO_TYPES
+      : tab === "ve"
+        ? GALLERY_VE_TYPES
+        : tab === "pronuncia"
+          ? GALLERY_PRONUNCIA_TYPES
+          : tab === "significado_alt"
+            ? GALLERY_SIGNIFICADO_ALT_TYPES
+            : GALLERY_SIGNIFICADO_REGIONAL_TYPES;
   const safePage = Math.max(0, Math.floor(page) || 0);
   const start = safePage * GALLERY_PAGE_SIZE;
 
