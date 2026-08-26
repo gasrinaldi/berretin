@@ -7,7 +7,8 @@ import { getOrCreateAnonVoterHash, readAnonVoterHash } from "@/lib/anon-voter";
 import { checkVoteRateLimit } from "@/lib/vote-rate-limit";
 import { getEntryBySlug } from "@/lib/dictionary";
 import { sanitizeText } from "@/lib/contributions";
-import { isVoteValue, isReportReason, REPORT_COMMENT_MAX, type VoteValue, type VoteSummary, type ReportFormState } from "@/lib/community";
+import { notifyAdmin } from "@/lib/admin-notify";
+import { isVoteValue, isReportReason, REPORT_REASONS, REPORT_COMMENT_MAX, type VoteValue, type VoteSummary, type ReportFormState } from "@/lib/community";
 
 const REPORT_RATE_LIMIT_SECONDS = 30;
 const REPORT_DAILY_LIMIT = 10;
@@ -182,5 +183,15 @@ export async function submitReport(_prevState: ReportFormState, formData: FormDa
   });
 
   if (error) return { status: "error", error: "No pudimos enviar el reporte." };
+
+  // Recién acá, con el INSERT ya confirmado: ver el comentario equivalente
+  // en submitContribution (contribute-actions.ts) y en admin-notify.ts.
+  await notifyAdmin({
+    kind: "report",
+    word: entry.palabra,
+    detail: REPORT_REASONS.find((r) => r.value === rawReason)?.label ?? rawReason,
+    createdAt: new Date(),
+  });
+
   return { status: "success" };
 }

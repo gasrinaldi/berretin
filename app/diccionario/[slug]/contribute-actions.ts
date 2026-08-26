@@ -8,6 +8,7 @@ import { getSupabaseAdmin, CONTRIBUTIONS_BUCKET, CONTRIBUTIONS_AUDIO_BUCKET } fr
 import { detectImageType } from "@/lib/image-signature";
 import { detectAudioType, audioContentType } from "@/lib/audio-signature";
 import { processContributionImage, ImageProcessingError, type ProcessedImage } from "@/lib/image-processing";
+import { notifyAdmin } from "@/lib/admin-notify";
 import {
   isContributionType,
   sanitizeText,
@@ -23,6 +24,7 @@ import {
   MAX_AUDIO_BYTES,
   SUCCESS_MESSAGE,
   LEGAL_VERSION,
+  CONTRIBUTION_TYPES,
   type ContributionFieldErrors,
   type ContributeFormState,
 } from "@/lib/contributions";
@@ -318,6 +320,15 @@ export async function submitContribution(_prevState: ContributeFormState, formDa
     }
     return errorState("No pudimos guardar tu aporte. Probá de nuevo en unos minutos.");
   }
+
+  // Recién acá, con el INSERT ya confirmado: si el aviso falla, el aporte
+  // igual quedó guardado y el remitente igual ve éxito (ver admin-notify.ts).
+  await notifyAdmin({
+    kind: "contribution",
+    word: entry.palabra,
+    detail: CONTRIBUTION_TYPES.find((t) => t.value === rawType)?.label ?? rawType,
+    createdAt: new Date(),
+  });
 
   return { status: "success", message: SUCCESS_MESSAGE };
 }
