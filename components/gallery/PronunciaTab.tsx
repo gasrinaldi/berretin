@@ -5,9 +5,13 @@ import { getWordGallery } from "@/app/diccionario/[slug]/gallery-actions";
 import { CONTRIBUTION_TYPES } from "@/lib/contributions";
 import type { GalleryContribution } from "@/lib/gallery";
 import { GalleryVoteReport } from "@/components/gallery/GalleryVoteReport";
+import { AudioPlayer } from "@/components/gallery/AudioPlayer";
 import { ContributionMeta } from "@/components/gallery/ContributionMeta";
 
-export function UsoTab({ wordSlug }: { wordSlug: string }) {
+// Pestaña exclusiva para aportes de tipo "audio" — nunca comparte lista
+// con aportes de texto (esos viven en UsoTab). Mismo patrón de paginación
+// y estados que UsoTab/VeTab.
+export function PronunciaTab({ wordSlug }: { wordSlug: string }) {
   const [rows, setRows] = useState<GalleryContribution[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
@@ -16,7 +20,7 @@ export function UsoTab({ wordSlug }: { wordSlug: string }) {
 
   const fetchPage = async (targetPage: number, append: boolean) => {
     setLoading(true);
-    const result = await getWordGallery(wordSlug, "uso", targetPage);
+    const result = await getWordGallery(wordSlug, "pronuncia", targetPage);
     setLoading(false);
     if (!result.ok) {
       setError(result.error);
@@ -37,7 +41,7 @@ export function UsoTab({ wordSlug }: { wordSlug: string }) {
 
   if (loading && rows.length === 0) return <p className="contribute-hint">cargando...</p>;
   if (error) return <p className="contribute-hint">no disponible en este momento</p>;
-  if (rows.length === 0) return <p className="no-results">todavía no hay aportes aprobados de este tipo para esta palabra</p>;
+  if (rows.length === 0) return <p className="no-results">todavía no hay audios aprobados para esta palabra</p>;
 
   return (
     <div className="gallery-list">
@@ -51,7 +55,8 @@ export function UsoTab({ wordSlug }: { wordSlug: string }) {
               </span>
             )}
           </div>
-          <p className="ficha-meaning gallery-item-content">{row.content}</p>
+          {row.content && <p className="ficha-meaning gallery-item-content">{row.content}</p>}
+          {row.hasAudio && <AudioPlayer contributionId={row.id} />}
           <GalleryVoteReport contributionId={row.id} wordSlug={wordSlug} voteCount={row.voteCount} myVote={row.myVote} />
         </article>
       ))}

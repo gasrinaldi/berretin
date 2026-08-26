@@ -397,11 +397,17 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .contribute-form { display:flex; flex-direction:column; gap:18px; }
 .contribute-field { display:flex; flex-direction:column; gap:6px; }
 .contribute-field label { font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); }
-.contribute-field input[type="text"], .contribute-field input[type="email"], .contribute-field select, .contribute-field textarea, .contribute-field input[type="file"] { background:var(--ink); border:1px solid var(--line-strong); border-radius:2px; padding:10px 12px; color:var(--crema); font:14px/1.4 var(--font-space-grotesk), sans-serif; }
+.contribute-field input[type="text"], .contribute-field input[type="email"], .contribute-field input[type="password"], .contribute-field input[type="url"], .contribute-field select, .contribute-field textarea, .contribute-field input[type="file"] { background:var(--ink); border:1px solid var(--line-strong); border-radius:2px; padding:10px 12px; color:var(--crema); font:14px/1.4 var(--font-space-grotesk), sans-serif; }
 .contribute-field textarea { resize:vertical; font-family:inherit; }
 .contribute-field select { cursor:pointer; }
 .contribute-field input:focus-visible, .contribute-field select:focus-visible, .contribute-field textarea:focus-visible { outline:1px solid var(--brass); outline-offset:1px; }
 .contribute-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.contribute-more { border:1px solid var(--line-strong); border-radius:2px; padding:0 12px; }
+.contribute-more summary { cursor:pointer; padding:10px 0; font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--muted); list-style:none; }
+.contribute-more summary::-webkit-details-marker { display:none; }
+.contribute-more summary::before { content:"+ "; color:var(--brass); }
+.contribute-more[open] summary::before { content:"− "; }
+.contribute-more-body { display:flex; flex-direction:column; gap:18px; padding-bottom:14px; }
 .contribute-honeypot { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 .contribute-hint { font-size:11px; line-height:1.5; color:var(--muted); }
 .contribute-consent { display:flex; align-items:flex-start; gap:10px; font-size:13px; line-height:1.5; color:var(--crema); cursor:pointer; }
@@ -635,6 +641,11 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .account-history-card .ficha-meaning { margin-top:12px; }
 .profile-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; border:1px solid var(--line-strong); }
 .profile-meta { margin-top:24px; }
+/* No estira este wrap para pegar el footer abajo en páginas cortas (ver
+   "body > .wrap" arriba): con solo 3 datos y sin aportes, ese estirado
+   dejaba un bloque vacío exagerado antes del footer. */
+.profile-wrap { flex:0 1 auto; }
+.profile-empty { text-align:left; padding:20px 0 0; }
 
 /* ---- Galería cultural: "cómo se usa" / "cómo se ve" ---- */
 .gallery-list { display:flex; flex-direction:column; gap:20px; }

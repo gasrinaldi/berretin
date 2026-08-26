@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LoginForm } from "@/components/admin/LoginForm";
 
 export const metadata: Metadata = { title: "Ingreso — Berretín", robots: { index: false, follow: false } };
@@ -8,6 +9,11 @@ export default function AdminLoginPage() {
 
   return (
     <div className="wrap admin-login-wrap">
+      <nav className="word-nav">
+        <Link href="/" className="back-btn">
+          ← volver al diccionario
+        </Link>
+      </nav>
       <p className="word-letter">Berretín</p>
       <h1 className="admin-login-title">Panel de moderación</h1>
       {configured ? <LoginForm /> : <p className="contribute-error contribute-error-general">El panel de moderación no está configurado todavía.</p>}

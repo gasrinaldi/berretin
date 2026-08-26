@@ -52,7 +52,7 @@ export default function TerminosPage() {
             <section>
               <h2>Moderación de aportes</h2>
               <p>
-                Todo aporte (ejemplo, corrección, significado alternativo, foto, dibujo, audio, información regional o generacional) queda pendiente de revisión
+                Todo aporte (ejemplo, corrección, significado alternativo, imagen o ilustración, pronunciación en audio, información regional o generacional) queda pendiente de revisión
                 antes de publicarse. Berretín puede <strong>editar, rechazar o eliminar</strong> cualquier aporte, en cualquier momento y sin necesidad de dar aviso
                 previo, si no cumple estos Términos o las{" "}
                 <Link href="/reglas-de-aportes">Reglas de aportes</Link>. También podemos <strong>suspender o bloquear</strong> a un usuario que envíe contenido

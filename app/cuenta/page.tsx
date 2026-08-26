@@ -16,16 +16,19 @@ export default async function CuentaPage() {
 
   if (!user) {
     return (
-      <div className="wrap admin-login-wrap">
-        <nav className="word-nav">
-          <Link href="/" className="back-btn">
-            ← volver al diccionario
-          </Link>
-        </nav>
-        <p className="word-letter">Berretín</p>
-        <h1 className="admin-login-title">Mi cuenta</h1>
-        <AuthForm redirectTo="/cuenta" />
-      </div>
+      <>
+        <div className="wrap admin-login-wrap">
+          <nav className="word-nav">
+            <Link href="/" className="back-btn">
+              ← volver al diccionario
+            </Link>
+          </nav>
+          <p className="word-letter">Berretín</p>
+          <h1 className="admin-login-title">Mi cuenta</h1>
+          <AuthForm redirectTo="/cuenta" />
+        </div>
+        <Footer />
+      </>
     );
   }
 

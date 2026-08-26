@@ -35,6 +35,12 @@ export function ContributeForm({ wordSlug, wordPalabra, onClose }: ContributeFor
   const activeTypeDef = CONTRIBUTION_TYPES.find((t) => t.value === type) ?? CONTRIBUTION_TYPES[0];
   const showImage = TYPES_WITH_IMAGE.includes(type);
   const showAudio = TYPES_WITH_AUDIO.includes(type);
+  // Solo se muestra directo el campo relevante para el tipo elegido — el
+  // resto (alias, email, y ubicación/década cuando no son el campo
+  // principal de este tipo) queda plegado en "Más datos opcionales" para
+  // no alargar el formulario, sobre todo en mobile.
+  const showLocation = type === "regional";
+  const showDecade = type === "generational";
 
   useEffect(() => {
     if (state.status === "success") formRef.current?.reset();
@@ -109,32 +115,56 @@ export function ContributeForm({ wordSlug, wordPalabra, onClose }: ContributeFor
               </div>
             )}
 
-            <div className="contribute-row">
+            {showLocation && (
               <div className="contribute-field">
-                <label htmlFor="contribute-alias">Alias o nombre público (opcional)</label>
-                <input id="contribute-alias" name="authorAlias" type="text" maxLength={ALIAS_MAX} />
-                {state.fieldErrors?.authorAlias && <p className="contribute-error">{state.fieldErrors.authorAlias}</p>}
-              </div>
-              <div className="contribute-field">
-                <label htmlFor="contribute-email">Email (opcional)</label>
-                <input id="contribute-email" name="email" type="email" maxLength={EMAIL_MAX} />
-                <p className="contribute-hint">{EMAIL_NOTE}</p>
-                {state.fieldErrors?.email && <p className="contribute-error">{state.fieldErrors.email}</p>}
-              </div>
-            </div>
-
-            <div className="contribute-row">
-              <div className="contribute-field">
-                <label htmlFor="contribute-location">Ciudad, barrio o provincia (opcional)</label>
+                <label htmlFor="contribute-location">Ciudad, barrio o provincia</label>
                 <input id="contribute-location" name="location" type="text" maxLength={LOCATION_MAX} />
                 {state.fieldErrors?.location && <p className="contribute-error">{state.fieldErrors.location}</p>}
               </div>
+            )}
+
+            {showDecade && (
               <div className="contribute-field">
-                <label htmlFor="contribute-decade">Década o generación (opcional)</label>
+                <label htmlFor="contribute-decade">Década o generación</label>
                 <input id="contribute-decade" name="decade" type="text" maxLength={DECADE_MAX} placeholder="ej. años 80, generación X..." />
                 {state.fieldErrors?.decade && <p className="contribute-error">{state.fieldErrors.decade}</p>}
               </div>
-            </div>
+            )}
+
+            <details className="contribute-more">
+              <summary>Más datos opcionales</summary>
+              <div className="contribute-more-body">
+                <div className="contribute-row">
+                  <div className="contribute-field">
+                    <label htmlFor="contribute-alias">Alias o nombre público (opcional)</label>
+                    <input id="contribute-alias" name="authorAlias" type="text" maxLength={ALIAS_MAX} />
+                    {state.fieldErrors?.authorAlias && <p className="contribute-error">{state.fieldErrors.authorAlias}</p>}
+                  </div>
+                  <div className="contribute-field">
+                    <label htmlFor="contribute-email">Email (opcional)</label>
+                    <input id="contribute-email" name="email" type="email" maxLength={EMAIL_MAX} />
+                    <p className="contribute-hint">{EMAIL_NOTE}</p>
+                    {state.fieldErrors?.email && <p className="contribute-error">{state.fieldErrors.email}</p>}
+                  </div>
+                </div>
+
+                {!showLocation && (
+                  <div className="contribute-field">
+                    <label htmlFor="contribute-location">Ciudad, barrio o provincia (opcional)</label>
+                    <input id="contribute-location" name="location" type="text" maxLength={LOCATION_MAX} />
+                    {state.fieldErrors?.location && <p className="contribute-error">{state.fieldErrors.location}</p>}
+                  </div>
+                )}
+
+                {!showDecade && (
+                  <div className="contribute-field">
+                    <label htmlFor="contribute-decade">Década o generación (opcional)</label>
+                    <input id="contribute-decade" name="decade" type="text" maxLength={DECADE_MAX} placeholder="ej. años 80, generación X..." />
+                    {state.fieldErrors?.decade && <p className="contribute-error">{state.fieldErrors.decade}</p>}
+                  </div>
+                )}
+              </div>
+            </details>
 
             <label className="contribute-consent">
               <input type="checkbox" name="consentTerms" required />

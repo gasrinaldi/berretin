@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { UsoTab } from "@/components/gallery/UsoTab";
 import { VeTab } from "@/components/gallery/VeTab";
+import { PronunciaTab } from "@/components/gallery/PronunciaTab";
 import { BerretinSeal } from "@/components/BerretinSeal";
 
 type WordTabsProps = {
@@ -14,6 +15,7 @@ const TABS = [
   { value: "significado", label: "Significado" },
   { value: "uso", label: "Cómo se usa" },
   { value: "ve", label: "Cómo se ve" },
+  { value: "pronuncia", label: "Cómo se pronuncia" },
 ] as const;
 
 type TabValue = (typeof TABS)[number]["value"];
@@ -56,6 +58,10 @@ export function WordTabs({ wordSlug, definicion }: WordTabsProps) {
 
       <div className="ficha-detail-panel" role="tabpanel" hidden={active !== "ve"}>
         {active === "ve" && <VeTab wordSlug={wordSlug} />}
+      </div>
+
+      <div className="ficha-detail-panel" role="tabpanel" hidden={active !== "pronuncia"}>
+        {active === "pronuncia" && <PronunciaTab wordSlug={wordSlug} />}
       </div>
     </div>
   );

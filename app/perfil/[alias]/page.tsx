@@ -45,7 +45,7 @@ export default async function PerfilPage({ params }: PageProps<"/perfil/[alias]"
 
   return (
     <>
-      <div className="wrap word-wrap">
+      <div className="wrap word-wrap profile-wrap">
         <nav className="word-nav">
           <BackButton />
         </nav>
@@ -70,6 +70,7 @@ export default async function PerfilPage({ params }: PageProps<"/perfil/[alias]"
               <dd>{profile.reputation}</dd>
             </div>
           </dl>
+          {approvedCount === 0 && <p className="no-results profile-empty">todavía no tiene aportes públicos</p>}
         </article>
       </div>
       <Footer />

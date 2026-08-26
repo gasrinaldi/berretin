@@ -2,7 +2,7 @@
 // server action (autoridad real). No contiene secretos: es seguro importarlo
 // desde un componente cliente.
 
-export type ContributionType = "example" | "correction" | "alternative_meaning" | "illustration" | "photo" | "regional" | "generational" | "audio";
+export type ContributionType = "example" | "correction" | "alternative_meaning" | "image" | "regional" | "generational" | "audio";
 
 export type ContributionTypeDef = {
   value: ContributionType;
@@ -11,18 +11,20 @@ export type ContributionTypeDef = {
   placeholder: string;
 };
 
+// "image" unifica los antiguos "illustration" y "photo" (ver migración
+// unify_illustration_photo_into_image_type): un aporte visual es un
+// aporte visual, no hace falta que quien aporta distinga entre los dos.
 export const CONTRIBUTION_TYPES: ContributionTypeDef[] = [
-  { value: "example", label: "Ejemplo de uso", contentLabel: "Ejemplo", placeholder: "Escribí una frase donde se use la palabra..." },
+  { value: "example", label: "Cómo se usa / agregar un ejemplo", contentLabel: "Ejemplo", placeholder: "Escribí una frase donde se use la palabra..." },
   { value: "correction", label: "Corrección", contentLabel: "¿Qué habría que corregir?", placeholder: "Contá qué está mal o incompleto en la ficha actual..." },
   { value: "alternative_meaning", label: "Significado alternativo", contentLabel: "Significado alternativo", placeholder: "Describí el otro significado que conocés..." },
-  { value: "illustration", label: "Dibujo o ilustración", contentLabel: "Sobre tu dibujo", placeholder: "Contanos algo sobre la ilustración que vas a subir..." },
-  { value: "photo", label: "Fotografía", contentLabel: "Sobre la foto", placeholder: "Contanos algo sobre la foto que vas a subir..." },
+  { value: "image", label: "Imagen o ilustración", contentLabel: "Sobre tu imagen", placeholder: "Contanos algo sobre la imagen o ilustración que vas a subir..." },
   { value: "regional", label: "Información regional", contentLabel: "Uso regional", placeholder: "¿Cómo se usa en tu zona?..." },
   { value: "generational", label: "Información generacional", contentLabel: "Uso generacional", placeholder: "¿En qué época o generación se usa así?..." },
-  { value: "audio", label: "Audio", contentLabel: "Sobre tu audio", placeholder: "Contanos algo sobre el audio que vas a subir (pronunciación, uso oral, etc.)..." },
+  { value: "audio", label: "Pronunciación en audio", contentLabel: "Sobre tu audio", placeholder: "Contanos algo sobre el audio que vas a subir (pronunciación, uso oral, etc.)..." },
 ];
 
-export const TYPES_WITH_IMAGE: ContributionType[] = ["illustration", "photo"];
+export const TYPES_WITH_IMAGE: ContributionType[] = ["image"];
 export const TYPES_WITH_AUDIO: ContributionType[] = ["audio"];
 
 export function isContributionType(value: string): value is ContributionType {

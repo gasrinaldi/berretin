@@ -6,7 +6,17 @@ import { getClientIpHash } from "@/lib/client-ip";
 import { getOrCreateAnonVoterHash, readAnonVoterHash } from "@/lib/anon-voter";
 import { checkVoteRateLimit } from "@/lib/vote-rate-limit";
 import { getEntryBySlug } from "@/lib/dictionary";
-import { GALLERY_USO_TYPES, GALLERY_VE_TYPES, GALLERY_PAGE_SIZE, GALLERY_THUMB_TTL_SECONDS, GALLERY_FULL_TTL_SECONDS, type GalleryTab, type GalleryContribution, type GalleryPage } from "@/lib/gallery";
+import {
+  GALLERY_USO_TYPES,
+  GALLERY_VE_TYPES,
+  GALLERY_PRONUNCIA_TYPES,
+  GALLERY_PAGE_SIZE,
+  GALLERY_THUMB_TTL_SECONDS,
+  GALLERY_FULL_TTL_SECONDS,
+  type GalleryTab,
+  type GalleryContribution,
+  type GalleryPage,
+} from "@/lib/gallery";
 
 type Ok<T> = { ok: true } & T;
 type Err = { ok: false; error: string };
@@ -26,7 +36,7 @@ export async function getWordGallery(wordSlug: string, tab: GalleryTab, page: nu
     return unavailable();
   }
 
-  const types = tab === "uso" ? GALLERY_USO_TYPES : GALLERY_VE_TYPES;
+  const types = tab === "uso" ? GALLERY_USO_TYPES : tab === "ve" ? GALLERY_VE_TYPES : GALLERY_PRONUNCIA_TYPES;
   const safePage = Math.max(0, Math.floor(page) || 0);
   const start = safePage * GALLERY_PAGE_SIZE;
 

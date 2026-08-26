@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: `Reglas de aportes | ${SITE_NAME}`,
-  description: `Qué contenido se puede aportar a ${SITE_NAME} y qué no: autoría, derechos sobre fotos, dibujos y audios, y protección de menores.`,
+  description: `Qué contenido se puede aportar a ${SITE_NAME} y qué no: autoría, derechos sobre imágenes y audios, y protección de menores.`,
   alternates: { canonical: "/reglas-de-aportes" },
 };
 
@@ -28,7 +28,7 @@ export default function ReglasDeAportesPage() {
           <div className="legal-content">
             <p className="legal-updated">Última actualización: {LEGAL_VERSION}</p>
             <p>
-              Estas reglas definen qué podés enviar a Berretín (ejemplos, correcciones, significados alternativos, fotos, dibujos, audios) y qué no. Todo aporte
+              Estas reglas definen qué podés enviar a Berretín (ejemplos, correcciones, significados alternativos, imágenes o ilustraciones, pronunciaciones en audio) y qué no. Todo aporte
               pasa por moderación antes de publicarse.
             </p>
 
@@ -51,10 +51,10 @@ export default function ReglasDeAportesPage() {
             </section>
 
             <section>
-              <h2>Fotos, dibujos y audios</h2>
+              <h2>Imágenes y audios</h2>
               <p>
-                Para subir una foto, un dibujo o un audio necesitás tener los derechos sobre esa obra. Si en la imagen o el audio aparece una persona identificable
-                (rostro o voz reconocible), necesitás además su permiso para compartirlo en Berretín.
+                Para subir una imagen, una ilustración o un audio necesitás tener los derechos sobre esa obra. Si en la imagen o el audio aparece una persona
+                identificable (rostro o voz reconocible), necesitás además su permiso para compartirlo en Berretín.
               </p>
             </section>
 
