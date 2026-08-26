@@ -88,7 +88,7 @@ export default function TerminosPage() {
             <section>
               <h2>Contacto</h2>
               <p>
-                Consultas sobre estos Términos: <strong>[EMAIL PÚBLICO]</strong>.
+                Consultas sobre estos Términos: <strong><a href="mailto:berretininfo@proton.me">berretininfo@proton.me</a></strong>.
               </p>
             </section>
           </div>

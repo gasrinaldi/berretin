@@ -86,7 +86,7 @@ export default function PrivacidadPage() {
               <h2>Tus derechos</h2>
               <p>
                 Podés pedirnos <strong>acceder</strong> a los datos que tenemos sobre vos, <strong>corregirlos</strong> si están mal, o <strong>eliminarlos</strong>{" "}
-                (tu cuenta, tus aportes o ambos). Escribinos a <strong>[EMAIL PÚBLICO]</strong> indicando qué necesitás — vamos a responder por ese mismo medio.
+                (tu cuenta, tus aportes o ambos). Escribinos a <strong><a href="mailto:berretininfo@proton.me">berretininfo@proton.me</a></strong> indicando qué necesitás — vamos a responder por ese mismo medio.
               </p>
             </section>
           </div>
