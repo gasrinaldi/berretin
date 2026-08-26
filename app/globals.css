@@ -127,7 +127,10 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 }
 
 @media (max-width:640px) {
-  .consult-title { font-size:clamp(26px, 8vw, 34px); white-space:normal; }
+  /* Una sola línea también en mobile: el tamaño se calcula para que
+     "Buscá. Filtrá. Encontrá." (Fraunces 600) siempre entre en el ancho
+     disponible (100vw - 48px de padding de .wrap), con margen. */
+  .consult-title { font-size:clamp(20px, calc((100vw - 48px) * 0.086), 34px); white-space:nowrap; }
   .consult-seal { display:none; }
   .controls { margin-top:16px; margin-bottom:16px; }
   .consult-letters { flex-wrap:nowrap; overflow-x:auto; justify-content:flex-start; padding-bottom:12px; -webkit-overflow-scrolling:touch; }
