@@ -47,8 +47,16 @@ const HERO_AUDIO_MUTED_KEY = "berretin-hero-audio-muted";
 const FONDO_SCROLL_SCALE_FROM = 1.16;
 const FONDO_SCROLL_SCALE_TO = 1.02;
 const MULTITUD_SCALE_TO = 0.94;
-const TANGUERO_SCALE_FROM = 0.9;
+const TANGUERO_SCALE_FROM = 1.1;
 const TANGUERO_SCALE_TO = 2.4;
+// Asentamiento inicial (0%→30% del recorrido): el tanguero entra con leve
+// desenfoque y algo translúcido, y se resuelve a nitidez/opacidad plena.
+// Nunca toca "y" ni transform-origin (fijados en CSS en 50% 100%): solo
+// filter/opacity, así los pies quedan anclados igual que con el scale.
+const TANGUERO_INTRO_BLUR_FROM = "blur(2.4px)";
+const TANGUERO_INTRO_BLUR_TO = "blur(0px)";
+const TANGUERO_INTRO_OPACITY_FROM = 0.88;
+const TANGUERO_INTRO_DURATION = 0.3;
 
 export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
   const heroStoryRef = useRef<HTMLDivElement>(null);
@@ -312,6 +320,12 @@ export function CinematicHero({ query, onQueryChange }: CinematicHeroProps) {
       tl.fromTo(fondoScrollRef.current, { scale: FONDO_SCROLL_SCALE_FROM }, { scale: FONDO_SCROLL_SCALE_TO, duration: 0.55 }, 0);
       tl.to(multitudRef.current, { scale: MULTITUD_SCALE_TO, duration: 0.55 }, 0);
       tl.fromTo(tangueroRef.current, { scale: TANGUERO_SCALE_FROM }, { scale: TANGUERO_SCALE_TO, duration: 0.7 }, 0);
+      tl.fromTo(
+        tangueroRef.current,
+        { filter: TANGUERO_INTRO_BLUR_FROM, opacity: TANGUERO_INTRO_OPACITY_FROM },
+        { filter: TANGUERO_INTRO_BLUR_TO, opacity: 1, duration: TANGUERO_INTRO_DURATION },
+        0
+      );
 
       // UI: wordmark, descriptor y buscador mantienen opacity:1 hasta 42%
       // y se desvanecen lento entre 42% y 72% — opacity + blur + una
