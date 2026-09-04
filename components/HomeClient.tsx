@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CinematicHero } from "@/components/CinematicHero";
+import { BerretinScrollytellingHero } from "@/components/hero-v2/BerretinScrollytellingHero";
+
+// CinematicHero.tsx (el hero 2D/GSAP anterior) queda sin usar pero sin
+// borrar a propósito, para poder volver atrás fácilmente — ver
+// components/hero-v2/BerretinScrollytellingHero.tsx para el reemplazo.
 
 export function HomeClient() {
   const [query, setQuery] = useState("");
@@ -12,7 +16,7 @@ export function HomeClient() {
   // encogerse/no reservar el recorrido completo del pin.
   return (
     <div className="home-page">
-      <CinematicHero query={query} onQueryChange={setQuery} />
+      <BerretinScrollytellingHero query={query} onQueryChange={setQuery} />
     </div>
   );
 }
