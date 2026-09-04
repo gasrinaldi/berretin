@@ -42,11 +42,6 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
   // "Volver al diccionario": mismo mecanismo que CinematicHero.tsx — solo
   // aparece una vez que el usuario ya empezó a recorrer los resultados.
   const [showBackBtn, setShowBackBtn] = useState(false);
-  // Fade + translateY suave para la entrada de la home real, disparado una
-  // sola vez cuando el header empieza a entrar en el viewport (ver
-  // .introReveal en hero-v2.module.css).
-  const introRef = useRef<HTMLElement>(null);
-  const [introVisible, setIntroVisible] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -87,18 +82,6 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
     return () => observer?.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (typeof IntersectionObserver === "undefined" || !introRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIntroVisible(true);
-      },
-      { threshold: 0, rootMargin: "0px 0px -10% 0px" }
-    );
-    observer.observe(introRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (isMobile || prefersReducedMotion) return;
@@ -133,10 +116,21 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
 
   // El humo de la variante "pack" no llega a tapar el puerto del todo por
   // sí solo (queda escena visible incluso en progress=1) — esta capa sólida
-  // termina de cubrirlo antes de que empiece a entrar la home real, para
-  // que el solape de abajo ocurra sobre fondo ya uniforme y no sobre la
-  // escena expuesta.
-  const scrimOpacity = scrollProgress < 0.75 ? 0 : Math.min(1, (scrollProgress - 0.75) / 0.17);
+  // termina de cubrirlo en paralelo con el humo real (no después), así el
+  // reveal de la home de abajo puede empezar a superponerse mientras la
+  // escena todavía está terminando de cubrirse.
+  const scrimOpacity = scrollProgress < 0.55 ? 0 : Math.min(1, (scrollProgress - 0.55) / 0.3);
+
+  // Reveal de la home real ligado directamente al scroll del pin (no es una
+  // animación aparte que se dispara al terminar el hero): arranca cuando el
+  // humo ya cubrió aprox. 80-85% de la escena y llega a "visible" antes de
+  // que el pin termine, para que el tramo final se sienta como una sola
+  // continuidad en vez de humo -> pantalla vacía -> home.
+  const revealProgress = Math.max(0, Math.min(1, (scrollProgress - 0.8) / 0.12));
+  const revealStyle = {
+    opacity: revealProgress,
+    transform: `translateY(${(1 - revealProgress) * 32}px)`,
+  };
 
   const scrollToDictionaryTop = () => {
     document.getElementById("dictionary-top")?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
@@ -157,11 +151,9 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
 
       <div className={styles.dictionaryReveal}>
         <div className="wrap dictionary-wrap">
-          <header
-            id="dictionary-top"
-            ref={introRef}
-            className={`dictionary-intro ${styles.introReveal} ${introVisible ? styles.isVisible : ""}`}
-          >
+          <header id="dictionary-top" className="dictionary-intro" style={revealStyle}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- wordmark estático, no requiere optimización de next/image */}
+            <img src="/brand/berretin-wordmark.png" alt="Berretín" className={styles.wordmark} />
             <AuxNav className="dictionary-intro-nav" />
           </header>
           <Dictionary query={query} onQueryChange={onQueryChange} />
