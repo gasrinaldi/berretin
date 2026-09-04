@@ -12,7 +12,7 @@
   position: relative;
   width: 100%;
   background: #0c0a08;
-  height: 350vh;
+  height: 300vh;
 }
 
 .stickyStage {
@@ -33,6 +33,18 @@
   inset: 0;
   overflow: hidden;
   background: #0c0a08;
+}
+
+/* Capa sólida que termina de cubrir la escena hacia el final del recorrido
+   (el humo por sí solo, en la variante "pack", no llega a tapar el puerto
+   por completo) — mismo #0c0a08 que el resto, para que el corte hacia la
+   home ocurra sobre un fondo ya uniforme en vez de sobre el puerto visible. */
+.scrimFade {
+  position: absolute;
+  inset: 0;
+  background: #0c0a08;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .overlayRoot {
@@ -64,4 +76,27 @@
   .searchWrap {
     top: 59%;
   }
+}
+
+/* Unión con la home/diccionario real: mismo tono oscuro que deja el humo
+   (#0c0a08, el mismo usado arriba en heroRoot/pinContainer/stickyStage) y
+   un solape hacia arriba para que el contenido empiece a entrar mientras
+   el pin todavía muestra la escena cubierta de humo, en vez de esperar a
+   que termine el tramo final "congelado" del pin. */
+.dictionaryReveal {
+  position: relative;
+  z-index: 1;
+  margin-top: -12vh;
+  background: #0c0a08;
+}
+
+.introReveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.introReveal.isVisible {
+  opacity: 1;
+  transform: translateY(0);
 }

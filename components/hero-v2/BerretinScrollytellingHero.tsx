@@ -42,6 +42,11 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
   // "Volver al diccionario": mismo mecanismo que CinematicHero.tsx — solo
   // aparece una vez que el usuario ya empezó a recorrer los resultados.
   const [showBackBtn, setShowBackBtn] = useState(false);
+  // Fade + translateY suave para la entrada de la home real, disparado una
+  // sola vez cuando el header empieza a entrar en el viewport (ver
+  // .introReveal en hero-v2.module.css).
+  const introRef = useRef<HTMLElement>(null);
+  const [introVisible, setIntroVisible] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -82,6 +87,18 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
     return () => observer?.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined" || !introRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setIntroVisible(true);
+      },
+      { threshold: 0, rootMargin: "0px 0px -10% 0px" }
+    );
+    observer.observe(introRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (isMobile || prefersReducedMotion) return;
@@ -114,6 +131,13 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
     return () => ctx.revert();
   }, []);
 
+  // El humo de la variante "pack" no llega a tapar el puerto del todo por
+  // sí solo (queda escena visible incluso en progress=1) — esta capa sólida
+  // termina de cubrirlo antes de que empiece a entrar la home real, para
+  // que el solape de abajo ocurra sobre fondo ya uniforme y no sobre la
+  // escena expuesta.
+  const scrimOpacity = scrollProgress < 0.75 ? 0 : Math.min(1, (scrollProgress - 0.75) / 0.17);
+
   const scrollToDictionaryTop = () => {
     document.getElementById("dictionary-top")?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
   };
@@ -124,17 +148,24 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
         <div ref={containerRef} onMouseMove={handleMouseMove} className={styles.pinContainer}>
           <div ref={stickyRef} className={styles.stickyStage}>
             <PackScene3D scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} prefersReducedMotion={prefersReducedMotion} />
+            <div className={styles.scrimFade} style={{ opacity: scrimOpacity }} />
 
             <HeroOverlayUI scrollProgress={scrollProgress} query={query} onQueryChange={onQueryChange} onSearchSubmit={scrollToDictionaryTop} />
           </div>
         </div>
       </div>
 
-      <div className="wrap dictionary-wrap">
-        <header id="dictionary-top" className="dictionary-intro">
-          <AuxNav className="dictionary-intro-nav" />
-        </header>
-        <Dictionary query={query} onQueryChange={onQueryChange} />
+      <div className={styles.dictionaryReveal}>
+        <div className="wrap dictionary-wrap">
+          <header
+            id="dictionary-top"
+            ref={introRef}
+            className={`dictionary-intro ${styles.introReveal} ${introVisible ? styles.isVisible : ""}`}
+          >
+            <AuxNav className="dictionary-intro-nav" />
+          </header>
+          <Dictionary query={query} onQueryChange={onQueryChange} />
+        </div>
       </div>
       <Footer />
 
