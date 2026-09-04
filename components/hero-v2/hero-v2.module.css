@@ -2,6 +2,16 @@
    directa de las clases Tailwind que usaban los componentes portados de
    berretinv2 — encapsulado acá para no tocar globals.css. */
 
+/* Superficie de fondo única compartida por el hero y la continuación de la
+   home: al ser el ancestro común de .heroRoot y .dictionaryReveal, un
+   subpíxel de separación entre esos dos hijos (redondeo del margin-top
+   negativo, alturas en vh, etc.) revela ESTE fondo en vez del --ink del
+   body — que es un tono distinto y es lo que se veía como línea. */
+.heroToHome {
+  position: relative;
+  background: #0c0a08;
+}
+
 .heroRoot {
   width: 100%;
   position: relative;
@@ -60,6 +70,10 @@
   inset: 0;
 }
 
+/* Centrado horizontal puro — nunca debe llevar un transform dinámico
+   (el fade-out por scroll vive aparte, en .searchFade) para que
+   translateX(-50%) no pueda ser pisado/reemplazado por un translateY
+   inline y correr el buscador del centro. */
 .searchWrap {
   position: absolute;
   left: 50%;
@@ -69,13 +83,16 @@
   max-width: 32rem;
   padding: 0 1rem;
   pointer-events: auto;
-  transition: opacity 0.15s ease-out;
 }
 
 @media (min-width: 640px) {
   .searchWrap {
     top: 59%;
   }
+}
+
+.searchFade {
+  width: 100%;
 }
 
 /* Unión con la home/diccionario real: mismo tono oscuro que deja el humo
@@ -87,7 +104,7 @@
   position: relative;
   z-index: 1;
   margin-top: -48vh;
-  background: #0c0a08;
+  background: transparent;
 }
 
 .wordmark {

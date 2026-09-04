@@ -30,15 +30,13 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
   return (
     <div className={styles.overlayRoot}>
       <div style={{ opacity: sceneUiOpacity }} className={styles.overlayFade}>
-        <div
-          style={{
-            opacity: searchBoxOpacity,
-            transform: `translateY(${searchBoxTranslateY}px)`,
-            display: searchBoxOpacity <= 0.01 ? "none" : "block",
-          }}
-          className={styles.searchWrap}
-        >
-          <SearchBar id="hero-v2-search" showSubmit value={query} onChange={onQueryChange} onSubmit={onSearchSubmit} />
+        <div className={styles.searchWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
+          <div
+            className={styles.searchFade}
+            style={{ opacity: searchBoxOpacity, transform: `translateY(${searchBoxTranslateY}px)` }}
+          >
+            <SearchBar id="hero-v2-search" showSubmit value={query} onChange={onQueryChange} onSubmit={onSearchSubmit} />
+          </div>
         </div>
       </div>
     </div>

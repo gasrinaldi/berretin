@@ -137,25 +137,27 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
 
   return (
     <>
-      <div className={styles.heroRoot}>
-        <div ref={containerRef} onMouseMove={handleMouseMove} className={styles.pinContainer}>
-          <div ref={stickyRef} className={styles.stickyStage}>
-            <PackScene3D scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} prefersReducedMotion={prefersReducedMotion} />
-            <div className={styles.scrimFade} style={{ opacity: scrimOpacity }} />
+      <div className={styles.heroToHome}>
+        <div className={styles.heroRoot}>
+          <div ref={containerRef} onMouseMove={handleMouseMove} className={styles.pinContainer}>
+            <div ref={stickyRef} className={styles.stickyStage}>
+              <PackScene3D scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} prefersReducedMotion={prefersReducedMotion} />
+              <div className={styles.scrimFade} style={{ opacity: scrimOpacity }} />
 
-            <HeroOverlayUI scrollProgress={scrollProgress} query={query} onQueryChange={onQueryChange} onSearchSubmit={scrollToDictionaryTop} />
+              <HeroOverlayUI scrollProgress={scrollProgress} query={query} onQueryChange={onQueryChange} onSearchSubmit={scrollToDictionaryTop} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className={styles.dictionaryReveal}>
-        <div className="wrap dictionary-wrap">
-          <header id="dictionary-top" className="dictionary-intro" style={revealStyle}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- wordmark estático, no requiere optimización de next/image */}
-            <img src="/brand/berretin-wordmark.png" alt="Berretín" className={styles.wordmark} />
-            <AuxNav className="dictionary-intro-nav" />
-          </header>
-          <Dictionary query={query} onQueryChange={onQueryChange} />
+        <div className={styles.dictionaryReveal}>
+          <div className="wrap dictionary-wrap">
+            <header id="dictionary-top" className="dictionary-intro" style={revealStyle}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- wordmark estático, no requiere optimización de next/image */}
+              <img src="/brand/berretin-wordmark.png" alt="Berretín" className={styles.wordmark} />
+              <AuxNav className="dictionary-intro-nav" />
+            </header>
+            <Dictionary query={query} onQueryChange={onQueryChange} />
+          </div>
         </div>
       </div>
       <Footer />
