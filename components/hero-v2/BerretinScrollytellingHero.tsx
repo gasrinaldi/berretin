@@ -116,17 +116,16 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
 
   // El humo de la variante "pack" no llega a tapar el puerto del todo por
   // sí solo (queda escena visible incluso en progress=1) — esta capa sólida
-  // termina de cubrirlo en paralelo con el humo real (no después), así el
-  // reveal de la home de abajo puede empezar a superponerse mientras la
-  // escena todavía está terminando de cubrirse.
-  const scrimOpacity = scrollProgress < 0.55 ? 0 : Math.min(1, (scrollProgress - 0.55) / 0.3);
+  // termina de cubrirlo, pero su rampa arranca bastante antes de que la
+  // home empiece a entrar y sigue subiendo en paralelo con ella (no debe
+  // llegar a opacity 1 antes de que la home ya esté apareciendo).
+  const scrimOpacity = scrollProgress < 0.55 ? 0 : Math.min(1, (scrollProgress - 0.55) / 0.37);
 
-  // Reveal de la home real ligado directamente al scroll del pin (no es una
-  // animación aparte que se dispara al terminar el hero): arranca cuando el
-  // humo ya cubrió aprox. 80-85% de la escena y llega a "visible" antes de
-  // que el pin termine, para que el tramo final se sienta como una sola
-  // continuidad en vez de humo -> pantalla vacía -> home.
-  const revealProgress = Math.max(0, Math.min(1, (scrollProgress - 0.8) / 0.12));
+  // Reveal de la home real ligado directamente al scroll del pin (no a un
+  // IntersectionObserver que se dispara al terminar el hero): arranca
+  // mientras el hero todavía es visible arriba y el humo sigue subiendo,
+  // para que sea una transición cruzada real y no humo -> negro -> home.
+  const revealProgress = Math.max(0, Math.min(1, (scrollProgress - 0.76) / 0.12));
   const revealStyle = {
     opacity: revealProgress,
     transform: `translateY(${(1 - revealProgress) * 32}px)`,

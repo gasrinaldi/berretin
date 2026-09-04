@@ -19,17 +19,23 @@ type HeroOverlayUIProps = {
 };
 
 export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSubmit }: HeroOverlayUIProps) {
-  // Misma curva que el original: el buscador se mantiene visible durante
-  // casi todo el recorrido y se desvanece recién sobre el final, cuando
-  // el humo ya está cubriendo la escena.
-  const searchBoxOpacity = scrollProgress < 0.78 ? 1.0 : Math.max(0, 1 - (scrollProgress - 0.78) / 0.12);
-  const sceneUiOpacity = Math.max(0, 1 - (scrollProgress - 0.84) / 0.08);
+  // El buscador tiene que desaparecer bastante antes de que el humo cubra
+  // la escena (no puede seguir flotando sobre un puerto ya casi oscuro):
+  // visible hasta ~0.68, se apaga entre 0.72 y 0.81, como si el humo se lo
+  // tragara — por eso además de opacity baja un poco (translateY) al irse.
+  const searchBoxOpacity = scrollProgress < 0.72 ? 1.0 : Math.max(0, 1 - (scrollProgress - 0.72) / 0.09);
+  const sceneUiOpacity = scrollProgress < 0.68 ? 1.0 : Math.max(0, 1 - (scrollProgress - 0.68) / 0.14);
+  const searchBoxTranslateY = (1 - searchBoxOpacity) * 14;
 
   return (
     <div className={styles.overlayRoot}>
       <div style={{ opacity: sceneUiOpacity }} className={styles.overlayFade}>
         <div
-          style={{ opacity: searchBoxOpacity, display: searchBoxOpacity <= 0.01 ? "none" : "block" }}
+          style={{
+            opacity: searchBoxOpacity,
+            transform: `translateY(${searchBoxTranslateY}px)`,
+            display: searchBoxOpacity <= 0.01 ? "none" : "block",
+          }}
           className={styles.searchWrap}
         >
           <SearchBar id="hero-v2-search" showSubmit value={query} onChange={onQueryChange} onSubmit={onSearchSubmit} />
