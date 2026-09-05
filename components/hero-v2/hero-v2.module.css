@@ -87,7 +87,7 @@
   top: 54%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 27rem;
+  max-width: 32rem;
   height: 30px;
   padding: 0 1rem;
   overflow: hidden;
@@ -116,7 +116,7 @@
 .searchWrap {
   position: absolute;
   left: 50%;
-  top: 57%;
+  top: 58%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 42rem;
@@ -126,7 +126,7 @@
 
 @media (min-width: 640px) {
   .searchWrap {
-    top: 58%;
+    top: 57%;
   }
 }
 
