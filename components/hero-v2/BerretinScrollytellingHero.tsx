@@ -125,7 +125,7 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
   // IntersectionObserver que se dispara al terminar el hero): arranca
   // mientras el hero todavía es visible arriba y el humo sigue subiendo,
   // para que sea una transición cruzada real y no humo -> negro -> home.
-  const revealProgress = Math.max(0, Math.min(1, (scrollProgress - 0.76) / 0.12));
+  const revealProgress = Math.max(0, Math.min(1, (scrollProgress - 0.72) / 0.12));
   const revealStyle = {
     opacity: revealProgress,
     transform: `translateY(${(1 - revealProgress) * 32}px)`,

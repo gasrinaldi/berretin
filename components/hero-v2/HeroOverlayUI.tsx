@@ -30,6 +30,14 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
   return (
     <div className={styles.overlayRoot}>
       <div style={{ opacity: sceneUiOpacity }} className={styles.overlayFade}>
+        <div className={styles.subtitleWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
+          <p
+            className={styles.subtitleText}
+            style={{ opacity: searchBoxOpacity, transform: `translateY(${searchBoxTranslateY}px)` }}
+          >
+            Diccionario vivo del habla porteña
+          </p>
+        </div>
         <div className={styles.searchWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
           <div
             className={styles.searchFade}
