@@ -292,25 +292,47 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  color: #3a2f22;
+  color: #4b3a2d;
   font-family: var(--font-fraunces, serif), serif;
 }
 
+/* color/caret-color explícitos: .search-row input en globals.css define
+   su propio color:var(--crema) (pensado para el buscador oscuro del
+   diccionario), que por ser una regla explícita sobre el mismo elemento
+   gana por sobre la herencia del color oscuro del form de acá arriba —
+   hay que pisarlo directo en el input, no alcanza con heredarlo. */
 .ticketFrame .ticketSearchRow input {
   order: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 19px;
+  color: #4b3a2d;
+  caret-color: #4b3a2d;
 }
 
 .ticketFrame .ticketSearchRow input::placeholder {
-  color: rgba(58, 47, 34, 0.55);
+  color: rgba(75, 58, 45, 0.6);
+}
+
+/* Botón nativo de limpiar (type=search): se desactiva porque queda
+   superpuesto con la zona de la lupa/divisor; el proyecto no tiene un
+   botón de limpiar propio, así que no se agrega ninguno nuevo acá. */
+.ticketFrame .ticketSearchRow input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 /* La lupa es el único ícono (sin botón de submit): se reordena vía flex
    `order` — sin tocar el markup de SearchBar.tsx, que sigue renderizando
-   el svg como primer hijo — para que quede después del input, separada
-   por una línea vertical (border-left), centrada verticalmente por el
-   align-items:center heredado de .search-row. */
+   el svg como primer hijo — para que quede después del input, centrada
+   verticalmente por el align-items:center heredado de .search-row. La
+   línea divisoria ya viene dibujada en el propio asset del ticket — acá
+   solo se deja el padding para separar la lupa de esa línea, sin dibujar
+   un borde CSS propio (eso era la "segunda línea" redundante). */
 .ticketFrame .ticketSearchRow svg {
   order: 2;
   flex-shrink: 0;
@@ -318,14 +340,12 @@
   height: 20px;
   margin-left: 6px;
   padding-left: 16px;
-  border-left: 1px solid rgba(58, 47, 34, 0.35);
-  box-sizing: content-box;
   opacity: 0.8;
 }
 
 @media (max-width: 640px) {
   .ticketFrame .ticketSearchRow input {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .ticketFrame .ticketSearchRow svg {
