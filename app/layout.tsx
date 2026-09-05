@@ -15,7 +15,7 @@ const fraunces = Fraunces({
   subsets: ["latin"],
 });
 
-const siteTitle = `${SITE_NAME} — diccionario del lunfardo porteño`;
+const siteTitle = `${SITE_NAME} - Diccionario vivo del habla porteña`;
 const siteDescription = "Diccionario navegable del lunfardo porteño: significados, expresiones y el habla de la calle argentina.";
 
 export const metadata: Metadata = {
