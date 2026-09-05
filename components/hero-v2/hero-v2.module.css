@@ -84,20 +84,20 @@
 .subtitleWrap {
   position: absolute;
   left: 50%;
-  top: 54%;
+  top: 53%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 32rem;
-  height: 30px;
-  padding: 0 1rem;
+  max-width: 46rem;
+  height: 42px;
+  padding: 0 0.5rem;
   overflow: hidden;
   pointer-events: none;
 }
 
 @media (min-width: 640px) {
   .subtitleWrap {
-    top: 53%;
-    height: 33px;
+    top: 54%;
+    height: 46px;
   }
 }
 
@@ -116,7 +116,7 @@
 .searchWrap {
   position: absolute;
   left: 50%;
-  top: 58%;
+  top: 54%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 42rem;
@@ -126,7 +126,7 @@
 
 @media (min-width: 640px) {
   .searchWrap {
-    top: 57%;
+    top: 54%;
   }
 }
 
