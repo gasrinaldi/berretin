@@ -59,6 +59,7 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
                 value={query}
                 onChange={onQueryChange}
                 onSubmit={onSearchSubmit}
+                onClear={() => onQueryChange("")}
               />
             </div>
           </div>

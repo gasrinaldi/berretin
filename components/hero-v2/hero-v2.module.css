@@ -326,13 +326,16 @@
   display: none;
 }
 
-/* La lupa es el único ícono (sin botón de submit): se reordena vía flex
-   `order` — sin tocar el markup de SearchBar.tsx, que sigue renderizando
-   el svg como primer hijo — para que quede después del input, centrada
-   verticalmente por el align-items:center heredado de .search-row. La
-   línea divisoria ya viene dibujada en el propio asset del ticket — acá
-   solo se deja el padding para separar la lupa de esa línea, sin dibujar
-   un borde CSS propio (eso era la "segunda línea" redundante). */
+/* La lupa (vacío) y la X de limpiar (con texto) comparten el mismo lugar
+   a la derecha del divisor — se reordenan vía flex `order` — sin tocar el
+   markup de SearchBar.tsx más allá de agregarle un botón opcional — para
+   que quede después del input, centrado verticalmente por el
+   align-items:center heredado de .search-row. La línea divisoria ya viene
+   dibujada en el propio asset del ticket — acá solo se deja el padding
+   para separar el ícono de esa línea, sin dibujar un borde CSS propio
+   (eso era la "segunda línea" redundante). Cuando existe el botón de
+   limpiar (solo se renderiza con texto escrito, ver SearchBar.tsx), se
+   oculta la lupa para que nunca haya dos íconos a la vez. */
 .ticketFrame .ticketSearchRow svg {
   order: 2;
   flex-shrink: 0;
@@ -341,6 +344,34 @@
   margin-left: 6px;
   padding-left: 16px;
   opacity: 0.8;
+}
+
+.ticketFrame .ticketSearchRow:has(:global(.search-clear-btn)) > svg {
+  display: none;
+}
+
+.ticketFrame .ticketSearchRow :global(.search-clear-btn) {
+  order: 2;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding-left: 16px;
+  border: 0;
+  background: transparent;
+  color: #7a1f1f;
+  cursor: pointer;
+}
+
+.ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
+  width: 16px;
+  height: 16px;
+  margin-left: 0;
+  padding-left: 0;
+  opacity: 1;
 }
 
 @media (max-width: 640px) {
@@ -352,6 +383,17 @@
     width: 18px;
     height: 18px;
     padding-left: 12px;
+  }
+
+  .ticketFrame .ticketSearchRow :global(.search-clear-btn) {
+    width: 18px;
+    height: 18px;
+    padding-left: 12px;
+  }
+
+  .ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
+    width: 15px;
+    height: 15px;
   }
 }
 
