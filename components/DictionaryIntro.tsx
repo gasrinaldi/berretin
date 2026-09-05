@@ -6,7 +6,7 @@ import { BerretinSeal } from "@/components/BerretinSeal";
 export function DictionaryIntro() {
   return (
     <div className="consult-intro">
-      <p className="consult-eyebrow">archivo del habla · consulta</p>
+      <p className="consult-eyebrow">diccionario vivo del habla porteño</p>
       <h1 className="consult-title">Buscá. Filtrá. Encontrá.</h1>
       <BerretinSeal className="consult-seal" />
     </div>

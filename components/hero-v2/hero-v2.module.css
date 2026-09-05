@@ -159,8 +159,8 @@
   position: absolute;
   left: 10%;
   right: 10%;
-  top: 32%;
-  bottom: 32%;
+  top: 24%;
+  bottom: 32.6%;
   margin: 0;
   padding: 0 6px;
   gap: 8px;
@@ -211,67 +211,40 @@
    (eso era la "segunda línea" redundante). Cuando existe el botón de
    limpiar (solo se renderiza con texto escrito, ver SearchBar.tsx), se
    oculta la lupa para que nunca haya dos íconos a la vez. */
-.ticketFrame .ticketSearchRow svg {
-  order: 2;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  margin-left: 6px;
-  padding-left: 14px;
-  opacity: 0.85;
-  stroke-width: 1.75px;
-}
-
-.ticketFrame .ticketSearchRow:has(:global(.search-clear-btn)) > svg {
+/* Lupa: mismo rojo/bordeaux del acento (--brand-red / #A92D22), más
+   grande y a opacity:1 para que tenga presencia real en vez de perderse
+   contra el ticket. */
+.ticketFrame .ticketSearchRow > svg {
   display: none;
 }
 
-/* La X es más grande que la lupa y va más cerca del input (menos
-   margin-left que antes) para quedar centrada dentro de su propio
-   casillero en vez de pegada al borde — igual sigue habiendo margen
-   antes de la línea divisoria del propio asset del ticket. El
-   posicionamiento va TODO en margin-left (no padding-left): con
-   box-sizing:border-box global, un padding asimétrico corriría el ícono
-   y el aro decorativo (::before, centrado por top/left 50%) a puntos
-   distintos — con margin-left el botón entero se desplaza sin romper su
-   propio centrado interno. El aro fino (border-radius:50%) le da un aire
-   de sello/troquel vintage sin agregar otro ícono. */
+/* La X: mismo rojo/bordeaux, más grande, sin aro alrededor (pedido
+   explícito) — el posicionamiento sigue yendo en margin-left, no
+   padding-left, para que el ícono quede realmente centrado dentro de su
+   propio casillero (con box-sizing:border-box un padding asimétrico
+   corre el contenido respecto al centro real del botón). */
 .ticketFrame .ticketSearchRow :global(.search-clear-btn) {
-  position: relative;
   order: 2;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin-left: 16px;
   border: 0;
   background: transparent;
-  color: #7a1f1f;
+  color: #a92d22;
   cursor: pointer;
 }
 
-.ticketFrame .ticketSearchRow :global(.search-clear-btn)::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 1px solid rgba(122, 31, 31, 0.4);
-}
-
 .ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
-  position: relative;
-  width: 15px;
-  height: 15px;
+  width: 19px;
+  height: 19px;
   margin-left: 0;
   padding-left: 0;
   opacity: 1;
-  stroke-width: 2.25px;
+  stroke-width: 2.4px;
 }
 
 @media (max-width: 640px) {
@@ -279,26 +252,15 @@
     font-size: 14px;
   }
 
-  .ticketFrame .ticketSearchRow svg {
-    width: 19px;
-    height: 19px;
-    padding-left: 11px;
-  }
-
   .ticketFrame .ticketSearchRow :global(.search-clear-btn) {
-    width: 24px;
-    height: 24px;
+    width: 27px;
+    height: 27px;
     margin-left: 12px;
   }
 
-  .ticketFrame .ticketSearchRow :global(.search-clear-btn)::before {
-    width: 21px;
-    height: 21px;
-  }
-
   .ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
-    width: 13px;
-    height: 13px;
+    width: 16px;
+    height: 16px;
   }
 }
 
