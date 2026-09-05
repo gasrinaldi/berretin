@@ -214,61 +214,91 @@
 .ticketFrame .ticketSearchRow svg {
   order: 2;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   margin-left: 6px;
-  padding-left: 16px;
-  opacity: 0.8;
+  padding-left: 14px;
+  opacity: 0.85;
+  stroke-width: 1.75px;
 }
 
 .ticketFrame .ticketSearchRow:has(:global(.search-clear-btn)) > svg {
   display: none;
 }
 
+/* La X es más grande que la lupa y va más cerca del input (menos
+   margin-left que antes) para quedar centrada dentro de su propio
+   casillero en vez de pegada al borde — igual sigue habiendo margen
+   antes de la línea divisoria del propio asset del ticket. El
+   posicionamiento va TODO en margin-left (no padding-left): con
+   box-sizing:border-box global, un padding asimétrico corriría el ícono
+   y el aro decorativo (::before, centrado por top/left 50%) a puntos
+   distintos — con margin-left el botón entero se desplaza sin romper su
+   propio centrado interno. El aro fino (border-radius:50%) le da un aire
+   de sello/troquel vintage sin agregar otro ícono. */
 .ticketFrame .ticketSearchRow :global(.search-clear-btn) {
+  position: relative;
   order: 2;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  margin-left: 6px;
-  padding-left: 16px;
+  width: 28px;
+  height: 28px;
+  margin-left: 16px;
   border: 0;
   background: transparent;
   color: #7a1f1f;
   cursor: pointer;
 }
 
+.ticketFrame .ticketSearchRow :global(.search-clear-btn)::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(122, 31, 31, 0.4);
+}
+
 .ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
-  width: 16px;
-  height: 16px;
+  position: relative;
+  width: 15px;
+  height: 15px;
   margin-left: 0;
   padding-left: 0;
   opacity: 1;
+  stroke-width: 2.25px;
 }
 
 @media (max-width: 640px) {
   .ticketFrame .ticketSearchRow input {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .ticketFrame .ticketSearchRow svg {
-    width: 18px;
-    height: 18px;
-    padding-left: 12px;
+    width: 19px;
+    height: 19px;
+    padding-left: 11px;
   }
 
   .ticketFrame .ticketSearchRow :global(.search-clear-btn) {
-    width: 18px;
-    height: 18px;
-    padding-left: 12px;
+    width: 24px;
+    height: 24px;
+    margin-left: 12px;
+  }
+
+  .ticketFrame .ticketSearchRow :global(.search-clear-btn)::before {
+    width: 21px;
+    height: 21px;
   }
 
   .ticketFrame .ticketSearchRow :global(.search-clear-btn) svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 }
 

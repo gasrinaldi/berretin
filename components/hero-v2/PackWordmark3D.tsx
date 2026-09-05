@@ -9,16 +9,17 @@
 //   apenas desplazada y detrás en Z, como hijo del mismo mesh — así se
 //   mueve/escala exactamente igual que el wordmark sin tocar su propio
 //   material/color dorado.
-// - Destello del acento: antes vivía como una capa CSS posicionada por %
-//   del viewport (se desalineaba en otros tamaños de ventana). Ahora es
-//   un grupo de 3 meshes (halo/chispa/reflejo) hijos del mismo mesh que
-//   el wordmark, ubicados en el espacio LOCAL del plano (unidades de
-//   PlaneGeometry(1,1), medido contra el bbox real de los píxeles rojos
-//   del PNG: x≈0.823, y≈0.222-desde-arriba → v≈0.778) — al ser hijos,
-//   heredan automáticamente la escala (mobile/desktop) y el parallax/lerp
-//   que ya aplica el useFrame de acá abajo sobre meshRef. La animación es
-//   por tiempo real desde el montaje (no por scrollProgress): un único
-//   pulso, sin loop, y se salta por completo si prefersReducedMotion.
+// - Destello del acento: un arco fino tipo "laser" (RingGeometry con
+//   thetaLength corto) que gira una vez alrededor del contorno del
+//   acento de la "í", en vez del blob/halo circular de la versión
+//   anterior. Vive como 2 meshes hijos del mismo mesh que el wordmark,
+//   ubicados en el espacio LOCAL del plano (unidades de PlaneGeometry(1,1),
+//   medido contra el bbox real de los píxeles rojos del PNG: x≈0.823,
+//   y≈0.222-desde-arriba → v≈0.778) — al ser hijos, heredan
+//   automáticamente la escala (mobile/desktop) y el parallax/lerp que ya
+//   aplica el useFrame de acá abajo sobre meshRef. La animación es por
+//   tiempo real desde el montaje (no por scrollProgress): un único pulso
+//   corto, sin loop, y se salta por completo si prefersReducedMotion.
 import React, { useRef } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
@@ -61,48 +62,27 @@ function sampleStops(t: number, stops: [number, number][]): number {
 }
 
 const FLASH_DELAY_MS = 420;
-const FLASH_DURATION_MS = 900;
-const HALO_OPACITY: [number, number][] = [
+const FLASH_DURATION_MS = 950;
+// Vueltas completas que da el arco durante toda la ventana activa —
+// controla qué tan "rápido" se siente el barrido del laser.
+const ARC_ROTATIONS = 1.15;
+const ARC_OPACITY: [number, number][] = [
   [0, 0],
-  [0.3, 0.55],
-  [0.45, 1],
-  [0.65, 0.55],
+  [0.12, 0.8],
+  [0.75, 0.5],
   [1, 0],
 ];
-const HALO_SCALE: [number, number][] = [
-  [0, 0.3],
-  [0.3, 0.9],
-  [0.45, 1.15],
-  [0.65, 1],
-  [1, 1.3],
-];
-const SPARK_OPACITY: [number, number][] = [
+const CORE_OPACITY: [number, number][] = [
   [0, 0],
-  [0.4, 0],
-  [0.5, 1],
-  [0.62, 0.4],
-  [1, 0],
-];
-const SPARK_SCALE: [number, number][] = [
-  [0, 0],
-  [0.4, 0.2],
-  [0.5, 1],
-  [0.62, 0.7],
-  [1, 0.4],
-];
-const AMBIENT_OPACITY: [number, number][] = [
-  [0, 0],
-  [0.35, 0],
-  [0.5, 1],
-  [0.7, 0.5],
+  [0.12, 1],
+  [0.75, 0.6],
   [1, 0],
 ];
 
 export const PackWordmark3D: React.FC<PackWordmark3DProps> = ({ scrollProgress, mousePos, isMobile, prefersReducedMotion }) => {
   const meshRef = useRef<THREE.Mesh>(null);
-  const haloRef = useRef<THREE.Mesh>(null);
-  const sparkRef = useRef<THREE.Mesh>(null);
-  const ambientRef = useRef<THREE.Mesh>(null);
+  const arcRef = useRef<THREE.Mesh>(null);
+  const coreRef = useRef<THREE.Mesh>(null);
   const flashStartRef = useRef<number | null>(null);
   const texture = useLoader(THREE.TextureLoader, PACK_ASSETS.wordmark);
 
@@ -148,27 +128,24 @@ export const PackWordmark3D: React.FC<PackWordmark3DProps> = ({ scrollProgress, 
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, targetY, 0.05);
 
     // Destello único al montar, en tiempo real (no scrollProgress) — se
-    // salta directamente si el usuario prefiere menos movimiento.
+    // salta directamente si el usuario prefiere menos movimiento. Un arco
+    // fino gira alrededor del contorno del acento (rotation.z, no
+    // regeneración de geometría) mientras el conjunto aparece y se apaga.
     if (!prefersReducedMotion) {
       if (flashStartRef.current === null) flashStartRef.current = performance.now();
       const localElapsed = performance.now() - flashStartRef.current - FLASH_DELAY_MS;
       const t = Math.max(0, Math.min(1, localElapsed / FLASH_DURATION_MS));
+      const rotationZ = t * Math.PI * 2 * ARC_ROTATIONS;
 
-      if (haloRef.current) {
-        const haloMat = haloRef.current.material as THREE.MeshBasicMaterial;
-        haloMat.opacity = sampleStops(t, HALO_OPACITY);
-        const s = sampleStops(t, HALO_SCALE);
-        haloRef.current.scale.set(s, s * WORDMARK_ASPECT, 1);
+      if (arcRef.current) {
+        const arcMat = arcRef.current.material as THREE.MeshBasicMaterial;
+        arcMat.opacity = sampleStops(t, ARC_OPACITY);
+        arcRef.current.rotation.z = rotationZ;
       }
-      if (sparkRef.current) {
-        const sparkMat = sparkRef.current.material as THREE.MeshBasicMaterial;
-        sparkMat.opacity = sampleStops(t, SPARK_OPACITY);
-        const s = sampleStops(t, SPARK_SCALE);
-        sparkRef.current.scale.set(s, s * WORDMARK_ASPECT, 1);
-      }
-      if (ambientRef.current) {
-        const ambientMat = ambientRef.current.material as THREE.MeshBasicMaterial;
-        ambientMat.opacity = sampleStops(t, AMBIENT_OPACITY);
+      if (coreRef.current) {
+        const coreMat = coreRef.current.material as THREE.MeshBasicMaterial;
+        coreMat.opacity = sampleStops(t, CORE_OPACITY);
+        coreRef.current.rotation.z = rotationZ;
       }
     }
   });
@@ -188,25 +165,33 @@ export const PackWordmark3D: React.FC<PackWordmark3DProps> = ({ scrollProgress, 
       <planeGeometry args={[1, 1]} />
       <meshBasicMaterial map={texture} transparent opacity={1.0} depthWrite={false} side={THREE.DoubleSide} />
 
-      {/* Destello sobre el acento rojo de la "í": tres meshes hijos en el
+      {/* Destello sobre el acento rojo de la "í": un arco fino tipo laser
+          que gira alrededor del contorno, hijo del mismo mesh, en el
           espacio local del plano (ACCENT_LOCAL_X/Y), delante en Z. Al ser
-          hijos del mismo mesh, acompañan escala/parallax exactamente —
-          nunca se desalinean como la versión anterior en % del viewport.
-          circleGeometry se corrige en Y (WORDMARK_ASPECT) porque el padre
-          aplica una escala no uniforme [planeWidth, planeHeight] que si
-          no, los ovalaría. */}
-      <mesh ref={haloRef} position={[ACCENT_LOCAL_X, ACCENT_LOCAL_Y, 0.01]}>
-        <circleGeometry args={[0.075, 24]} />
-        <meshBasicMaterial color="#A92D22" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
-      <mesh ref={sparkRef} position={[ACCENT_LOCAL_X, ACCENT_LOCAL_Y, 0.012]}>
-        <circleGeometry args={[0.028, 24]} />
-        <meshBasicMaterial color="#fff6e4" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
-      <mesh ref={ambientRef} position={[ACCENT_LOCAL_X, ACCENT_LOCAL_Y, 0.008]} scale={[1, WORDMARK_ASPECT, 1]}>
-        <circleGeometry args={[0.19, 24]} />
-        <meshBasicMaterial color="#C9A15A" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} toneMapped={false} />
-      </mesh>
+          hijos, acompañan escala/parallax exactamente — nunca se
+          desalinean como la versión anterior en % del viewport.
+
+          IMPORTANTE: la corrección de aspecto (WORDMARK_ASPECT, por la
+          escala no uniforme del padre) va en un <group> que NO rota —
+          rotar y corregir aspecto en el mismo objeto ovalaría el arco a
+          mitad de giro (escala no uniforme + rotación no conmutan). Por
+          eso el <mesh> con rotation.z animado vive ADENTRO del group: la
+          rotación actúa sobre un círculo real (sin deformar) y recién
+          después el group aplica (y el padre cancela) el achatado. Dos
+          capas: el arco (bordeaux, algo más ancho) y un núcleo más fino y
+          brillante encima, para el brillo "premium" del laser. */}
+      <group position={[ACCENT_LOCAL_X, ACCENT_LOCAL_Y, 0.01]} scale={[1, WORDMARK_ASPECT, 1]}>
+        <mesh ref={arcRef}>
+          <ringGeometry args={[0.064, 0.078, 48, 1, 0, Math.PI * 0.5]} />
+          <meshBasicMaterial color="#A92D22" transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+      </group>
+      <group position={[ACCENT_LOCAL_X, ACCENT_LOCAL_Y, 0.012]} scale={[1, WORDMARK_ASPECT, 1]}>
+        <mesh ref={coreRef}>
+          <ringGeometry args={[0.068, 0.072, 48, 1, 0, Math.PI * 0.32]} />
+          <meshBasicMaterial color="#ff6a52" transparent opacity={0} depthWrite={false} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} toneMapped={false} />
+        </mesh>
+      </group>
     </mesh>
   );
 };

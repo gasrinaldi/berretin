@@ -16,7 +16,7 @@ export const SCROLLY_CONFIG = {
     fog: {
       color: "#0e0b08",
       density: 0.022,
-      particleCount: 30,
+      particleCount: 110,
     },
   },
 };
