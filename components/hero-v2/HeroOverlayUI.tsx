@@ -31,19 +31,31 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
     <div className={styles.overlayRoot}>
       <div style={{ opacity: sceneUiOpacity }} className={styles.overlayFade}>
         <div className={styles.subtitleWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
-          <p
-            className={styles.subtitleText}
+          {/* eslint-disable-next-line @next/next/no-img-element -- asset estático, no requiere optimización de next/image */}
+          <img
+            src="/hero-v2/diccionario-vivo-subtitle.png"
+            alt="Diccionario vivo del habla porteña"
+            className={styles.subtitleImg}
             style={{ opacity: searchBoxOpacity, transform: `translateY(${searchBoxTranslateY}px)` }}
-          >
-            Diccionario vivo del habla porteña
-          </p>
+          />
         </div>
         <div className={styles.searchWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
           <div
             className={styles.searchFade}
             style={{ opacity: searchBoxOpacity, transform: `translateY(${searchBoxTranslateY}px)` }}
           >
-            <SearchBar id="hero-v2-search" showSubmit value={query} onChange={onQueryChange} onSubmit={onSearchSubmit} />
+            <div className={styles.ticketFrame}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- solo marco decorativo, sin texto ni ícono embebido */}
+              <img src="/hero-v2/searchbar-ticket.png" alt="" aria-hidden="true" className={styles.ticketImg} />
+              <SearchBar
+                id="hero-v2-search"
+                showSubmit
+                className={styles.ticketSearchRow}
+                value={query}
+                onChange={onQueryChange}
+                onSubmit={onSearchSubmit}
+              />
+            </div>
           </div>
         </div>
       </div>

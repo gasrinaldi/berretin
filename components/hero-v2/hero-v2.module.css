@@ -72,40 +72,41 @@
 
 /* Subtítulo de marca entre el wordmark 3D y el buscador — mismo patrón de
    dos wrappers que .searchWrap/.searchFade: éste solo centra (transform
-   estático), el <p> de adentro es el único que recibe opacity/translateY
-   inline, para que nunca puedan pisarse entre sí. */
+   estático), la imagen de adentro es la única que recibe opacity/translateY
+   inline, para que nunca puedan pisarse entre sí. El PNG trae mucho aire
+   transparente arriba/abajo del texto (lienzo 2172x724, banda de texto
+   real ~44%-54% de esa altura); mostrar el lienzo completo a su relación
+   de aspecto natural dejaba una caja mucho más alta que el texto real y
+   dificultaba separarlo del buscador sin superponerse. Se recorta acá a
+   una franja fija angosta (object-fit:cover) que muestra solo la banda
+   central con el texto, centrada — mismo criterio que ya usa el recorte
+   del wordmark de home. */
 .subtitleWrap {
   position: absolute;
   left: 50%;
-  top: 55%;
+  top: 54%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 28rem;
+  max-width: 22rem;
+  height: 22px;
   padding: 0 1rem;
-  text-align: center;
+  overflow: hidden;
   pointer-events: none;
 }
 
 @media (min-width: 640px) {
   .subtitleWrap {
-    top: 56%;
+    top: 55%;
+    height: 24px;
   }
 }
 
-.subtitleText {
-  margin: 0;
-  font-family: var(--font-space-grotesk), sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--crema-dim, rgba(237, 230, 214, 0.78));
-}
-
-@media (min-width: 640px) {
-  .subtitleText {
-    font-size: 13px;
-  }
+.subtitleImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 /* Centrado horizontal puro — nunca debe llevar un transform dinámico
@@ -115,7 +116,7 @@
 .searchWrap {
   position: absolute;
   left: 50%;
-  top: 65%;
+  top: 60%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 32rem;
@@ -125,12 +126,92 @@
 
 @media (min-width: 640px) {
   .searchWrap {
-    top: 66%;
+    top: 61%;
   }
 }
 
 .searchFade {
   width: 100%;
+}
+
+/* Marco de ticket vintage: el PNG es solo fondo decorativo (sin texto ni
+   ícono embebido) — el <img> queda detrás, y el form real de SearchBar se
+   superpone dentro de la franja "papel" del asset (medida por el bbox
+   opaco del PNG: banda sólida ~30%-69% de alto, ~2%-98% de ancho sobre un
+   lienzo con aire/sombra alrededor). */
+.ticketFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2172 / 724;
+}
+
+.ticketImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ticketFrame .ticketSearchRow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 32%;
+  bottom: 32%;
+  margin: 0;
+  padding: 0 6px;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: #3a2f22;
+  font-family: var(--font-fraunces, serif), serif;
+}
+
+.ticketFrame .ticketSearchRow input {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ticketFrame .ticketSearchRow input::placeholder {
+  color: rgba(58, 47, 34, 0.55);
+}
+
+.ticketFrame .ticketSearchRow svg {
+  opacity: 0.75;
+}
+
+/* :global() es necesario acá: dentro de un CSS module, una clase como
+   .search-submit-btn (definida en globals.css, sin :global) se hashea y
+   deja de matchear el nombre real que renderiza SearchBar.tsx. */
+.ticketFrame .ticketSearchRow :global(.search-submit-btn) {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: #3a2f22;
+  cursor: pointer;
+}
+
+.ticketFrame .ticketSearchRow :global(.search-submit-btn) svg {
+  width: 16px;
+  height: 16px;
+  opacity: 1;
+  stroke: currentColor;
+}
+
+@media (max-width: 640px) {
+  .ticketFrame .ticketSearchRow input {
+    font-size: 13px;
+  }
 }
 
 /* Unión con la home/diccionario real: mismo tono oscuro que deja el humo
