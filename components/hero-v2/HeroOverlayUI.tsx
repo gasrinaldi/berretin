@@ -49,7 +49,6 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
               <img src="/hero-v2/searchbar-ticket.png" alt="" aria-hidden="true" className={styles.ticketImg} />
               <SearchBar
                 id="hero-v2-search"
-                showSubmit
                 className={styles.ticketSearchRow}
                 value={query}
                 onChange={onQueryChange}

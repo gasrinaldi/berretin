@@ -87,8 +87,8 @@
   top: 54%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 22rem;
-  height: 22px;
+  max-width: 27rem;
+  height: 30px;
   padding: 0 1rem;
   overflow: hidden;
   pointer-events: none;
@@ -96,8 +96,8 @@
 
 @media (min-width: 640px) {
   .subtitleWrap {
-    top: 55%;
-    height: 24px;
+    top: 53%;
+    height: 33px;
   }
 }
 
@@ -116,17 +116,17 @@
 .searchWrap {
   position: absolute;
   left: 50%;
-  top: 60%;
+  top: 57%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 32rem;
+  max-width: 42rem;
   padding: 0 1rem;
   pointer-events: auto;
 }
 
 @media (min-width: 640px) {
   .searchWrap {
-    top: 61%;
+    top: 58%;
   }
 }
 
@@ -172,45 +172,41 @@
 }
 
 .ticketFrame .ticketSearchRow input {
+  order: 1;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .ticketFrame .ticketSearchRow input::placeholder {
   color: rgba(58, 47, 34, 0.55);
 }
 
+/* La lupa es el único ícono (sin botón de submit): se reordena vía flex
+   `order` — sin tocar el markup de SearchBar.tsx, que sigue renderizando
+   el svg como primer hijo — para que quede después del input, separada
+   por una línea vertical (border-left), centrada verticalmente por el
+   align-items:center heredado de .search-row. */
 .ticketFrame .ticketSearchRow svg {
-  opacity: 0.75;
-}
-
-/* :global() es necesario acá: dentro de un CSS module, una clase como
-   .search-submit-btn (definida en globals.css, sin :global) se hashea y
-   deja de matchear el nombre real que renderiza SearchBar.tsx. */
-.ticketFrame .ticketSearchRow :global(.search-submit-btn) {
-  display: flex;
+  order: 2;
   flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  width: 30px;
-  height: 30px;
-  border: 0;
-  background: transparent;
-  color: #3a2f22;
-  cursor: pointer;
-}
-
-.ticketFrame .ticketSearchRow :global(.search-submit-btn) svg {
-  width: 16px;
-  height: 16px;
-  opacity: 1;
-  stroke: currentColor;
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(58, 47, 34, 0.35);
+  box-sizing: content-box;
+  opacity: 0.8;
 }
 
 @media (max-width: 640px) {
   .ticketFrame .ticketSearchRow input {
-    font-size: 13px;
+    font-size: 14px;
+  }
+
+  .ticketFrame .ticketSearchRow svg {
+    width: 18px;
+    height: 18px;
+    padding-left: 12px;
   }
 }
 
