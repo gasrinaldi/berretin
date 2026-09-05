@@ -29,12 +29,9 @@ export function HeroOverlayUI({ scrollProgress, query, onQueryChange, onSearchSu
 
   return (
     <div className={styles.overlayRoot}>
-      {/* Destello único al cargar, alineado por porcentaje sobre el acento
-          rojo de la "í" del wordmark 3D (no depende de scrollProgress: solo
-          corre una vez al montar, independientemente de dónde esté el
-          scroll). Ver .wordmarkFlash en hero-v2.module.css para la
-          coreografía de keyframes y el respeto a prefers-reduced-motion. */}
-      <div className={styles.wordmarkFlash} aria-hidden="true" />
+      {/* El destello del acento ahora vive dentro de PackWordmark3D.tsx,
+          anclado al propio mesh en Three.js (así acompaña escala/parallax
+          en vez de una posición en % del viewport que se desalineaba). */}
       <div style={{ opacity: sceneUiOpacity }} className={styles.overlayFade}>
         <div className={styles.subtitleWrap} style={{ display: searchBoxOpacity <= 0.01 ? "none" : "block" }}>
           {/* eslint-disable-next-line @next/next/no-img-element -- asset estático, no requiere optimización de next/image */}

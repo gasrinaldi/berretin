@@ -276,7 +276,7 @@ export const PackScene3D: React.FC<PackScene3DProps> = ({ scrollProgress, mouseP
         <DeepCrowd scrollProgress={scrollProgress} />
 
         {/* 3. Wordmark en profundidad: delante del tanguero al inicio, detrás en Cuadro 03 */}
-        <PackWordmark3D scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} />
+        <PackWordmark3D scrollProgress={scrollProgress} mousePos={mousePos} isMobile={isMobile} prefersReducedMotion={prefersReducedMotion} />
 
         {/* Interferencia parcial de gente sobre el wordmark, conservada en bordes y base */}
         <ForegroundCrowdFringe scrollProgress={scrollProgress} />
