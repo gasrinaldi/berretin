@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root { --ink:#0B0D10; --surface:#1C2027; --crema:#EDE6D6; --crema-dim:rgba(237,230,214,0.78); --muted:#96907E; --brass:#C9A15A; --line:rgba(237,230,214,0.09); --line-strong:rgba(237,230,214,0.16); --error:#D98770; }
+:root { --ink:#0B0D10; --surface:#1C2027; --crema:#EDE6D6; --crema-dim:rgba(237,230,214,0.78); --muted:#96907E; --brass:#C9A15A; --line:rgba(237,230,214,0.09); --line-strong:rgba(237,230,214,0.16); --error:#D98770; --brand-red:#A92D22; }
 * { box-sizing:border-box; margin:0; padding:0; }
 html, body { background:var(--ink); color:var(--crema); min-height:100vh; }
 /* Flex column + min-height:100svh para poder pegar el footer abajo en
@@ -71,7 +71,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-tipo { margin-bottom:18px; }
 .consult-letters { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px 4px; padding-bottom:10px; border-bottom:1px solid var(--line); }
 .consult-tipo .consult-letters { justify-content:flex-start; gap:10px 28px; }
-.consult-letter { position:relative; border:0; background:none; padding:6px 2px; color:var(--crema-dim); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; text-transform:uppercase; transition:color .15s ease; }
+.consult-letter { position:relative; border:0; background:none; padding:6px 2px; color:var(--brand-red); cursor:pointer; font-family:var(--font-fraunces), serif; font-weight:600; font-size:15px; text-transform:uppercase; transition:color .15s ease; }
 .consult-letter:hover { color:var(--crema); }
 .consult-letter.active { color:var(--brass); }
 .consult-letter.active::after { content:""; position:absolute; left:2px; right:2px; bottom:0; height:2px; background:var(--brass); }
@@ -103,7 +103,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .consult-facet-item:hover { color:var(--crema); }
 .consult-facet-item.active { color:var(--brass); }
 .consult-facet-item:focus-visible { outline:1px solid var(--brass); outline-offset:2px; }
-.consult-facet-index { font-family:var(--font-space-grotesk), sans-serif; font-size:10px; color:var(--muted); flex-shrink:0; }
+.consult-facet-index { font-family:var(--font-space-grotesk), sans-serif; font-size:10px; color:var(--brand-red); flex-shrink:0; }
 .consult-facet-name { position:relative; }
 .consult-facet-item.active .consult-facet-name::after { content:""; position:absolute; left:0; right:0; bottom:-3px; height:1px; background:var(--brass); }
 
