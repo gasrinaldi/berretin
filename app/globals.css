@@ -59,7 +59,7 @@ header { margin-bottom:32px; padding-bottom:28px; border-bottom:1px solid var(--
 .aux-nav.dictionary-intro-nav .aux-nav-text { display:flex; flex-direction:column; gap:2px; }
 .aux-nav.dictionary-intro-nav .aux-nav-label { font:600 13px var(--font-space-grotesk), sans-serif; letter-spacing:1.4px; text-transform:uppercase; color:var(--crema); transition:color .15s ease; }
 .aux-nav.dictionary-intro-nav .aux-nav-sub { display:block; font:10px var(--font-space-grotesk), sans-serif; letter-spacing:.3px; color:var(--muted); transition:color .15s ease; }
-.aux-nav.dictionary-intro-nav a:hover:not(.active) { background:#121011; border-color:var(--brass); }
+.aux-nav.dictionary-intro-nav a:hover:not(.active) { background:var(--surface); border-color:var(--brass); }
 .aux-nav.dictionary-intro-nav a.active { background:var(--brass); border-color:var(--brass); }
 .aux-nav.dictionary-intro-nav a.active .aux-nav-icon,
 .aux-nav.dictionary-intro-nav a.active .aux-nav-label,
