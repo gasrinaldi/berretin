@@ -1,56 +1,39 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { mapChallengeRow } from "@/lib/challenges";
+import { getRoundTerms } from "./round-actions";
+import { DesafioGame } from "@/components/desafio/DesafioGame";
+import { AuxNav } from "@/components/AuxNav";
 import { BackButton } from "@/components/BackButton";
 import { Footer } from "@/components/Footer";
 
-// No depende de quién lo visita: mismo contenido para todos, puede
-// quedar cacheado como el resto de las páginas públicas.
-export const revalidate = 300;
+export const metadata: Metadata = {
+  title: "Desafío — Berretín",
+  description: "¿Todavía se usa? Votá sobre la vigencia de palabras y expresiones reales del lunfardo porteño y comparalo con la comunidad.",
+};
 
-export const metadata: Metadata = { title: "Desafío del mes — Berretín", description: "El desafío cultural mensual de Berretín." };
-
-async function getActiveChallenge() {
-  let supabase;
-  try {
-    supabase = getSupabaseAdmin();
-  } catch {
-    return null;
-  }
-  const { data } = await supabase.from("monthly_challenges").select("*").eq("is_active", true).order("created_at", { ascending: false }).limit(1).maybeSingle();
-  return data ? mapChallengeRow(data) : null;
-}
+// Cada visita arma una ronda con una selección al azar del dataset local
+// (ver round-actions.ts, sin Supabase) — la página tiene que quedar
+// dynamic para que ese shuffle se recalcule en cada visita en vez de
+// congelarse en el primer build/revalidate.
+export const dynamic = "force-dynamic";
 
 export default async function DesafioPage() {
-  const challenge = await getActiveChallenge();
+  const initialTerms = await getRoundTerms();
 
   return (
     <>
-      <div className="wrap word-wrap">
+      <div className="wrap word-wrap desafio-wrap">
         <nav className="word-nav">
           <BackButton />
+          <AuxNav />
         </nav>
-        <article className="word-article">
-          <span className="word-letter">Desafío</span>
-          {challenge ? (
-            <>
-              <h1 className="word-title">{challenge.title}</h1>
-              <p className="contribute-hint">{challenge.periodLabel}</p>
-              <p className="word-definition">{challenge.description}</p>
-              {challenge.wordSlug && (
-                <p className="contribute-hint">
-                  Palabra del desafío: <Link href={`/diccionario/${challenge.wordSlug}`}>{challenge.wordSlug}</Link>
-                </p>
-              )}
-            </>
-          ) : (
-            <>
-              <h1 className="word-title">Sin desafío activo</h1>
-              <p className="word-definition">Todavía no hay un desafío del mes publicado. Volvé pronto.</p>
-            </>
-          )}
-        </article>
+
+        <header className="desafio-intro">
+          <p className="word-letter">Desafío</p>
+          <h2 className="desafio-intro-title">¿Todavía se usa?</h2>
+          <p className="desafio-intro-text">El idioma está vivo. Decinos cómo escuchás estas palabras hoy.</p>
+        </header>
+
+        <DesafioGame initialTerms={initialTerms} />
       </div>
       <Footer />
     </>
