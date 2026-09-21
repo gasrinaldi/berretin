@@ -5,6 +5,7 @@ import { LetterBlock } from "@/components/LetterBlock";
 import { SearchBar } from "@/components/SearchBar";
 import { DictionaryIntro } from "@/components/DictionaryIntro";
 import { DictionaryFilters, EMPTY_FILTERS, type FilterState } from "@/components/DictionaryFilters";
+import { DictionaryFixedFooter } from "@/components/DictionaryFixedFooter";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 // Techo defensivo para la restauración por sessionStorage: nunca se
@@ -419,6 +420,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
           )
         )}
       </main>
+      <DictionaryFixedFooter total={total} />
     </div>
   );
 }
