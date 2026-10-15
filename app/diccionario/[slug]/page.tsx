@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getEntryBySlug, getEntryPosition, isExpression } from "@/lib/dictionary";
 import { getLetterHubPath, getCategoryHubPath, getAdjacentEntries, getExploreEntries } from "@/lib/dictionary-seo";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt, buildEntryTitle, buildEntryDescription } from "@/lib/site";
+import { SITE_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt, buildEntryTitle, buildEntryDescription } from "@/lib/site";
 import { BackButton } from "@/components/BackButton";
 import { BerretinInitial } from "@/components/BerretinInitial";
 import { ShareButton } from "@/components/ShareButton";
@@ -51,10 +51,7 @@ export async function generateMetadata({ params }: PageProps<"/diccionario/[slug
   const title = buildEntryTitle(entry.palabra);
   const description = buildEntryDescription(entry.palabra, entry.definicion);
   const url = `${SITE_URL}/diccionario/${entry.slug}`;
-  // Temporal mientras berretin.com.ar no esté conectado (ver lib/site.ts):
-  // openGraph.url/images van contra OG_URL, no contra el canonical de arriba.
-  const ogUrl = `${OG_URL}/diccionario/${entry.slug}`;
-  const ogImage = `${OG_URL}/brand/berretin-og.png`;
+  const ogImage = `${SITE_URL}/brand/berretin-og.png`;
 
   return {
     title,
@@ -64,7 +61,7 @@ export async function generateMetadata({ params }: PageProps<"/diccionario/[slug
     openGraph: {
       title,
       description,
-      url: ogUrl,
+      url,
       siteName: SITE_NAME,
       locale: "es_AR",
       type: "article",

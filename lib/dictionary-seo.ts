@@ -4,7 +4,7 @@
 // inventa, y no se consulta Supabase.
 import type { Metadata } from "next";
 import { getAllEntries, type DictionaryEntry } from "@/lib/dictionary";
-import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED } from "@/lib/site";
+import { SITE_URL, SITE_NAME, INDEXING_ALLOWED } from "@/lib/site";
 
 // Una sola constante para letras y categorías (100 fichas por página).
 export const SEO_PAGE_SIZE = 100;
@@ -265,7 +265,7 @@ export function describePage(subject: string, p: Paginated): string {
 
 export function buildHubMetadata({ title, description, path }: { title: string; description: string; path: string }): Metadata {
   const url = `${SITE_URL}${path}`;
-  const ogImage = `${OG_URL}/brand/berretin-og.png`;
+  const ogImage = `${SITE_URL}/brand/berretin-og.png`;
   return {
     title,
     description,
@@ -274,7 +274,7 @@ export function buildHubMetadata({ title, description, path }: { title: string; 
     openGraph: {
       title,
       description,
-      url: `${OG_URL}${path}`,
+      url,
       siteName: SITE_NAME,
       locale: "es_AR",
       type: "website",

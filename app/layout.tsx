@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED } from "@/lib/site";
+import { SITE_URL, SITE_NAME, INDEXING_ALLOWED } from "@/lib/site";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -39,22 +39,21 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/brand/berretin-isologo-180.png", sizes: "180x180", type: "image/png" }],
   },
-  // url/images en absoluto contra OG_URL (no metadataBase/SITE_URL): son
-  // temporales mientras berretin.com.ar no esté conectado (ver lib/site.ts).
+  // url/images en absoluto contra SITE_URL, igual que canonical y sitemap.
   openGraph: {
     title: siteTitle,
     description: siteDescription,
-    url: OG_URL,
+    url: SITE_URL,
     siteName: SITE_NAME,
     locale: "es_AR",
     type: "website",
-    images: [{ url: `${OG_URL}/brand/berretin-og.png`, width: 1200, height: 630, alt: SITE_NAME }],
+    images: [{ url: `${SITE_URL}/brand/berretin-og.png`, width: 1200, height: 630, alt: SITE_NAME }],
   },
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: [`${OG_URL}/brand/berretin-og.png`],
+    images: [`${SITE_URL}/brand/berretin-og.png`],
   },
 };
 
