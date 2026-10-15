@@ -15,9 +15,11 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
   const hasFilterParams = FILTER_PARAM_KEYS.some((key) => params[key] !== undefined);
 
   if (!hasFilterParams) {
-    // Home limpia: hereda robots/canonical del layout raíz, que ya refleja
-    // SITE_INDEXING_ENABLED — no hace falta repetir esa lógica acá.
-    return {};
+    // Home limpia: hereda robots del layout raíz, que ya refleja
+    // SITE_INDEXING_ENABLED — no hace falta repetir esa lógica acá. El
+    // canonical sí se define acá (no en el layout: heredaría a todas las
+    // páginas internas el canonical de la home).
+    return { alternates: { canonical: SITE_URL } };
   }
 
   return {
