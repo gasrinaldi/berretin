@@ -4,6 +4,10 @@ export function Footer() {
   return (
     <footer className="site-footer">
       <p>© 2026 Berretín. Diseño, software y contenido editorial original. Las voces y expresiones del habla popular forman parte del patrimonio lingüístico común.</p>
+      <nav className="site-footer-index" aria-label="Índices">
+        <Link href="/letras">Palabras por letra</Link>
+        <Link href="/categorias">Categorías</Link>
+      </nav>
       <nav className="site-footer-legal" aria-label="Legal">
         <Link href="/privacidad">Privacidad</Link>
         <Link href="/terminos">Términos</Link>
