@@ -1,13 +1,28 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 const MotionLink = motion.create(Link);
 
+const noopSubscribe = () => () => {};
+
 export function WordCard({ entry }: { entry: DictionaryEntry }) {
-  const reduceMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion();
+  // Las fichas ahora llegan renderizadas por el servidor, donde
+  // useReducedMotion() es null — pero en el primer render del cliente ya
+  // devuelve la preferencia real, y el markup (style/tabindex) difería entre
+  // ambos (mismatch de hidratación solo con reduced-motion). Con
+  // useSyncExternalStore el servidor y la hidratación usan siempre `false`
+  // y recién después React pasa al valor real: el primer render es idéntico
+  // y, ya hidratado, quien prefiere menos movimiento sigue sin animaciones.
+  const reduceMotion = useSyncExternalStore(
+    noopSubscribe,
+    () => prefersReducedMotion === true,
+    () => false
+  );
   const rotateX = useSpring(useMotionValue(0), { stiffness: 260, damping: 25 });
   const rotateY = useSpring(useMotionValue(0), { stiffness: 260, damping: 25 });
 
