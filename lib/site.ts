@@ -46,3 +46,29 @@ export function cleanExcerpt(text: string, maxLength = 155): string {
   const safe = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
   return `${safe.trim()}…`;
 }
+
+// Mayúscula inicial en la primera letra (no en la primera posición: hay
+// términos que arrancan con signos, como "¡aijuna!").
+export function capitalizeFirst(text: string): string {
+  return text.replace(/\p{L}/u, (ch) => ch.toLocaleUpperCase("es"));
+}
+
+// Largo a partir del cual el título completo se reemplaza por el corto.
+export const ENTRY_TITLE_MAX = 60;
+
+// Título de una ficha: "{Palabra}: qué significa en Argentina | Berretín",
+// o "{Palabra} | Berretín" si el completo supera ENTRY_TITLE_MAX. Nunca se
+// recorta el término; si ni el corto entra, se deja entero.
+export function buildEntryTitle(palabra: string): string {
+  const term = capitalizeFirst(palabra);
+  const full = `${term}: qué significa en Argentina | ${SITE_NAME}`;
+  return full.length <= ENTRY_TITLE_MAX ? full : `${term} | ${SITE_NAME}`;
+}
+
+// Meta description de una ficha: la definición sigue siendo el contenido
+// principal; solo se antepone el término, que además desambigua las ~970
+// fichas con definición idéntica. No es el description del JSON-LD.
+export function buildEntryDescription(palabra: string, definicion: string): string {
+  return cleanExcerpt(`${capitalizeFirst(palabra)}: ${definicion}`);
+}
+
