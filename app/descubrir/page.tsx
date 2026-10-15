@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import facets from "@/data/dictionary-facets.json";
 import { getAllEntries } from "@/lib/dictionary";
+import { buildHubMetadata } from "@/lib/dictionary-seo";
 import { pickWordOfTheDay, pickRandomEntry, buildQuiz, buildThematicCollections } from "@/lib/discover";
 import { getRegionGroups, getDecadeGroups, getTrendingWords, getWeeklyIllustration } from "@/lib/discover-community";
 import { AuxNav } from "@/components/AuxNav";
@@ -11,10 +12,12 @@ import { QuizWidget } from "@/components/discover/QuizWidget";
 
 const CATEGORIES = Object.keys(facets.categorias);
 
-export const metadata: Metadata = {
+// canonical, og:url, imágenes y robots propios (mismo armado que los hubs SEO).
+export const metadata: Metadata = buildHubMetadata({
   title: "Descubrir — Berretín",
   description: "Palabra del día, expresiones al azar, un quiz breve y colecciones temáticas del diccionario de lunfardo Berretín.",
-};
+  path: "/descubrir",
+});
 // Palabra del día es determinística por fecha, pero la expresión aleatoria
 // y el quiz se recalculan en cada visita — la página entera queda dynamic.
 // Las secciones que leen Supabase (mapa, décadas, tendencias, ilustración)
