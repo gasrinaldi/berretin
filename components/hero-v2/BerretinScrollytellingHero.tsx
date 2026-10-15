@@ -21,6 +21,7 @@ import { SCROLLY_CONFIG } from "./scrollyConfig";
 import { Dictionary } from "@/components/Dictionary";
 import { AuxNav } from "@/components/AuxNav";
 import { Footer } from "@/components/Footer";
+import type { InitialDictionaryState } from "@/lib/dictionary-state";
 import styles from "./hero-v2.module.css";
 
 if (typeof window !== "undefined") {
@@ -30,9 +31,11 @@ if (typeof window !== "undefined") {
 type BerretinScrollytellingHeroProps = {
   query: string;
   onQueryChange: (value: string) => void;
+  // Solo se reenvía a <Dictionary>; el hero no lo usa.
+  initialDictionary?: InitialDictionaryState;
 };
 
-export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScrollytellingHeroProps) {
+export function BerretinScrollytellingHero({ query, onQueryChange, initialDictionary }: BerretinScrollytellingHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -156,7 +159,7 @@ export function BerretinScrollytellingHero({ query, onQueryChange }: BerretinScr
               <img src="/brand/berretin-wordmark.png" alt="Berretín" className={styles.wordmark} />
               <AuxNav className="dictionary-intro-nav" />
             </header>
-            <Dictionary query={query} onQueryChange={onQueryChange} />
+            <Dictionary query={query} onQueryChange={onQueryChange} initial={initialDictionary} />
           </div>
         </div>
       </div>

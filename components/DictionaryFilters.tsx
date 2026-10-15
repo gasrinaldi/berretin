@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import facets from "@/data/dictionary-facets.json";
+import { EMPTY_FILTERS, type FilterState } from "@/lib/dictionary-state";
 
 const LETTERS = Object.keys(facets.letras);
 const CATEGORIES = Object.keys(facets.categorias);
@@ -12,17 +13,12 @@ const TIPOS = [
   { value: "expresiones", label: "expresiones" },
 ] as const;
 
-export type TipoFilter = (typeof TIPOS)[number]["value"];
-
-export type FilterState = {
-  letras: string[];
-  categorias: string[];
-  origenes: string[];
-  sinCategoria: boolean;
-  tipo: TipoFilter;
-};
-
-export const EMPTY_FILTERS: FilterState = { letras: [], categorias: [], origenes: [], sinCategoria: false, tipo: "todas" };
+// Los tipos y EMPTY_FILTERS viven en un módulo neutral (lib/dictionary-state)
+// para que el servidor (app/page.tsx) pueda usarlos sin importar nada de un
+// archivo "use client". Se re-exportan acá para no tocar los imports
+// existentes.
+export type { FilterState, TipoFilter } from "@/lib/dictionary-state";
+export { EMPTY_FILTERS };
 
 type DictionaryFiltersProps = {
   state: FilterState;

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { HomeClient } from "@/components/HomeClient";
+import { searchEntries } from "@/lib/dictionary";
+import { parseDictionaryState, toURLSearchParams, type InitialDictionaryState } from "@/lib/dictionary-state";
 import { SITE_URL } from "@/lib/site";
 
 // Mismos parámetros que lee/escribe components/Dictionary.tsx en la URL
@@ -24,6 +26,24 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
   };
 }
 
-export default function Home() {
-  return <HomeClient />;
+// La primera página del diccionario (la de la home limpia o la de la
+// búsqueda/filtros que venga en la URL) se resuelve acá, en el servidor,
+// con el mismo searchEntries que usa /api/dictionary — sin pasar por HTTP —
+// y viaja como estado inicial hasta <Dictionary>: el HTML inicial ya trae
+// las fichas reales y el componente hidrata sobre ese mismo contenido.
+export default async function Home({ searchParams }: PageProps<"/">) {
+  const { query, filters } = parseDictionaryState(toURLSearchParams(await searchParams));
+  const data = searchEntries({
+    q: query,
+    letras: filters.letras,
+    categorias: filters.categorias,
+    origenes: filters.origenes,
+    sinCategoria: filters.sinCategoria,
+    tipo: filters.tipo,
+    page: 0,
+    limit: 50,
+  });
+  const initialDictionary: InitialDictionaryState = { query, filters, data };
+
+  return <HomeClient initialDictionary={initialDictionary} />;
 }

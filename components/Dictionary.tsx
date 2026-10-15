@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { DictionaryIntro } from "@/components/DictionaryIntro";
 import { DictionaryFilters, EMPTY_FILTERS, type FilterState } from "@/components/DictionaryFilters";
 import { DictionaryFixedFooter } from "@/components/DictionaryFixedFooter";
+import { parseDictionaryState, isSameSearchState, type InitialDictionaryState } from "@/lib/dictionary-state";
 import type { DictionaryEntry } from "@/app/api/dictionary/route";
 
 // Techo defensivo para la restauración por sessionStorage: nunca se
@@ -29,19 +30,8 @@ type ScrollState = { search: string; pagesLoaded: number; wordSlug: string };
 
 function readStateFromUrl(): { query: string; filters: FilterState } {
   if (typeof window === "undefined") return { query: "", filters: EMPTY_FILTERS };
-  const params = new URLSearchParams(window.location.search);
-  const tipoParam = params.get("tipo");
-  const tipo: FilterState["tipo"] = tipoParam === "palabras" || tipoParam === "expresiones" ? tipoParam : "todas";
-  return {
-    query: params.get("q") ?? "",
-    filters: {
-      letras: params.getAll("letra"),
-      categorias: params.getAll("categoria"),
-      origenes: params.getAll("origen"),
-      sinCategoria: params.get("sinCategoria") === "1",
-      tipo,
-    },
-  };
+  // Mismo parseo que usa app/page.tsx en el servidor (lib/dictionary-state).
+  return parseDictionaryState(new URLSearchParams(window.location.search));
 }
 
 function writeStateToUrl(query: string, filters: FilterState) {
@@ -82,16 +72,27 @@ function saveScrollState(state: ScrollState) {
 type DictionaryProps = {
   query: string;
   onQueryChange: (value: string) => void;
+  // Primera página ya resuelta por el servidor para la URL actual. Sin esto
+  // (otros usos del componente) el comportamiento es el de siempre: arranca
+  // vacío y pide la página 0 a /api/dictionary.
+  initial?: InitialDictionaryState;
 };
 
-export function Dictionary({ query, onQueryChange }: DictionaryProps) {
-  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
-  const [debouncedQuery, setDebouncedQuery] = useState(query);
-  const [results, setResults] = useState<DictionaryEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [countsByLetter, setCountsByLetter] = useState<Record<string, number>>({});
-  const [page, setPage] = useState(0);
+export function Dictionary({ query, onQueryChange, initial }: DictionaryProps) {
+  // El primer render sale del estado que resolvió el servidor, así el HTML
+  // inicial ya trae las fichas reales y no hay mismatch al hidratar.
+  const [filters, setFilters] = useState<FilterState>(initial?.filters ?? EMPTY_FILTERS);
+  const [debouncedQuery, setDebouncedQuery] = useState(initial?.query ?? query);
+  const [results, setResults] = useState<DictionaryEntry[]>(initial?.data.results ?? []);
+  const [total, setTotal] = useState(initial?.data.total ?? 0);
+  const [hasMore, setHasMore] = useState(initial?.data.hasMore ?? false);
+  const [countsByLetter, setCountsByLetter] = useState<Record<string, number>>(initial?.data.countsByLetter ?? {});
+  const [page, setPage] = useState(initial?.data.page ?? 0);
+  // Se incrementa al terminar una restauración: dispara la alineación de la
+  // tarjeta aunque `loading` no llegue a mostrar el cambio true -> false (con
+  // el contenido del servidor ya pintado y una respuesta muy rápida, React
+  // agrupa ambos cambios y el efecto de `loading` no corre).
+  const [alignTick, setAlignTick] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // Flag de estado (no ref): así el commit que aplica los filtros leídos de
@@ -105,7 +106,22 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // Estado "vivo" para poder guardarlo en cualquier momento (scroll, cambio
   // de página, desmontaje) sin depender de closures viejas de un efecto.
   const currentSearchRef = useRef("");
-  const pagesLoadedRef = useRef(0);
+  // Con la página 0 ya resuelta por el servidor, hay 1 página cargada desde
+  // el primer momento (el click guardado y el infinite scroll parten de ahí).
+  const pagesLoadedRef = useRef(initial && initial.data.results.length > 0 ? 1 : 0);
+  // La primera corrida del efecto de fetch puede reutilizar la página 0 del
+  // servidor en vez de pedirla de nuevo. Se consume una sola vez.
+  const reuseInitialRef = useRef(Boolean(initial));
+  // true mientras hay una restauración pendiente o en curso. Con el
+  // contenido del servidor ya pintado, el observador del infinite scroll
+  // puede quedar "intersectando" (p. ej. el scroll guardado se clampa al
+  // final de la lista corta) antes de que corra restorePages: si pidiera
+  // la página siguiente en paralelo, su requestId descartaría la
+  // restauración. Mientras esto sea true, el scroll automático espera.
+  const restoringRef = useRef(false);
+  // Entradas que vinieron del servidor: LetterBlock las pinta sin animación
+  // de entrada (si no, el HTML inicial saldría con opacity 0).
+  const instantIds = useMemo(() => new Set((initial?.data.results ?? []).map((e) => e.id)), [initial]);
   const pendingRestoreRef = useRef<ScrollState | null>(null);
   const pendingWordSlugRef = useRef<string | null>(null);
   // Token de la alineación de tarjeta en curso: incrementarlo cancela
@@ -228,6 +244,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
   // salto visual. La alineación de la tarjeta visitada se aplica recién
   // cuando esto termina, nunca antes.
   const restorePages = async (pagesLoaded: number, wordSlug: string) => {
+    restoringRef.current = true;
     const id = ++requestId.current;
     setLoading(true);
     const safeCount = Math.max(1, Math.min(pagesLoaded, MAX_RESTORE_PAGES));
@@ -242,10 +259,12 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
       setPage(safeCount - 1);
       pagesLoadedRef.current = safeCount;
       pendingWordSlugRef.current = wordSlug;
+      setAlignTick((n) => n + 1);
     } catch {
       if (id !== requestId.current) return;
       fetchPage(0, true); // la restauración falló: arrancar normal en vez de quedar vacío
     } finally {
+      restoringRef.current = false;
       if (id === requestId.current) setLoading(false);
     }
   };
@@ -262,8 +281,13 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     const run = () => {
       const restore = pendingRestoreRef.current;
       pendingRestoreRef.current = null;
+      const reuseInitial = reuseInitialRef.current;
+      reuseInitialRef.current = false;
       if (restore) restorePages(restore.pagesLoaded, restore.wordSlug);
-      else fetchPage(0, true);
+      else if (reuseInitial && initial && isSameSearchState(debouncedQuery, filters, initial)) {
+        // La página 0 de ESTA búsqueda/filtros ya está pintada desde el
+        // servidor: no se repite el pedido a /api/dictionary.
+      } else fetchPage(0, true);
     };
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -281,7 +305,11 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) fetchPage(page + 1, false);
+        if (!entries[0]?.isIntersecting) return;
+        // Restauración pendiente/en curso: ver restoringRef. Al terminar,
+        // `loading` cambia y este efecto vuelve a armar el observador.
+        if (restoringRef.current || pendingRestoreRef.current) return;
+        fetchPage(page + 1, false);
       },
       { rootMargin: "600px 0px" }
     );
@@ -333,7 +361,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
     pendingWordSlugRef.current = null;
     alignCardToTop(targetSlug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [loading, alignTick]);
 
   // Cancela una alineación en curso solo ante un desmontaje real (irse de
   // la página), nunca por los cambios de `loading` de la carga automática.
@@ -399,6 +427,7 @@ export function Dictionary({ query, onQueryChange }: DictionaryProps) {
                 letter={group.letter}
                 entries={group.entries}
                 total={countsByLetter[group.letter] ?? group.entries.length}
+                instantIds={instantIds}
               />
             ))}
             {hasMore && (

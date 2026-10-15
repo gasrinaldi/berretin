@@ -9,14 +9,19 @@ type LetterBlockProps = {
   letter: string;
   entries: DictionaryEntry[];
   total: number;
+  // ids de las entradas que ya vinieron renderizadas desde el servidor: se
+  // pintan en su estado final (sin entrada animada desde opacity 0), así el
+  // HTML inicial es visible y no hay parpadeo al hidratar.
+  instantIds?: ReadonlySet<string>;
 };
 
-export function LetterBlock({ letter, entries, total }: LetterBlockProps) {
+export function LetterBlock({ letter, entries, total, instantIds }: LetterBlockProps) {
   const reduceMotion = useReducedMotion();
+  const portadaInstant = instantIds?.has(entries[0]?.id) ?? false;
 
   return (
     <section className="letter-block" aria-labelledby={`letter-${letter}`}>
-      <motion.div className="letter-portada" initial={reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+      <motion.div className="letter-portada" initial={portadaInstant || reduceMotion ? false : { opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
         <h2 className="letter-big" id={`letter-${letter}`}>
           <BerretinInitial letter={letter} />
         </h2>
@@ -28,7 +33,7 @@ export function LetterBlock({ letter, entries, total }: LetterBlockProps) {
       </div>
       <div className="fichas">
         {entries.map((entry, index) => (
-          <motion.div key={entry.id} initial={reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(0.015 * index, 0.45), ease: "easeOut" }}>
+          <motion.div key={entry.id} initial={instantIds?.has(entry.id) || reduceMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: Math.min(0.015 * index, 0.45), ease: "easeOut" }}>
             <WordCard entry={entry} />
           </motion.div>
         ))}
