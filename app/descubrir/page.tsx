@@ -15,7 +15,7 @@ const CATEGORIES = Object.keys(facets.categorias);
 // canonical, og:url, imágenes y robots propios (mismo armado que los hubs SEO).
 export const metadata: Metadata = buildHubMetadata({
   title: "Descubrir — Berretín",
-  description: "Palabra del día, expresiones al azar, un quiz breve y colecciones temáticas del diccionario de lunfardo Berretín.",
+  description: "Palabra del día, expresiones al azar, un quiz breve y colecciones temáticas del diccionario Berretín.",
   path: "/descubrir",
 });
 // Palabra del día es determinística por fecha, pero la expresión aleatoria
