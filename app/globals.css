@@ -916,3 +916,39 @@ body:has(.fixed-footer) { padding-bottom:38px; }
 .seo-pagination-pages a, .seo-pagination-pages span { display:inline-block; min-width:34px; padding:6px 8px; text-align:center; font:12px var(--font-space-grotesk), sans-serif; color:var(--muted); text-decoration:none; border:1px solid var(--line); transition:color .15s ease, border-color .15s ease; }
 .seo-pagination-pages a:hover { color:var(--brass); border-color:var(--brass); }
 .seo-pagination-pages span[aria-current] { color:var(--ink); background:var(--brass); border-color:var(--brass); }
+
+/* ---- Enlazado interno en la ficha (/diccionario/[slug]) ----
+   Breadcrumb en la misma fila que "volver", letra y categorías como links
+   sin cambiar su aspecto, anterior/siguiente y "Seguí explorando". */
+.ficha-back-row-split { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:10px 24px; }
+.ficha-breadcrumb ol { list-style:none; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; font:11px/1.4 var(--font-space-grotesk), sans-serif; letter-spacing:1.2px; text-transform:uppercase; color:var(--muted); }
+.ficha-breadcrumb li + li::before { content:"›"; margin-right:8px; opacity:.55; }
+.ficha-breadcrumb a { color:var(--muted); text-decoration:none; transition:color .15s ease; }
+.ficha-breadcrumb a:hover { color:var(--brass); }
+.ficha-breadcrumb [aria-current] { color:var(--crema-dim); }
+
+a.ficha-detail-sidebar-letter-frame { color:inherit; text-decoration:none; }
+a.ficha-detail-sidebar-letter-frame:focus-visible { outline:1px solid var(--brass); outline-offset:6px; }
+.ficha-detail-meta a { color:inherit; text-decoration:none; border-bottom:1px solid transparent; transition:color .15s ease, border-color .15s ease; }
+.ficha-detail-meta a:hover, .ficha-detail-meta a:focus-visible { color:var(--brass); border-bottom-color:var(--brass); }
+
+.ficha-pager { display:flex; justify-content:space-between; gap:24px; margin-top:56px; padding-top:20px; border-top:1px solid var(--line-strong); }
+.ficha-pager-link { display:flex; flex-direction:column; gap:6px; min-width:0; max-width:48%; color:inherit; text-decoration:none; }
+.ficha-pager-next { align-items:flex-end; text-align:right; margin-left:auto; }
+.ficha-pager-dir { font-size:11px; letter-spacing:1.4px; text-transform:uppercase; color:var(--muted); transition:color .15s ease; }
+.ficha-pager-word { font-family:var(--font-fraunces), serif; font-weight:600; font-size:clamp(17px, 1.6vw, 22px); line-height:1.25; color:var(--crema); overflow-wrap:anywhere; transition:color .15s ease; }
+.ficha-pager-link:hover .ficha-pager-word, .ficha-pager-link:focus-visible .ficha-pager-word { color:var(--brass); }
+.ficha-pager-link:hover .ficha-pager-dir { color:var(--crema-dim); }
+
+.ficha-explore { margin-top:44px; padding-top:22px; border-top:1px solid var(--line); }
+.ficha-explore-title { margin-bottom:14px; font-size:11px; font-weight:400; letter-spacing:2px; text-transform:uppercase; color:var(--brass); }
+.ficha-explore-list { list-style:none; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); column-gap:clamp(24px, 4vw, 56px); }
+.ficha-explore-item { display:flex; flex-direction:column; gap:4px; height:100%; padding:14px 0; border-bottom:1px solid var(--line); color:inherit; text-decoration:none; }
+.ficha-explore-word { font-family:var(--font-fraunces), serif; font-weight:600; font-size:19px; line-height:1.25; color:var(--crema); overflow-wrap:anywhere; transition:color .15s ease; }
+.ficha-explore-def { font-family:var(--font-fraunces), serif; font-style:italic; font-size:14px; line-height:1.45; color:var(--crema-dim); }
+.ficha-explore-item:hover .ficha-explore-word, .ficha-explore-item:focus-visible .ficha-explore-word { color:var(--brass); }
+@media (max-width:640px) {
+  .ficha-pager { margin-top:40px; gap:16px; }
+  .ficha-pager-link { max-width:50%; }
+  .ficha-explore-list { grid-template-columns:minmax(0, 1fr); }
+}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getEntryBySlug, getEntryPosition, isExpression } from "@/lib/dictionary";
+import { getLetterHubPath, getCategoryHubPath, getAdjacentEntries, getExploreEntries } from "@/lib/dictionary-seo";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { SITE_URL, OG_URL, SITE_NAME, INDEXING_ALLOWED, cleanExcerpt } from "@/lib/site";
 import { BackButton } from "@/components/BackButton";
@@ -93,7 +95,22 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
   const position = getEntryPosition(entry.slug);
   const registro = position ? String(position).padStart(5, "0") : null;
   const tipo = tipoLabel(entry.palabra);
-  const metaParts = [tipo, ...entry.categorias, ...entry.origenes, ...(region ? [region] : [])];
+  // Solo las categorías con hub SEO real son links (/categoria/[slug]);
+  // tipo, origen y región siguen siendo texto plano.
+  const metaParts: { key: string; node: React.ReactNode }[] = [
+    { key: "tipo", node: tipo },
+    ...entry.categorias.map((cat) => {
+      const href = getCategoryHubPath(cat);
+      return { key: `cat-${cat}`, node: href ? <Link href={href}>{cat}</Link> : cat };
+    }),
+    ...entry.origenes.map((o) => ({ key: `ori-${o}`, node: o })),
+    ...(region ? [{ key: "region", node: region }] : []),
+  ];
+
+  const letterHref = getLetterHubPath(entry.letra);
+  const { prev, next } = getAdjacentEntries(entry.slug);
+  const explore = getExploreEntries(entry, 6);
+  const entryUrl = `${SITE_URL}/diccionario/${entry.slug}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -108,27 +125,68 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
     url: `${SITE_URL}/diccionario/${entry.slug}`,
   };
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Diccionario", item: SITE_URL },
+      ...(letterHref ? [{ "@type": "ListItem", position: 2, name: entry.letra, item: `${SITE_URL}${letterHref}` }] : []),
+      { "@type": "ListItem", position: letterHref ? 3 : 2, name: entry.palabra, item: entryUrl },
+    ],
+  };
+
   return (
     <>
       {/* JSON.stringify no escapa "<": si algún día un campo trajera
           literalmente "</script>", cortaría el tag antes de tiempo. */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <div className="ficha-back-row">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd).replace(/</g, "\\u003c") }} />
+      <div className="ficha-back-row ficha-back-row-split">
         <BackButton />
+        <nav className="ficha-breadcrumb" aria-label="Ruta">
+          <ol>
+            <li>
+              <Link href="/">Diccionario</Link>
+            </li>
+            {letterHref && (
+              <li>
+                <Link href={letterHref}>{entry.letra}</Link>
+              </li>
+            )}
+            <li>
+              <span aria-current="page">{entry.palabra}</span>
+            </li>
+          </ol>
+        </nav>
       </div>
       <div className="ficha-detail">
         <div className="ficha-detail-grid">
           <aside className="ficha-detail-sidebar">
-            <span className="ficha-detail-sidebar-letter-frame">
-              <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
-            </span>
+            {letterHref ? (
+              <Link href={letterHref} className="ficha-detail-sidebar-letter-frame" aria-label={`Ver todas las palabras con ${entry.letra}`}>
+                <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
+              </Link>
+            ) : (
+              <span className="ficha-detail-sidebar-letter-frame">
+                <BerretinInitial letter={entry.letra} className="ficha-detail-sidebar-letter" />
+              </span>
+            )}
             {registro && <p className="ficha-detail-registro">N.º {registro}</p>}
           </aside>
 
           <article className="ficha-detail-main">
             <header className="ficha-detail-header">
               <h1 className="ficha-detail-title">{entry.palabra}</h1>
-              {metaParts.length > 0 && <p className="ficha-detail-meta">{metaParts.join(" · ")}</p>}
+              {metaParts.length > 0 && (
+                <p className="ficha-detail-meta">
+                  {metaParts.map((part, i) => (
+                    <span key={part.key}>
+                      {i > 0 && " · "}
+                      {part.node}
+                    </span>
+                  ))}
+                </p>
+              )}
             </header>
 
             <WordTabs wordSlug={entry.slug} definicion={entry.definicion} />
@@ -145,6 +203,45 @@ export default async function DiccionarioEntryPage({ params }: PageProps<"/dicci
             </div>
           </article>
         </div>
+
+        {(prev || next) && (
+          <nav className="ficha-pager" aria-label="Palabras vecinas">
+            {prev ? (
+              <Link href={`/diccionario/${prev.slug}`} rel="prev" className="ficha-pager-link ficha-pager-prev">
+                <span className="ficha-pager-dir">← anterior</span>
+                <span className="ficha-pager-word">{prev.palabra}</span>
+              </Link>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            {next ? (
+              <Link href={`/diccionario/${next.slug}`} rel="next" className="ficha-pager-link ficha-pager-next">
+                <span className="ficha-pager-dir">siguiente →</span>
+                <span className="ficha-pager-word">{next.palabra}</span>
+              </Link>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+          </nav>
+        )}
+
+        {explore.length > 0 && (
+          <section className="ficha-explore" aria-labelledby="ficha-explore-title">
+            <h2 className="ficha-explore-title" id="ficha-explore-title">
+              Seguí explorando
+            </h2>
+            <ul className="ficha-explore-list">
+              {explore.map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/diccionario/${item.slug}`} className="ficha-explore-item">
+                    <span className="ficha-explore-word">{item.palabra}</span>
+                    <span className="ficha-explore-def">{cleanExcerpt(item.definicion, 96)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
       <Footer />
     </>
