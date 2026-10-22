@@ -12,12 +12,19 @@ import { getCachedMaintenanceMode } from "@/lib/maintenance-cache";
 // y congelar la respuesta en el valor del build.
 export const dynamic = "force-dynamic";
 
+// Respuesta cacheable en el CDN: el fetch de proxy.ts pasa por la URL
+// pública, así que casi todas las consultas son HIT y no invocan la función.
+// Costo aceptado: el toggle de /admin/sitio puede tardar hasta ~1 min en
+// verse (más la memo de 60 s de proxy.ts). Los errores (fail-open) no se
+// cachean, para no extender una falla pasajera.
+const CACHEABLE = { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" };
+
 export async function GET() {
   try {
     const maintenanceMode = await getCachedMaintenanceMode();
-    return NextResponse.json({ maintenanceMode });
+    return NextResponse.json({ maintenanceMode }, { headers: CACHEABLE });
   } catch {
     console.error("[maintenance-status] No se pudo leer el estado, se responde fail-open.");
-    return NextResponse.json({ maintenanceMode: false });
+    return NextResponse.json({ maintenanceMode: false }, { headers: { "Cache-Control": "no-store" } });
   }
 }

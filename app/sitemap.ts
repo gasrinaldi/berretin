@@ -23,12 +23,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   }
 
-  // Páginas públicas con URL estable (no incluye /cuenta: es personal).
-  entries.push(
-    { url: `${SITE_URL}/descubrir`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${SITE_URL}/desafio`, changeFrequency: "weekly", priority: 0.7 },
-  );
-
   for (const slug of getAllSlugs()) {
     entries.push({
       url: `${SITE_URL}/diccionario/${slug}`,

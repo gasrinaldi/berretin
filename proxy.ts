@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { FILTER_PARAM_KEYS } from "@/lib/dictionary-state";
 
 const MAINTENANCE_STATUS_PATH = "/api/internal/maintenance-status";
+
+// Memo en módulo (por instancia): con instancias Fluid reutilizadas, el
+// estado de mantenimiento se consulta a lo sumo una vez por minuto por
+// instancia en vez de una vez por request. Una falla (fail-open) se
+// recuerda poco tiempo para no martillar el endpoint si está caído.
+const MAINTENANCE_TTL_MS = 60_000;
+const MAINTENANCE_ERROR_TTL_MS = 10_000;
+let maintenanceMemo: { value: boolean; expiresAt: number } | null = null;
+let maintenanceInflight: Promise<boolean> | null = null;
 
 // Next.js 16 renombró middleware.ts a proxy.ts (mismo comportamiento).
 // Tres usos según la ruta:
@@ -42,6 +52,13 @@ export async function proxy(request: NextRequest) {
       status: 503,
       headers: { "Retry-After": "1800" },
     });
+  }
+
+  // La home es estática: la URL con filtros (?q=, ?letra=, …) sirve el mismo
+  // HTML que la home limpia y el cliente aplica los filtros. Para que esas
+  // variantes nunca se indexen como páginas propias, se marcan acá.
+  if (pathname === "/" && FILTER_PARAM_KEYS.some((key) => request.nextUrl.searchParams.has(key))) {
+    response.headers.set("X-Robots-Tag", "noindex, follow");
   }
 
   const needsAuth = isAdminPath || pathname === "/cuenta" || pathname.startsWith("/cuenta/");
@@ -102,17 +119,30 @@ export async function proxy(request: NextRequest) {
 // responde a tiempo, se deja pasar igual. Solo un log breve, sin
 // detalles de la falla ni nada del request.
 async function isMaintenanceModeOn(request: NextRequest): Promise<boolean> {
+  if (maintenanceMemo && maintenanceMemo.expiresAt > Date.now()) return maintenanceMemo.value;
+  // Requests simultáneas comparten una única consulta en vuelo.
+  maintenanceInflight ??= fetchMaintenanceMode(request.url).finally(() => {
+    maintenanceInflight = null;
+  });
+  return maintenanceInflight;
+}
+
+async function fetchMaintenanceMode(requestUrl: string): Promise<boolean> {
   try {
-    const statusUrl = new URL(MAINTENANCE_STATUS_PATH, request.url);
+    const statusUrl = new URL(MAINTENANCE_STATUS_PATH, requestUrl);
     const res = await fetch(statusUrl, { signal: AbortSignal.timeout(2000) });
     if (!res.ok) {
       console.error("[proxy] Estado de mantenimiento no disponible, se deja pasar.");
+      maintenanceMemo = { value: false, expiresAt: Date.now() + MAINTENANCE_ERROR_TTL_MS };
       return false;
     }
     const data = (await res.json()) as { maintenanceMode?: boolean };
-    return data.maintenanceMode === true;
+    const value = data.maintenanceMode === true;
+    maintenanceMemo = { value, expiresAt: Date.now() + MAINTENANCE_TTL_MS };
+    return value;
   } catch {
     console.error("[proxy] No se pudo consultar el estado de mantenimiento, se deja pasar.");
+    maintenanceMemo = { value: false, expiresAt: Date.now() + MAINTENANCE_ERROR_TTL_MS };
     return false;
   }
 }

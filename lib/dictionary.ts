@@ -1,15 +1,7 @@
-import { createHash } from "node:crypto";
-import dictionaryData from "@/data/dictionary.json";
-
-type RawEntry = {
-  id: string;
-  palabra: string;
-  definicion: string;
-  letra: string;
-  categorias: string[];
-  origenes: string[];
-  busquedaNormalizada: string;
-};
+// data/dictionary-index.json lo genera scripts/build-dictionary-index.mjs
+// (prebuild/predev): ya viene ordenado y con los slugs resueltos, así que
+// acá no hay que ordenar ni hashear nada en cada cold start.
+import dictionaryIndex from "@/data/dictionary-index.json";
 
 export type DictionaryEntry = {
   id: string;
@@ -23,11 +15,7 @@ export type DictionaryEntry = {
 
 type InternalEntry = DictionaryEntry & { busquedaNormalizada: string };
 
-// Mismas reglas que components/Dictionary.tsx: ignora signos iniciales para
-// ordenar, pliega tildes (no la ñ) para comparar sin acentos.
-function sortKey(word: string) {
-  return word.replace(/^[^\p{L}]+/u, "") || word;
-}
+// Pliega tildes (no la ñ) para comparar sin acentos.
 function stripAccents(value: string) {
   return value.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
@@ -52,51 +40,10 @@ function relevanceTier(entry: InternalEntry, query: string): number {
 export function isExpression(palabra: string): boolean {
   return palabra.trim().split(/\s+/).filter(Boolean).length >= 2;
 }
-function slugifyWord(value: string) {
-  return (
-    stripAccents(value)
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "entrada"
-  );
-}
-// Identificador corto y determinístico (derivado del id ya estable de la
-// entrada) para desambiguar slugs que colisionan, sin depender de la
-// posición en el array — no cambia si se reordena o actualiza el dataset.
-function shortHash(id: string) {
-  return createHash("sha1").update(id).digest("hex").slice(0, 5);
-}
-
-function buildAll(): InternalEntry[] {
-  const raw = dictionaryData as RawEntry[];
-  const sorted = [...raw].sort((a, b) => sortKey(a.palabra).localeCompare(sortKey(b.palabra), "es"));
-
-  const baseSlugs = sorted.map((e) => slugifyWord(e.palabra));
-  const freq = new Map<string, number>();
-  for (const s of baseSlugs) freq.set(s, (freq.get(s) ?? 0) + 1);
-
-  const used = new Set<string>();
-  return sorted.map((e, i) => {
-    const base = baseSlugs[i];
-    let slug = (freq.get(base) ?? 0) > 1 ? `${base}-${shortHash(e.id)}` : base;
-    while (used.has(slug)) slug = `${slug}x`;
-    used.add(slug);
-    return {
-      id: e.id,
-      slug,
-      palabra: e.palabra,
-      definicion: e.definicion,
-      letra: e.letra,
-      categorias: e.categorias,
-      origenes: e.origenes,
-      busquedaNormalizada: e.busquedaNormalizada,
-    };
-  });
-}
-
-// Se calcula una sola vez por instancia de la función serverless: el orden,
-// los slugs y el índice de búsqueda se reutilizan en cada request.
-const ALL: InternalEntry[] = buildAll();
+// Se arma una sola vez por instancia de la función serverless a partir del
+// índice precalculado en build: el orden, los slugs y el índice de búsqueda
+// se reutilizan en cada request.
+const ALL: InternalEntry[] = dictionaryIndex as InternalEntry[];
 const BY_SLUG = new Map<string, InternalEntry>(ALL.map((e) => [e.slug, e]));
 // Posición (1-based) de cada entrada dentro del orden alfabético completo
 // del diccionario — estable mientras no cambie el dataset, nunca inventada.

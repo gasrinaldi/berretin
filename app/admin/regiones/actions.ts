@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getAdminUser } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { getEntryBySlug } from "@/lib/dictionary";
@@ -56,6 +57,8 @@ export async function assignWordRegion(wordSlugRaw: string, region: string): Pro
     .single();
 
   if (error || !data) return { ok: false, error: "No pudimos guardar la región." };
+  // La ficha es ISR sin vencimiento por tiempo: se regenera acá, al instante.
+  revalidatePath(`/diccionario/${entry.slug}`);
   return { ok: true, row: { id: data.id, wordSlug: data.word_slug, word: data.word, region: data.region } };
 }
 
@@ -70,7 +73,9 @@ export async function removeWordRegion(id: string): Promise<Result> {
     return { ok: false, error: "No disponible en este momento." };
   }
 
-  const { error } = await supabase.from("word_regions").delete().eq("id", id);
+  const { data, error } = await supabase.from("word_regions").delete().eq("id", id).select("word_slug");
   if (error) return { ok: false, error: "No pudimos quitar la región." };
+  // La ficha es ISR sin vencimiento por tiempo: se regenera acá, al instante.
+  for (const row of data ?? []) revalidatePath(`/diccionario/${row.word_slug}`);
   return { ok: true };
 }

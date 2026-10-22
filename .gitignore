@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# índice del diccionario generado por scripts/build-dictionary-index.mjs
+/data/dictionary-index.json

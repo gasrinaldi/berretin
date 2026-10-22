@@ -20,7 +20,10 @@ import { Footer } from "@/components/Footer";
 export function generateStaticParams() {
   return [];
 }
-export const revalidate = 86400;
+// Sin revalidación por tiempo: lo único que la ficha lee de Supabase es la
+// región (word_regions), y /admin/regiones invalida la ficha afectada con
+// revalidatePath al guardar o quitar. El resto sale del dataset local.
+export const revalidate = false;
 
 function tipoLabel(palabra: string) {
   return isExpression(palabra) ? "Expresión" : "Palabra";

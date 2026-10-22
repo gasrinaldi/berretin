@@ -34,6 +34,11 @@ export type InitialDictionaryState = {
   data: DictionaryPageData;
 };
 
+// Parámetros de URL que lee/escribe components/Dictionary.tsx. Si aparece
+// alguno, la URL es un estado temporal de búsqueda/filtros y no una página
+// propia (ver proxy.ts y app/robots.ts).
+export const FILTER_PARAM_KEYS = ["q", "letra", "categoria", "origen", "sinCategoria", "tipo"] as const;
+
 // Reglas idénticas a las de siempre (antes vivían en readStateFromUrl de
 // Dictionary.tsx): parámetros repetidos con getAll, tipo inválido -> "todas".
 export function parseDictionaryState(params: URLSearchParams): { query: string; filters: FilterState } {
@@ -49,17 +54,6 @@ export function parseDictionaryState(params: URLSearchParams): { query: string; 
       tipo,
     },
   };
-}
-
-// searchParams de Next (string | string[] | undefined) -> URLSearchParams,
-// conservando los parámetros repetidos.
-export function toURLSearchParams(raw: Record<string, string | string[] | undefined>): URLSearchParams {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(raw)) {
-    if (Array.isArray(value)) value.forEach((v) => params.append(key, v));
-    else if (value !== undefined) params.append(key, value);
-  }
-  return params;
 }
 
 function sameList(a: string[], b: string[]) {
